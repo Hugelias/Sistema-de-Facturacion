@@ -1,0 +1,376 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar Sesión — TecnoStock S.A.</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    font-family:'Inter','Segoe UI',sans-serif;
+    min-height:100vh;
+    background:linear-gradient(150deg,#EEF0FF 0%,#DDE2FF 35%,#CDD5FF 65%,#BCC8FE 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;position:relative;overflow-x:hidden;overflow-y:auto;
+}
+
+/* ── Background shapes ── */
+.blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.blob-tl{width:80px;height:80px;top:7%;left:3%;background:#3B82F6;opacity:.75}
+.blob-tr{width:300px;height:300px;top:-9%;right:-6%;
+    background:radial-gradient(circle,#818CF8 0%,#6366F1 55%,transparent 80%);opacity:.6}
+.blob-bl{width:520px;height:520px;bottom:-22%;left:-13%;
+    background:radial-gradient(circle at 42% 42%,#2563EB 0%,#1D4ED8 48%,transparent 75%);opacity:.88}
+.blob-br{width:440px;height:440px;bottom:-20%;right:-11%;
+    background:radial-gradient(circle,#7C3AED 0%,#5B21B6 48%,transparent 75%);opacity:.78}
+
+.dots{position:fixed;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle,rgba(71,85,105,.28) 1.5px,transparent 1.5px);
+    background-size:22px 22px}
+.dots-l{width:130px;height:290px;top:12%;left:1.5%}
+.dots-r{width:130px;height:290px;top:12%;right:1.5%}
+
+/* ── Card wrapper ── */
+.auth-outer{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:460px}
+
+/* ── Card ── */
+.auth-card{
+    background:#fff;border-radius:24px;
+    box-shadow:0 24px 60px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.08);
+    padding:40px 36px 32px;width:100%;
+}
+
+/* ── Brand ── */
+.brand{text-align:center;margin-bottom:22px}
+.brand-hex{
+    width:60px;height:60px;margin:0 auto 12px;
+    background:linear-gradient(135deg,#3B82F6,#2563EB);
+    clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:1.45rem;
+}
+.brand-name{font-size:1.15rem;font-weight:800;color:#0F172A;letter-spacing:-.3px}
+.brand-sub{font-size:.77rem;color:#64748B;margin-top:3px}
+
+/* ── Heading ── */
+.card-heading{text-align:center;margin-bottom:24px}
+.card-title{font-size:1.25rem;font-weight:700;color:#0F172A}
+.card-desc{font-size:.825rem;color:#64748B;margin-top:4px}
+
+/* ── Role badge ── */
+.role-badge-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:18px}
+.role-badge-icon{
+    width:56px;height:56px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.4rem;margin-bottom:8px;
+}
+.role-badge-label{font-size:.75rem;color:#94A3B8;text-align:center}
+.role-badge-name{
+    font-size:.82rem;font-weight:700;padding:3px 12px;border-radius:20px;
+    margin-top:3px;
+}
+.role-back-link{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:.76rem;color:#64748B;text-decoration:none;
+    margin-top:8px;
+}
+.role-back-link:hover{color:#2563EB}
+.role-back-wrap{text-align:center;margin-bottom:16px}
+.role-back-wrap .role-back-link{margin-top:0}
+
+.role-badge-administrador .role-badge-icon{background:#EFF6FF;color:#2563EB}
+.role-badge-administrador .role-badge-name{background:#EFF6FF;color:#2563EB}
+.role-badge-gerente .role-badge-icon{background:#ECFDF5;color:#16A34A}
+.role-badge-gerente .role-badge-name{background:#ECFDF5;color:#16A34A}
+.role-badge-vendedor .role-badge-icon{background:#FFF7ED;color:#EA580C}
+.role-badge-vendedor .role-badge-name{background:#FFF7ED;color:#EA580C}
+.role-badge-comprador .role-badge-icon{background:#F5F3FF;color:#7C3AED}
+.role-badge-comprador .role-badge-name{background:#F5F3FF;color:#7C3AED}
+
+/* ── Alert global ── */
+.global-alert{
+    display:flex;align-items:center;gap:9px;
+    border-radius:10px;padding:10px 14px;
+    font-size:.8rem;margin-bottom:16px;
+}
+.global-alert.err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
+.global-alert.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8}
+
+/* ── Field ── */
+.field-group{margin-bottom:15px}
+.field-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.field-label span{font-size:.8rem;font-weight:600;color:#374151}
+.field-label a{font-size:.74rem;color:#2563EB;text-decoration:none;font-weight:500}
+.field-label a:hover{text-decoration:underline}
+
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:1rem;pointer-events:none;z-index:1}
+.input-wrap input{
+    width:100%;padding:11px 14px 11px 40px;
+    border:1.5px solid #E2E8F0;border-radius:12px;
+    font-size:.875rem;color:#0F172A;outline:none;
+    transition:border-color .15s,box-shadow .15s;
+    font-family:'Inter',sans-serif;background:#fff;
+}
+.input-wrap input::placeholder{color:#CBD5E1}
+.input-wrap input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.input-wrap input.is-err{border-color:#EF4444}
+.input-wrap input.is-err:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)}
+.field-err{font-size:.74rem;color:#EF4444;margin-top:5px;display:flex;align-items:center;gap:4px}
+
+/* Password with eye toggle: extra right padding */
+.input-wrap.has-eye input{padding-right:40px}
+.eye-btn{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:#94A3B8;cursor:pointer;
+    padding:4px;font-size:.95rem;line-height:1;display:flex;align-items:center;
+    transition:color .15s;
+}
+.eye-btn:hover{color:#64748B}
+
+/* ── Checkbox ── */
+.check-wrap{display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.check-wrap input[type="checkbox"]{width:16px;height:16px;accent-color:#2563EB;cursor:pointer;border-radius:4px}
+.check-wrap label{font-size:.82rem;color:#64748B;cursor:pointer}
+
+/* ── Submit ── */
+.btn-submit{
+    width:100%;padding:13px;border:none;border-radius:12px;
+    background:linear-gradient(135deg,#4F46E5 0%,#2563EB 55%,#1D4ED8 100%);
+    color:#fff;font-size:.9rem;font-weight:600;cursor:pointer;
+    font-family:'Inter',sans-serif;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:opacity .15s,transform .1s;
+    box-shadow:0 4px 14px rgba(37,99,235,.35);letter-spacing:.2px;
+}
+.btn-submit:hover{opacity:.92;transform:translateY(-1px)}
+.btn-submit:active{transform:translateY(0)}
+
+/* ── Footer link ── */
+.card-foot{text-align:center;margin-top:20px}
+.card-foot p{font-size:.82rem;color:#64748B;margin-bottom:9px}
+.foot-link{
+    display:inline-flex;align-items:center;gap:6px;
+    color:#2563EB;text-decoration:none;font-size:.82rem;font-weight:600;
+    padding:7px 18px;border-radius:10px;
+    border:1.5px solid rgba(37,99,235,.22);
+    background:rgba(37,99,235,.05);transition:background .15s;
+}
+.foot-link:hover{background:rgba(37,99,235,.1)}
+
+/* ── Illustration ── */
+.auth-illus{
+    margin-top:22px;
+    background:linear-gradient(135deg,#EEF2FF,#E0E7FF);
+    border-radius:14px;padding:16px 20px;
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    min-height:100px;overflow:hidden;position:relative;
+}
+/* Pie */
+.illus-pie{
+    width:68px;height:68px;border-radius:50%;flex-shrink:0;position:relative;
+    background:conic-gradient(#2563EB 0% 42%,#818CF8 42% 68%,#A5B4FC 68% 84%,#C7D2FE 84% 100%);
+    box-shadow:0 4px 12px rgba(37,99,235,.2);
+}
+.illus-pie::after{content:'';position:absolute;inset:18px;background:#E8EEFF;border-radius:50%}
+/* Browser */
+.illus-browser{
+    flex:1;max-width:160px;background:#fff;border-radius:10px;
+    box-shadow:0 2px 10px rgba(37,99,235,.14);overflow:hidden;
+}
+.illus-bar-row{
+    background:#F8FAFC;padding:6px 9px;border-bottom:1px solid #E2E8F0;
+    display:flex;align-items:center;gap:5px;
+}
+.illus-dot{width:7px;height:7px;border-radius:50%}
+.illus-dot:nth-child(1){background:#EF4444}
+.illus-dot:nth-child(2){background:#F59E0B}
+.illus-dot:nth-child(3){background:#10B981}
+.illus-body{padding:8px;display:flex;align-items:flex-end;gap:4px;height:52px}
+.illus-bbar{flex:1;min-width:10px;background:linear-gradient(to top,#2563EB,#818CF8);border-radius:3px 3px 0 0}
+/* Trend line overlay */
+.illus-trend{position:absolute;bottom:26px;right:22px;width:80px;height:30px}
+.illus-trend svg{overflow:visible}
+/* Shield */
+.illus-shield{
+    width:52px;height:52px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,#2563EB,#4F46E5);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:1.45rem;
+    box-shadow:0 4px 14px rgba(37,99,235,.38);
+}
+
+/* ── Copyright ── */
+.copyright{margin-top:18px;font-size:.72rem;color:rgba(255,255,255,.65);text-align:center;letter-spacing:.3px}
+
+@media(max-width:480px){
+    .auth-card{padding:30px 20px 26px}
+    .auth-illus{gap:10px;padding:14px}
+    .illus-browser{max-width:130px}
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="blob blob-tl"></div>
+<div class="blob blob-tr"></div>
+<div class="blob blob-bl"></div>
+<div class="blob blob-br"></div>
+<div class="dots dots-l"></div>
+<div class="dots dots-r"></div>
+
+<div class="auth-outer">
+<div class="auth-card">
+
+    <!-- Brand -->
+    <div class="brand">
+        <div class="brand-hex"><i class="bi bi-box-seam"></i></div>
+        <div class="brand-name">TecnoStock S.A.</div>
+        <div class="brand-sub">Sistema de Ventas y Facturación</div>
+    </div>
+
+    <!-- Role badge (shown when arriving from the role-selection screen) -->
+    {% if request.GET.role %}
+    <div class="role-badge-wrap role-badge-{{ request.GET.role }}">
+        <div class="role-badge-icon">
+            {% if request.GET.role == 'administrador' %}<i class="bi bi-shield-lock-fill"></i>
+            {% elif request.GET.role == 'gerente' %}<i class="bi bi-graph-up-arrow"></i>
+            {% elif request.GET.role == 'vendedor' %}<i class="bi bi-cart-fill"></i>
+            {% elif request.GET.role == 'comprador' %}<i class="bi bi-bag-fill"></i>
+            {% else %}<i class="bi bi-person-fill"></i>{% endif %}
+        </div>
+        <div class="role-badge-label">Accediendo como</div>
+        <div class="role-badge-name">
+            {% if request.GET.role == 'administrador' %}Administrador
+            {% elif request.GET.role == 'gerente' %}Gerente
+            {% elif request.GET.role == 'vendedor' %}Vendedor
+            {% elif request.GET.role == 'comprador' %}Comprador
+            {% else %}{{ request.GET.role }}{% endif %}
+        </div>
+        <a href="{% url 'security:role_select' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="role-back-link">
+            <i class="bi bi-arrow-left"></i> Elegir otro perfil
+        </a>
+    </div>
+    {% else %}
+    <div class="role-back-wrap">
+        <a href="{% url 'security:role_select' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="role-back-link">
+            <i class="bi bi-arrow-left"></i> Volver a selección de perfil
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Heading -->
+    <div class="card-heading">
+        <div class="card-title">¡Bienvenido de nuevo! 👋</div>
+        <div class="card-desc">Inicia sesión para continuar</div>
+    </div>
+
+    <!-- Django messages -->
+    {% if messages %}
+        {% for msg in messages %}
+        <div class="global-alert info"><i class="bi bi-info-circle"></i> {{ msg }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+        <!-- Non-field errors (wrong credentials) -->
+        {% if form.non_field_errors %}
+        <div class="global-alert err">
+            <i class="bi bi-exclamation-circle"></i> {{ form.non_field_errors.0 }}
+        </div>
+        {% endif %}
+
+        <!-- Username -->
+        <div class="field-group">
+            <div class="field-label"><span>Nombre de usuario</span></div>
+            <div class="input-wrap">
+                <i class="bi bi-person input-icon"></i>
+                <input type="text" name="username" id="id_username"
+                       placeholder="Ingresa tu usuario"
+                       value="{{ form.username.value|default:'' }}"
+                       class="{% if form.username.errors %}is-err{% endif %}"
+                       autocomplete="username">
+            </div>
+            {% for e in form.username.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Password -->
+        <div class="field-group">
+            <div class="field-label">
+                <span>Contraseña</span>
+                <a href="{% url 'security:password_reset_request' %}">¿Olvidaste tu contraseña?</a>
+            </div>
+            <div class="input-wrap has-eye">
+                <i class="bi bi-lock input-icon"></i>
+                <input type="password" name="password" id="id_password"
+                       placeholder="Ingresa tu contraseña"
+                       class="{% if form.password.errors %}is-err{% endif %}"
+                       autocomplete="current-password">
+                <button type="button" class="eye-btn" data-target="id_password" aria-label="Mostrar/ocultar contraseña">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+            {% for e in form.password.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Remember me -->
+        <div class="check-wrap">
+            <input type="checkbox" name="remember_me" id="remember_me">
+            <label for="remember_me">Recordarme</label>
+        </div>
+
+        <button type="submit" class="btn-submit">
+            <i class="bi bi-box-arrow-in-right"></i> Ingresar
+        </button>
+    </form>
+
+
+    <!-- Illustration -->
+    <div class="auth-illus" aria-hidden="true">
+        <div class="illus-pie"></div>
+        <div class="illus-browser">
+            <div class="illus-bar-row">
+                <span class="illus-dot"></span><span class="illus-dot"></span><span class="illus-dot"></span>
+            </div>
+            <div class="illus-body">
+                <div class="illus-bbar" style="height:38%"></div>
+                <div class="illus-bbar" style="height:62%"></div>
+                <div class="illus-bbar" style="height:48%"></div>
+                <div class="illus-bbar" style="height:80%"></div>
+                <div class="illus-bbar" style="height:55%"></div>
+            </div>
+        </div>
+        <div class="illus-shield"><i class="bi bi-shield-lock-fill"></i></div>
+    </div>
+
+</div><!-- /auth-card -->
+<p class="copyright">© 2026 TecnoStock S.A. - Todos los derechos reservados.</p>
+</div><!-- /auth-outer -->
+
+<script>
+document.querySelectorAll('.eye-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var inp = document.getElementById(this.dataset.target);
+        var icon = this.querySelector('i');
+        if (!inp) return;
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            inp.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    });
+});
+</script>
+</body>
+</html>

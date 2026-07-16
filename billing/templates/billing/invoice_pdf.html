@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+{% load l10n %}
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Factura #{{ invoice.number }} — TecnoStock S.A.</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',sans-serif;background:#F1F5F9;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px;color:#0F172A}
+
+/* ── Action bar ── */
+.pdf-actions{width:100%;max-width:820px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.pdf-act-left{display:flex;align-items:center;gap:10px}
+.pdf-btn-print{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border:none;border-radius:10px;background:#2563EB;color:#fff;font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;box-shadow:0 4px 12px rgba(37,99,235,.28)}
+.pdf-btn-print:hover{background:#1D4ED8}
+.pdf-btn-back{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border:1.5px solid #CBD5E1;border-radius:10px;background:#fff;color:#475569;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s}
+.pdf-btn-back:hover{background:#F8FAFC;color:#0F172A}
+.pdf-hint{font-size:.78rem;color:#94A3B8}
+
+/* ── Invoice document ── */
+.inv-doc{background:#fff;width:100%;max-width:820px;box-shadow:0 4px 32px rgba(15,23,42,.12);border-radius:4px;overflow:hidden}
+
+/* Header */
+.inv-header{background:#0B1120;padding:28px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.inv-brand{display:flex;align-items:center;gap:14px}
+.inv-brand-icon{width:46px;height:46px;background:linear-gradient(135deg,#2563EB,#4F46E5);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.inv-brand-icon svg{width:24px;height:24px;fill:#fff}
+.inv-brand-name{color:#fff;font-size:1.1rem;font-weight:800;letter-spacing:.3px}
+.inv-brand-ruc{color:#475569;font-size:.72rem;margin-top:2px}
+.inv-brand-addr{color:#475569;font-size:.72rem}
+.inv-num-box{text-align:right}
+.inv-label{color:#475569;font-size:.68rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.inv-num{color:#fff;font-size:1.6rem;font-weight:800;line-height:1}
+.inv-date{color:#64748B;font-size:.78rem;margin-top:6px}
+
+/* Status bar */
+.inv-status-bar{background:#1E293B;padding:10px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.inv-status-item{display:flex;align-items:center;gap:8px}
+.inv-status-dot{width:8px;height:8px;border-radius:50%;background:#22C55E;flex-shrink:0}
+.inv-status-txt{color:#94A3B8;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+.inv-status-val{color:#E2E8F0;font-size:.78rem;font-weight:600}
+
+/* Body */
+.inv-body{padding:32px 36px}
+
+/* Customer section */
+.inv-section-title{font-size:.68rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px}
+.inv-customer-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid #E2E8F0;border-radius:10px;overflow:hidden;margin-bottom:28px}
+.inv-cfield{padding:12px 16px;border-bottom:1px solid #F1F5F9}
+.inv-cfield:nth-child(odd){border-right:1px solid #F1F5F9}
+.inv-cfield:nth-last-child(-n+2){border-bottom:none}
+.inv-cf-label{font-size:.68rem;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.inv-cf-val{font-size:.875rem;color:#0F172A;font-weight:500}
+
+/* Table */
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:24px}
+.inv-table thead th{background:#0B1120;color:#fff;padding:10px 14px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;text-align:left}
+.inv-table thead th:not(:first-child){text-align:right}
+.inv-table thead th:nth-child(2){text-align:center}
+.inv-table tbody td{padding:11px 14px;border-bottom:1px solid #F1F5F9;font-size:.845rem;color:#334155;vertical-align:middle}
+.inv-table tbody tr:last-child td{border-bottom:none}
+.inv-table tbody tr:hover td{background:#FAFBFF}
+.inv-table td:not(:first-child){text-align:right}
+.inv-table td:nth-child(2){text-align:center}
+.inv-prod-name{font-weight:600;color:#0F172A}
+.inv-prod-group{font-size:.72rem;color:#94A3B8;margin-top:1px}
+
+/* Totals */
+.inv-totals-wrap{display:flex;justify-content:flex-end;margin-bottom:28px}
+.inv-totals{width:280px}
+.inv-total-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:.845rem}
+.inv-total-row:last-child{border-bottom:none}
+.inv-total-lbl{color:#64748B}
+.inv-total-val{font-weight:600;color:#0F172A}
+.inv-total-row.inv-grand{background:#EFF6FF;border-radius:10px;padding:12px 16px;margin-top:8px;border:1.5px solid #BFDBFE}
+.inv-grand .inv-total-lbl{color:#1D4ED8;font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.inv-grand .inv-total-val{color:#1D4ED8;font-size:1.15rem;font-weight:800}
+
+/* Notes */
+.inv-notes{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px;margin-bottom:28px;font-size:.8rem;color:#64748B;line-height:1.6}
+.inv-notes strong{color:#374151}
+
+/* Footer */
+.inv-footer{border-top:2px solid #F1F5F9;padding:20px 36px;display:flex;justify-content:space-between;align-items:center;background:#FAFBFF;flex-wrap:wrap;gap:12px}
+.inv-footer-brand{font-size:.8rem;font-weight:700;color:#0F172A}
+.inv-footer-sub{font-size:.7rem;color:#94A3B8;margin-top:2px}
+.inv-footer-right{text-align:right}
+.inv-footer-page{font-size:.7rem;color:#94A3B8}
+
+/* Electronic authorization block */
+.inv-sri{background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:10px;padding:14px 16px;margin-bottom:28px;font-size:.78rem;color:#166534}
+.inv-sri-hdr{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem}
+.inv-sri-hdr .dot{width:8px;height:8px;border-radius:50%;background:#22C55E}
+.inv-sri-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+.inv-sri-item{overflow-wrap:break-word;word-break:break-all}
+.inv-sri-lbl{font-weight:600;color:#15803D}
+.inv-sri.pending{background:#FFFBEB;border-color:#FDE68A;color:#92400E}
+.inv-sri.pending .dot{background:#F59E0B}
+.inv-sri.pending .inv-sri-lbl{color:#B45309}
+
+/* Pay with PayPal (public invoice only) */
+.inv-pp{border:1.5px solid #BFDBFE;border-radius:12px;overflow:hidden;margin-bottom:28px;background:#fff}
+.inv-pp-top{background:linear-gradient(135deg,#003087 0%,#0070E0 100%);padding:16px 18px;color:#fff}
+.inv-pp-top .inv-pp-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.95rem}
+.inv-pp-top p{margin:8px 0 0;font-size:.78rem;opacity:.92;line-height:1.4}
+.inv-pp-body{padding:16px 18px}
+.inv-pp-amount{margin-bottom:14px;max-width:200px}
+.inv-pp-amount label{font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;display:block}
+.inv-pp-amount input{border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 12px;font-size:.95rem;font-weight:700;width:100%;background:#fff;color:#0F172A}
+.inv-pp-pay-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:340px;height:42px;padding:0 18px;margin-bottom:10px;border:none;border-radius:4px;background:#FFC439;color:#003087;font-size:.9rem;font-weight:800;cursor:pointer;font-family:inherit}
+.inv-pp-pay-btn:disabled{opacity:.65;cursor:wait}
+.inv-pp-divider{display:flex;align-items:center;gap:10px;max-width:340px;margin:4px 0 10px;color:#94A3B8;font-size:.7rem;font-weight:700;text-transform:uppercase}
+.inv-pp-divider::before,.inv-pp-divider::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.inv-pp-buttons{max-width:340px}
+.inv-pp-buttons > *{margin-bottom:8px}
+.inv-pp-hint{margin:10px 0 0;font-size:.72rem;color:#64748B}
+.inv-pp-msg{margin-top:10px;font-size:.8rem}
+.inv-pp-msg.error{color:#DC2626}
+.inv-pp-msg.ok{background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:8px;padding:12px 14px;color:#15803D;font-size:.85rem;line-height:1.5}
+
+/* ── PRINT STYLES ── */
+@media print {
+    .pdf-actions{display:none!important}
+    .inv-pp{display:none!important}
+    body{background:#fff;padding:0;display:block}
+    .inv-doc{box-shadow:none;border-radius:0;max-width:none;width:100%}
+    @page{margin:1.2cm 1.5cm;size:A4}
+    .inv-table tbody tr{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- Action bar (hidden when printing) -->
+<div class="pdf-actions">
+    <div class="pdf-act-left">
+        <button class="pdf-btn-print" onclick="window.print()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
+            Imprimir / Guardar PDF
+        </button>
+        <a href="{% if is_public %}{% url 'billing:invoice_pdf_file_public' public_token %}{% else %}{% url 'billing:invoice_pdf_file' invoice.pk %}{% endif %}" target="_blank" class="pdf-btn-back">
+            ⬇ Descargar PDF
+        </a>
+        {% if invoice.clave_acceso %}
+        <a href="{% if is_public %}{% url 'billing:invoice_xml_public' public_token %}{% else %}{% url 'billing:invoice_xml' invoice.pk %}{% endif %}" class="pdf-btn-back" download>
+            ⬇ Descargar XML
+        </a>
+        {% endif %}
+        {% if not is_public %}
+        <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="pdf-btn-back">
+            ← Volver a la factura
+        </a>
+        {% endif %}
+    </div>
+    <span class="pdf-hint">Usa Ctrl+P o el botón para guardar como PDF</span>
+</div>
+
+<!-- Invoice document -->
+<div class="inv-doc">
+
+    <!-- Header -->
+    <div class="inv-header">
+        <div class="inv-brand">
+            <div class="inv-brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <div>
+                <div class="inv-brand-name">TecnoStock S.A.</div>
+                <div class="inv-brand-ruc">RUC: 1790000000001</div>
+                <div class="inv-brand-addr">Quito, Ecuador</div>
+            </div>
+        </div>
+        <div class="inv-num-box">
+            <div class="inv-label">Factura</div>
+            <div class="inv-num">{{ invoice.numero_completo }}</div>
+            <div class="inv-date">{{ invoice.invoice_date|date:"d \d\e F \d\e Y" }}</div>
+        </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="inv-status-bar">
+        <div class="inv-status-item">
+            <div class="inv-status-dot"></div>
+            <span class="inv-status-txt">Estado:</span>
+            <span class="inv-status-val">Emitida</span>
+        </div>
+        <div class="inv-status-item">
+            <span class="inv-status-txt">Forma de Pago:</span>
+            <span class="inv-status-val">{% if invoice.tipo_pago == 'credito' %}Crédito{% else %}Contado{% endif %}</span>
+        </div>
+        {% if invoice.tipo_pago == 'credito' %}
+        <div class="inv-status-item">
+            <span class="inv-status-txt">Estado de Cobro:</span>
+            <span class="inv-status-val" id="inv-status-cobro">{% if invoice.estado == 'pagada' %}Pagada{% else %}Pendiente — Saldo $ {{ invoice.saldo }}{% endif %}</span>
+        </div>
+        {% endif %}
+        <div class="inv-status-item">
+            <span class="inv-status-txt">Hora:</span>
+            <span class="inv-status-val">{{ invoice.invoice_date|date:"H:i" }}</span>
+        </div>
+        <div class="inv-status-item">
+            <span class="inv-status-txt">Atendido por:</span>
+            <span class="inv-status-val">TecnoStock S.A.</span>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="inv-body">
+
+        <!-- Customer -->
+        <div class="inv-section-title">Datos del cliente</div>
+        <div class="inv-customer-grid">
+            <div class="inv-cfield">
+                <div class="inv-cf-label">Nombre completo</div>
+                <div class="inv-cf-val">{{ invoice.customer.full_name }}</div>
+            </div>
+            <div class="inv-cfield">
+                <div class="inv-cf-label">Cédula / RUC</div>
+                <div class="inv-cf-val">{{ invoice.customer.dni }}</div>
+            </div>
+            <div class="inv-cfield">
+                <div class="inv-cf-label">Email</div>
+                <div class="inv-cf-val">{{ invoice.customer.email|default:"—" }}</div>
+            </div>
+            <div class="inv-cfield">
+                <div class="inv-cf-label">Teléfono</div>
+                <div class="inv-cf-val">{{ invoice.customer.phone|default:"—" }}</div>
+            </div>
+            <div class="inv-cfield">
+                <div class="inv-cf-label">Ciudad</div>
+                <div class="inv-cf-val">{{ invoice.customer.city|default:"—" }}</div>
+            </div>
+            <div class="inv-cfield">
+                <div class="inv-cf-label">Dirección</div>
+                <div class="inv-cf-val">{{ invoice.customer.address|default:"—" }}</div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="inv-section-title">Detalle de productos</div>
+        <table class="inv-table">
+            <thead>
+                <tr>
+                    <th style="width:40%">Producto</th>
+                    <th style="width:12%">Cant.</th>
+                    <th style="width:18%">P. Unitario</th>
+                    <th style="width:18%">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in invoice.details.all %}
+                <tr>
+                    <td>
+                        <div class="inv-prod-name">{{ d.product.name }}</div>
+                        {% if d.product.group %}<div class="inv-prod-group">{{ d.product.group.name }}</div>{% endif %}
+                    </td>
+                    <td>{{ d.quantity }}</td>
+                    <td>$ {{ d.unit_price }}</td>
+                    <td>$ {{ d.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="inv-totals-wrap">
+            <div class="inv-totals">
+                <div class="inv-total-row">
+                    <span class="inv-total-lbl">Subtotal</span>
+                    <span class="inv-total-val">$ {{ invoice.subtotal }}</span>
+                </div>
+                <div class="inv-total-row">
+                    <span class="inv-total-lbl">IVA (15%)</span>
+                    <span class="inv-total-val">$ {{ invoice.tax }}</span>
+                </div>
+                <div class="inv-total-row inv-grand">
+                    <span class="inv-total-lbl">Total</span>
+                    <span class="inv-total-val">$ {{ invoice.total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pay with PayPal (solo en el enlace público, si hay saldo pendiente) -->
+        {% if is_public and invoice.tipo_pago == 'credito' and invoice.estado != 'pagada' and invoice.is_active %}
+        <div class="inv-pp">
+            <div class="inv-pp-top">
+                <div class="inv-pp-brand">💳 PayPal</div>
+                <p><strong>PayPal</strong> abre el sandbox. <strong>Tarjeta</strong> permite cargar los datos aquí.</p>
+            </div>
+            <div class="inv-pp-body">
+                <div class="inv-pp-amount">
+                    <label for="inv-pp-amount-input">Monto a pagar (USD)</label>
+                    <input type="number" id="inv-pp-amount-input" step="0.01" min="0.01" max="{{ invoice.saldo|unlocalize }}" value="{{ invoice.saldo|unlocalize }}">
+                </div>
+                <button type="button" id="inv-pp-pay-btn" class="inv-pp-pay-btn">Pagar con PayPal</button>
+                <div class="inv-pp-divider">o</div>
+                <div id="inv-paypal-card-container" class="inv-pp-buttons"></div>
+                <p class="inv-pp-hint">Tarjeta de prueba: Visa 4012888888881881 · 12/2030 · CVV 123</p>
+                <div id="inv-pp-message" class="inv-pp-msg"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Notes -->
+        <div class="inv-notes">
+            <strong>Nota:</strong> Este documento es un comprobante de venta emitido por TecnoStock S.A.
+            Los precios incluyen IVA del 15%. Gracias por su compra.
+        </div>
+
+        <!-- Electronic authorization (simulated SRI) -->
+        {% if invoice.clave_acceso %}
+        <div class="inv-sri">
+            <div class="inv-sri-hdr"><span class="dot"></span> Autorizado electrónicamente — {% if invoice.ambiente == '1' %}Ambiente de Pruebas{% else %}Producción{% endif %}</div>
+            <div class="inv-sri-grid">
+                <div class="inv-sri-item"><span class="inv-sri-lbl">N° Autorización:</span> {{ invoice.numero_autorizacion }}</div>
+                <div class="inv-sri-item"><span class="inv-sri-lbl">Fecha autorización:</span> {{ invoice.fecha_autorizacion|date:"d/m/Y H:i:s" }}</div>
+                <div class="inv-sri-item" style="grid-column:1/-1"><span class="inv-sri-lbl">Clave de acceso:</span> {{ invoice.clave_acceso }}</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="inv-sri pending">
+            <div class="inv-sri-hdr"><span class="dot"></span> Pendiente de autorización electrónica</div>
+            <div class="inv-sri-grid">
+                <div class="inv-sri-item">Esta factura todavía no tiene clave de acceso ni autorización del SRI.</div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /inv-body -->
+
+    <!-- Footer -->
+    <div class="inv-footer">
+        <div>
+            <div class="inv-footer-brand">TecnoStock S.A.</div>
+            <div class="inv-footer-sub">Sistema de Ventas y Facturación</div>
+        </div>
+        <div class="inv-footer-right">
+            <div class="inv-footer-page">Factura N° {{ invoice.numero_completo }} — {{ invoice.invoice_date|date:"d/m/Y" }}</div>
+            <div class="inv-footer-sub" style="margin-top:2px">Documento generado electrónicamente</div>
+        </div>
+    </div>
+
+</div><!-- /inv-doc -->
+
+{% if is_public and invoice.tipo_pago == 'credito' and invoice.estado != 'pagada' and invoice.is_active %}
+<form id="inv-pp-csrf-form" style="display:none">{% csrf_token %}</form>
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture&components=buttons&enable-funding=card&disable-funding=venmo,paylater,credit"></script>
+<script>
+(function(){
+    var amountInput = document.getElementById('inv-pp-amount-input');
+    var messageBox = document.getElementById('inv-pp-message');
+    var payBtn = document.getElementById('inv-pp-pay-btn');
+    var createUrl = '{% url "cobros:cobro_paypal_public_create_order" public_token %}';
+    var captureTpl = '{% url "cobros:cobro_paypal_public_capture_order" public_token "ORDER_ID" %}';
+    function csrfToken(){ return document.querySelector('#inv-pp-csrf-form [name=csrfmiddlewaretoken]').value; }
+    function montoNormalizado(){
+        return String(amountInput.value || '').trim().replace(',', '.');
+    }
+    function showMsg(text, ok){
+        messageBox.textContent = text;
+        messageBox.className = 'inv-pp-msg ' + (ok ? 'ok' : 'error');
+    }
+    payBtn.addEventListener('click', function(){
+        payBtn.disabled = true;
+        showMsg('Redirigiendo a PayPal Sandbox…', true);
+        fetch(createUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+            body: JSON.stringify({amount: montoNormalizado(), flow: 'redirect'}),
+        }).then(function(r){ return r.json().then(function(data){ return {ok: r.ok, data: data}; }); })
+        .then(function(res){
+            if (!res.ok || res.data.error || !res.data.approve_url) {
+                showMsg(res.data.error || 'No se pudo iniciar el pago.', false);
+                payBtn.disabled = false;
+                return;
+            }
+            window.location.href = res.data.approve_url;
+        }).catch(function(){
+            showMsg('No se pudo conectar con el servidor de pagos.', false);
+            payBtn.disabled = false;
+        });
+    });
+    if (typeof paypal === 'undefined') {
+        showMsg('No se pudo cargar el botón de tarjeta PayPal.', false);
+        return;
+    }
+    paypal.Buttons({
+        fundingSource: paypal.FUNDING.CARD,
+        style: { layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 42 },
+        createOrder: function(){
+            showMsg('Creando orden…', true);
+            return fetch(createUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+                body: JSON.stringify({amount: montoNormalizado()}),
+            }).then(function(r){ return r.json().then(function(data){ return {ok: r.ok, data: data}; }); })
+            .then(function(res){
+                if (!res.ok || res.data.error || !res.data.id) {
+                    throw new Error(res.data.error || 'No se pudo crear la orden.');
+                }
+                return res.data.id;
+            });
+        },
+        onApprove: function(data){
+            showMsg('Confirmando pago…', true);
+            var url = captureTpl.replace('ORDER_ID', encodeURIComponent(data.orderID));
+            return fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+            }).then(function(r){ return r.json().then(function(body){ return {ok: r.ok, body: body}; }); })
+            .then(function(res){
+                if (!res.ok || res.body.error) {
+                    throw new Error(res.body.error || 'No se pudo capturar el pago.');
+                }
+                showMsg('Pago de $ ' + res.body.valor + ' registrado. Saldo: $ ' + res.body.saldo, true);
+                window.setTimeout(function(){ window.location.reload(); }, 1500);
+            });
+        },
+        onCancel: function(){ showMsg('Pago cancelado.', false); },
+        onError: function(err){ showMsg((err && err.message) ? err.message : 'Error en el pago con tarjeta.', false); }
+    }).render('#inv-paypal-card-container');
+})();
+</script>
+{% endif %}
+
+</body>
+</html>

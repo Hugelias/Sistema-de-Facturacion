@@ -1,0 +1,551 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+/* ── Invoice Form ──────────────────────────────────────────────── */
+.if-page-title{display:flex;align-items:center;gap:11px;font-size:1.5rem;font-weight:800;color:#0F172A;margin-bottom:24px}
+.if-page-title i{font-size:1.3rem;color:#475569}
+
+/* Cards */
+.if-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:18px}
+.if-card-hdr{background:#1E293B;padding:14px 22px;display:flex;align-items:center;gap:10px;color:#fff;font-size:.9rem;font-weight:600;letter-spacing:.1px}
+.if-card-hdr i{font-size:1rem;opacity:.9}
+.if-card-body{padding:24px 22px}
+
+/* Field label */
+.if-label{display:block;font-size:.825rem;font-weight:600;color:#374151;margin-bottom:9px}
+.if-req{color:#EF4444;margin-left:2px}
+.if-field-err{font-size:.775rem;color:#EF4444;margin-top:5px;display:flex;align-items:center;gap:4px}
+
+/* Customer select wrapper */
+.if-cust-wrap{position:relative}
+.if-cust-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:34px;height:34px;background:#F1F5F9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#64748B;font-size:.9rem;pointer-events:none;z-index:1}
+.if-cust-wrap .form-select{
+    padding-left:56px !important;padding-right:36px;
+    height:52px !important;line-height:1.4;
+    border:1.5px solid #E2E8F0 !important;border-radius:11px !important;
+    font-size:.875rem;color:#0F172A;box-shadow:none !important;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") !important;
+    background-repeat:no-repeat !important;
+    background-position:right 14px center !important;
+}
+.if-cust-wrap .form-select:focus{border-color:#2563EB !important;box-shadow:0 0 0 3px rgba(37,99,235,.1) !important}
+.if-cust-wrap .form-select.is-invalid{border-color:#EF4444 !important}
+
+/* Validation alert */
+.if-val-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 16px;font-size:.845rem;color:#B91C1C;display:flex;align-items:center;gap:9px;margin-bottom:16px}
+
+/* ── Formset table ──────────────────────────────────────────────── */
+.if-table-wrap{overflow-x:auto}
+.if-table{width:100%;border-collapse:collapse}
+.if-table thead th{
+    padding:11px 14px;font-size:.74rem;font-weight:700;color:#64748B;
+    text-transform:uppercase;letter-spacing:.5px;
+    border-bottom:1.5px solid #E2E8F0;
+    background:#F8FAFC;text-align:left;white-space:nowrap;
+}
+.if-table thead th:first-child{padding-left:22px}
+.if-table thead th:last-child{text-align:center}
+.if-table tbody td{
+    padding:10px 10px;border-bottom:1px solid #F1F5F9;
+    vertical-align:middle;
+}
+.if-table tbody td:first-child{padding-left:22px}
+.if-table tbody tr:last-child td{border-bottom:none}
+.if-table tbody tr:hover td{background:#FAFBFF}
+
+/* Product select */
+.if-prod-wrap{position:relative}
+.if-prod-icon{
+    position:absolute;left:10px;top:50%;transform:translateY(-50%);
+    width:28px;height:28px;background:#F1F5F9;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    color:#94A3B8;font-size:.8rem;pointer-events:none;z-index:1;
+}
+.if-prod-wrap .form-select{
+    padding-left:46px !important;padding-right:30px;
+    border:1.5px solid #E2E8F0 !important;border-radius:9px !important;
+    height:40px !important;font-size:.845rem;box-shadow:none !important;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") !important;
+    background-repeat:no-repeat !important;background-position:right 10px center !important;
+    min-width:220px;
+}
+.if-prod-wrap .form-select:focus{border-color:#2563EB !important;box-shadow:0 0 0 3px rgba(37,99,235,.1) !important}
+
+/* Quantity */
+.qty-input{
+    width:84px !important;text-align:center;
+    border:1.5px solid #E2E8F0 !important;border-radius:9px !important;
+    height:40px !important;font-size:.875rem;
+    box-shadow:none !important;padding:0 10px !important;
+}
+.qty-input:focus{border-color:#2563EB !important;box-shadow:0 0 0 3px rgba(37,99,235,.1) !important}
+
+/* Price input */
+.if-price-wrap{position:relative}
+.if-price-pfx{
+    position:absolute;left:11px;top:50%;transform:translateY(-50%);
+    color:#64748B;font-size:.8rem;font-weight:700;pointer-events:none;z-index:1;
+}
+.if-price-wrap .price-input{
+    padding-left:22px !important;
+    width:110px !important;
+    border:1.5px solid #E2E8F0 !important;border-radius:9px !important;
+    height:40px !important;font-size:.845rem;box-shadow:none !important;
+}
+.if-price-wrap .price-input:focus{border-color:#2563EB !important;box-shadow:0 0 0 3px rgba(37,99,235,.1) !important}
+
+/* Subtotal value cell */
+.row-subtotal{color:#2563EB;font-weight:700;font-size:.95rem;white-space:nowrap}
+
+/* DELETE checkbox */
+.if-table input[name$="-DELETE"]{
+    width:17px;height:17px;
+    accent-color:#EF4444;cursor:pointer;
+    display:block;margin:0 auto;
+}
+
+/* Subtotal footer row */
+.if-sub-row td{background:#EFF6FF;padding:12px 14px;border-top:1.5px solid #BFDBFE}
+.if-sub-row td:first-child{padding-left:22px}
+.if-sub-label{text-align:right;font-weight:700;font-size:.875rem;color:#0F172A}
+.if-sub-value{font-weight:800;font-size:1rem;color:#2563EB;white-space:nowrap}
+
+/* Add line button */
+.if-add-wrap{padding:16px 22px;border-top:1px solid #F1F5F9}
+.if-btn-add{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:9px 18px;
+    border:1.5px solid #CBD5E1;border-radius:9px;
+    background:#fff;color:#475569;
+    font-size:.855rem;font-weight:600;cursor:pointer;
+    transition:background .15s,border-color .15s;
+    font-family:inherit;
+}
+.if-btn-add:hover{background:#F8FAFC;border-color:#94A3B8;color:#0F172A}
+
+/* Bottom buttons */
+.if-btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.if-btn-save{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:13px 28px;border:none;border-radius:11px;
+    background:#1E293B;color:#fff;
+    font-size:.9rem;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:background .15s;
+    box-shadow:0 4px 12px rgba(15,23,42,.25);
+}
+.if-btn-save:hover{background:#0F172A}
+.if-btn-cancel{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:13px 24px;border-radius:11px;
+    background:#64748B;color:#fff;text-decoration:none;
+    font-size:.9rem;font-weight:600;
+    transition:background .15s;
+}
+.if-btn-cancel:hover{background:#475569;color:#fff}
+
+/* Non-form errors */
+.if-nfe{background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:10px 14px;font-size:.83rem;color:#B91C1C;margin-bottom:14px}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .if-page-title,
+:root[data-bs-theme="dark"] .if-label,
+:root[data-bs-theme="dark"] .if-sub-label,
+:root[data-bs-theme="dark"] .if-cust-wrap .form-select,
+:root[data-bs-theme="dark"] .if-prod-wrap .form-select { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .if-page-title i,
+:root[data-bs-theme="dark"] .if-cust-icon,
+:root[data-bs-theme="dark"] .if-prod-icon,
+:root[data-bs-theme="dark"] .if-price-pfx,
+:root[data-bs-theme="dark"] .if-table thead th,
+:root[data-bs-theme="dark"] .if-btn-add { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .if-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .if-cust-icon,
+:root[data-bs-theme="dark"] .if-prod-icon,
+:root[data-bs-theme="dark"] .if-table thead th { background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .if-cust-wrap .form-select,
+:root[data-bs-theme="dark"] .if-prod-wrap .form-select,
+:root[data-bs-theme="dark"] .qty-input,
+:root[data-bs-theme="dark"] .if-price-wrap .price-input,
+:root[data-bs-theme="dark"] .if-btn-add { border-color:var(--border) !important; }
+
+:root[data-bs-theme="dark"] .if-btn-add { background:var(--surface); }
+:root[data-bs-theme="dark"] .if-btn-add:hover { background:var(--main-bg); color:var(--text-primary); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .if-table thead th,
+:root[data-bs-theme="dark"] .if-table tbody td { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .if-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .if-sub-row td { background:rgba(37,99,235,.12); border-top-color:rgba(37,99,235,.35); }
+:root[data-bs-theme="dark"] .if-sub-label { color:#60A5FA; }
+:root[data-bs-theme="dark"] .if-sub-value { color:#93C5FD; }
+
+:root[data-bs-theme="dark"] .if-add-wrap { border-top-color:var(--border); }
+</style>
+
+{# ── PAGE TITLE ───────────────────────────────────────────────── #}
+<div class="if-page-title">
+    <i class="bi bi-receipt"></i> {{ title }}
+</div>
+
+{# ── FORM ──────────────────────────────────────────────────────── #}
+<form id="invoice-form" method="post" novalidate>
+    {% csrf_token %}
+
+    {# Validation error banner (JS-driven) #}
+    <div id="if-val-err" class="if-val-err" style="display:none">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span id="if-val-msg"></span>
+    </div>
+
+    {# Non-field errors from Django #}
+    {% if form.non_field_errors %}
+    <div class="if-nfe">
+        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+    </div>
+    {% endif %}
+
+    {# ── BLOCK 1: DATOS DEL CLIENTE ──────────────────────────── #}
+    <div class="if-card">
+        <div class="if-card-hdr">
+            <i class="bi bi-person-circle"></i> Datos del Cliente
+        </div>
+        <div class="if-card-body">
+            <div class="frm-grid-2" style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+                <div>
+                    <label class="if-label" for="id_customer">
+                        Cliente <span class="if-req">*</span>
+                    </label>
+                    <div class="if-cust-wrap">
+                        <div class="if-cust-icon"><i class="bi bi-person"></i></div>
+                        {{ form.customer }}
+                    </div>
+                    {% for err in form.customer.errors %}
+                    <div class="if-field-err"><i class="bi bi-exclamation-circle"></i> {{ err }}</div>
+                    {% endfor %}
+                </div>
+                <div>
+                    <label class="if-label" for="{{ form.tipo_pago.id_for_label }}">
+                        Tipo de Pago <span class="if-req">*</span>
+                    </label>
+                    {{ form.tipo_pago }}
+                    <div id="generic-customer-hint" class="if-field-err" style="display:none;color:var(--text-warning)">
+                        <i class="bi bi-info-circle"></i> El Consumidor Final solo admite pago de contado.
+                    </div>
+                    {% for err in form.tipo_pago.errors %}
+                    <div class="if-field-err"><i class="bi bi-exclamation-circle"></i> {{ err }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── BLOCK 2: DETALLE DE PRODUCTOS ───────────────────────── #}
+    <div class="if-card">
+        <div class="if-card-hdr">
+            <i class="bi bi-cart3"></i> Detalle de Productos
+        </div>
+
+        {# Management form (required by Django formset) #}
+        {{ formset.management_form }}
+
+        {% if formset.non_form_errors %}
+        <div class="if-nfe" style="margin:16px 22px 0">
+            {% for err in formset.non_form_errors %}<div>{{ err }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="if-table-wrap">
+            <table class="if-table" id="formset-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th style="width:100px">Cantidad</th>
+                        <th style="width:140px">Precio Unit.</th>
+                        <th style="width:110px">Subtotal</th>
+                        <th style="width:62px;text-align:center">Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail_form in formset %}
+                    <tr class="formset-row">
+                        {# Product #}
+                        <td>
+                            <div class="if-prod-wrap">
+                                <div class="if-prod-icon"><i class="bi bi-box"></i></div>
+                                {{ detail_form.product }}
+                                {{ detail_form.id }}
+                            </div>
+                            {% for err in detail_form.product.errors %}
+                            <div class="if-field-err" style="margin-top:4px"><i class="bi bi-exclamation-circle"></i> {{ err }}</div>
+                            {% endfor %}
+                        </td>
+
+                        {# Quantity #}
+                        <td>
+                            {{ detail_form.quantity }}
+                            {% for err in detail_form.quantity.errors %}
+                            <div class="if-field-err" style="margin-top:4px">{{ err }}</div>
+                            {% endfor %}
+                        </td>
+
+                        {# Unit price #}
+                        <td>
+                            <div class="if-price-wrap">
+                                <span class="if-price-pfx">$</span>
+                                {{ detail_form.unit_price }}
+                            </div>
+                            {% for err in detail_form.unit_price.errors %}
+                            <div class="if-field-err" style="margin-top:4px">{{ err }}</div>
+                            {% endfor %}
+                        </td>
+
+                        {# Subtotal #}
+                        <td>
+                            <span class="row-subtotal">$0.00</span>
+                        </td>
+
+                        {# Delete #}
+                        <td style="text-align:center">
+                            {{ detail_form.DELETE }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="if-sub-row">
+                        <td colspan="3" class="if-sub-label">Subtotal:</td>
+                        <td class="if-sub-value">
+                            <span id="invoice-subtotal">$0.00</span>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="if-add-wrap">
+            <button type="button" class="if-btn-add" id="add-row">
+                <i class="bi bi-plus"></i> Agregar Línea
+            </button>
+        </div>
+    </div>
+
+    {# ── BOTTOM BUTTONS ──────────────────────────────────────── #}
+    <div class="if-btns">
+        <button type="submit" class="if-btn-save">
+            <i class="bi bi-floppy"></i> Guardar Factura
+        </button>
+        <a href="{% url 'billing:invoice_list' %}" class="if-btn-cancel">
+            <i class="bi bi-x-lg"></i> Cancelar
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PRODUCTS = {{ products_json|safe }};
+const GENERIC_CUSTOMERS = {{ generic_customers_json|safe }};
+
+/* ── Consumidor Final: bloquear crédito ─────────────────────── */
+(function() {
+    const custSel  = document.getElementById('id_customer');
+    const pagoSel  = document.getElementById('id_tipo_pago');
+    const hint     = document.getElementById('generic-customer-hint');
+    const creditoOpt = pagoSel ? Array.from(pagoSel.options).find(function(o) { return o.value === 'credito'; }) : null;
+    if (!custSel || !pagoSel) return;
+
+    function applyRestriction() {
+        const isGeneric = GENERIC_CUSTOMERS.includes(parseInt(custSel.value));
+        if (creditoOpt) creditoOpt.disabled = isGeneric;
+        hint.style.display = isGeneric ? 'flex' : 'none';
+        if (isGeneric && pagoSel.value === 'credito') pagoSel.value = 'contado';
+    }
+
+    custSel.addEventListener('change', applyRestriction);
+    applyRestriction();
+})();
+
+/* ── Subtotal helpers ───────────────────────────────────────── */
+function updateRowSubtotal(row) {
+    const price = parseFloat(row.querySelector('input[name$="-unit_price"]').value) || 0;
+    const qty   = parseInt(row.querySelector('input[name$="-quantity"]').value)     || 0;
+    row.querySelector('.row-subtotal').textContent = '$' + (price * qty).toFixed(2);
+    updateInvoiceSubtotal();
+}
+
+function updateInvoiceSubtotal() {
+    let total = 0;
+    document.querySelectorAll('.formset-row').forEach(function(row) {
+        var chk = row.querySelector('input[name$="-DELETE"]');
+        if (chk && chk.checked) return;
+        var sub = row.querySelector('.row-subtotal');
+        total += parseFloat((sub.textContent || '').replace('$', '')) || 0;
+    });
+    document.getElementById('invoice-subtotal').textContent = '$' + total.toFixed(2);
+}
+
+/* ── Initialize one row ─────────────────────────────────────── */
+function initRow(row) {
+    var sel        = row.querySelector('select[name$="-product"]');
+    var priceInput = row.querySelector('input[name$="-unit_price"]');
+    var qtyInput   = row.querySelector('input[name$="-quantity"]');
+    var deleteChk  = row.querySelector('input[name$="-DELETE"]');
+
+    if (!sel) return;
+
+    function applyProduct(productId) {
+        var data = PRODUCTS[productId];
+        if (data) {
+            priceInput.value     = data.price;
+            qtyInput.max         = data.stock;
+            qtyInput.title       = 'Stock disponible: ' + data.stock;
+            qtyInput.placeholder = 'Máx: ' + data.stock;
+        } else {
+            priceInput.value = '';
+            qtyInput.removeAttribute('max');
+            qtyInput.title       = '';
+            qtyInput.placeholder = '';
+        }
+    }
+
+    sel.addEventListener('change', function() {
+        applyProduct(this.value);
+        updateRowSubtotal(row);
+        checkDuplicateProducts();
+    });
+    priceInput.addEventListener('input', function() { updateRowSubtotal(row); });
+    qtyInput.addEventListener('input',   function() { updateRowSubtotal(row); });
+    if (deleteChk) {
+        deleteChk.addEventListener('change', function() {
+            row.style.opacity = deleteChk.checked ? '0.45' : '1';
+            updateInvoiceSubtotal();
+            checkDuplicateProducts();
+        });
+    }
+
+    if (sel.value) applyProduct(sel.value);
+    updateRowSubtotal(row);
+}
+
+/* ── Duplicate product detection ──────────────────────────────── */
+function checkDuplicateProducts() {
+    var seen = {};
+    var hasDuplicates = false;
+    document.querySelectorAll('.formset-row').forEach(function(row) {
+        var chk = row.querySelector('input[name$="-DELETE"]');
+        var sel = row.querySelector('select[name$="-product"]');
+        if (!sel) return;
+        var cell   = sel.closest('td') || row;
+        var errBox = cell.querySelector('.dup-product-err');
+        var isDup  = false;
+
+        if (sel.value && !(chk && chk.checked)) {
+            if (seen[sel.value]) {
+                isDup = true;
+                hasDuplicates = true;
+            }
+            seen[sel.value] = true;
+        }
+
+        sel.classList.toggle('is-invalid', isDup);
+        if (isDup && !errBox) {
+            errBox = document.createElement('div');
+            errBox.className = 'if-field-err dup-product-err';
+            errBox.style.marginTop = '4px';
+            errBox.innerHTML = '<i class="bi bi-exclamation-circle"></i> Producto duplicado en esta factura.';
+            cell.appendChild(errBox);
+        } else if (!isDup && errBox) {
+            errBox.remove();
+        }
+    });
+    return hasDuplicates;
+}
+
+/* ── Init existing rows ─────────────────────────────────────── */
+document.querySelectorAll('.formset-row').forEach(initRow);
+checkDuplicateProducts();
+
+/* ── Add row ────────────────────────────────────────────────── */
+document.getElementById('add-row').addEventListener('click', function() {
+    var tbody      = document.querySelector('#formset-table tbody');
+    var totalForms = document.getElementById('id_details-TOTAL_FORMS');
+    var formCount  = parseInt(totalForms.value);
+    var firstRow   = tbody.querySelector('.formset-row');
+    var newRow     = firstRow.cloneNode(true);
+
+    newRow.style.opacity = '1';
+    newRow.querySelectorAll('input, select').forEach(function(el) {
+        el.name = el.name.replace(/-\d+-/, '-' + formCount + '-');
+        el.id   = (el.id || '').replace(/-\d+-/, '-' + formCount + '-');
+        if (el.type !== 'checkbox') el.value = '';
+        else el.checked = false;
+        el.removeAttribute('max');
+        el.title = ''; el.placeholder = '';
+    });
+    newRow.querySelector('.row-subtotal').textContent = '$0.00';
+    newRow.querySelectorAll('.if-field-err').forEach(function(e) { e.remove(); });
+    tbody.appendChild(newRow);
+    initRow(newRow);
+    checkDuplicateProducts();
+    totalForms.value = formCount + 1;
+
+    /* Scroll into view */
+    newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+/* ── Client-side validation before submit ───────────────────── */
+document.getElementById('invoice-form').addEventListener('submit', function(e) {
+    var errBanner = document.getElementById('if-val-err');
+    var errMsg    = document.getElementById('if-val-msg');
+
+    /* 1. Customer must be selected */
+    var custSel = document.getElementById('id_customer');
+    if (!custSel || !custSel.value) {
+        e.preventDefault();
+        errMsg.textContent = 'Por favor selecciona un cliente antes de guardar.';
+        errBanner.style.display = 'flex';
+        custSel.closest('.if-cust-wrap').querySelector('.form-select').classList.add('is-invalid');
+        errBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    /* 2. At least one valid (non-deleted) product line */
+    var hasLine = false;
+    document.querySelectorAll('.formset-row').forEach(function(row) {
+        var chk = row.querySelector('input[name$="-DELETE"]');
+        if (chk && chk.checked) return;
+        var sel = row.querySelector('select[name$="-product"]');
+        var qty = parseInt(row.querySelector('input[name$="-quantity"]').value) || 0;
+        if (sel && sel.value && qty > 0) hasLine = true;
+    });
+
+    if (!hasLine) {
+        e.preventDefault();
+        errMsg.textContent = 'Agrega al menos una línea de producto con cantidad mayor a cero.';
+        errBanner.style.display = 'flex';
+        errBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    /* 3. No duplicate products */
+    if (checkDuplicateProducts()) {
+        e.preventDefault();
+        errMsg.textContent = 'Hay productos duplicados en la factura. Combina las cantidades en una sola línea.';
+        errBanner.style.display = 'flex';
+        errBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    errBanner.style.display = 'none';
+});
+</script>
+{% endblock %}

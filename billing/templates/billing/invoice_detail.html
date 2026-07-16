@@ -1,0 +1,480 @@
+{% extends 'base.html' %}
+{% block title %}Factura #{{ invoice.number }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.id-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.id-hdr-left{display:flex;align-items:center;gap:14px}
+.id-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.id-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.id-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.id-hdr-btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.id-btn-pdf{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border:none;border-radius:10px;background:#2563EB;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.id-btn-pdf:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+.id-btn-edit{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#475569;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.id-btn-edit:hover{background:#F8FAFC;color:#0F172A}
+.id-btn-back{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#64748B;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.id-btn-back:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+
+.id-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.id-card-hdr{background:#1E293B;padding:14px 22px;display:flex;align-items:center;gap:12px}
+.id-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.id-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.id-card-body{padding:24px}
+
+.id-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:700px){.id-info-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:440px){.id-info-grid{grid-template-columns:1fr}}
+.id-info-item{}
+.id-info-label{font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.id-info-val{font-size:.9rem;color:#0F172A;font-weight:600}
+
+.id-divider{border:none;border-top:1px solid #F1F5F9;margin:20px 0}
+
+.id-table{width:100%;border-collapse:collapse}
+.id-table thead th{padding:10px 14px;font-size:.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;text-align:left;white-space:nowrap;background:#FAFBFF}
+.id-table thead th:not(:first-child){text-align:right}
+.id-table thead th:nth-child(2){text-align:center}
+.id-table thead th:first-child{padding-left:20px}
+.id-table tbody td{padding:12px 14px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.id-table tbody td:first-child{padding-left:20px}
+.id-table tbody td:not(:first-child){text-align:right}
+.id-table tbody td:nth-child(2){text-align:center}
+.id-table tbody tr:last-child td{border-bottom:none}
+.id-table tbody tr:hover td{background:#FAFBFF}
+.id-prod-name{font-weight:600;color:#0F172A}
+.id-prod-group{font-size:.72rem;color:#94A3B8;margin-top:1px}
+
+.id-totals-wrap{display:flex;justify-content:flex-end;padding:16px 20px;border-top:1.5px solid #F1F5F9;background:#FAFBFF}
+.id-totals{width:260px}
+.id-total-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:.845rem}
+.id-total-row:last-child{border-bottom:none}
+.id-total-lbl{color:#64748B}
+.id-total-val{font-weight:600;color:#0F172A}
+.id-total-grand{margin-top:8px;background:#EFF6FF;border-radius:10px;padding:12px 16px;border:1.5px solid #BFDBFE}
+.id-total-grand .id-total-lbl{color:#1D4ED8;font-weight:700;text-transform:uppercase;font-size:.8rem;letter-spacing:.5px}
+.id-total-grand .id-total-val{color:#1D4ED8;font-size:1.05rem;font-weight:800}
+
+.id-sri-badge{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:20px;padding:4px 12px;text-transform:uppercase;letter-spacing:.4px}
+.id-sri-badge .dot{width:7px;height:7px;border-radius:50%;background:#22C55E}
+.id-sri-badge.pending{color:#B45309;background:#FFFBEB;border-color:#FDE68A}
+.id-sri-badge.pending .dot{background:#F59E0B}
+/* Mayor especificidad que ".id-card-hdr span" (que pone todos los span en blanco) */
+.id-card-hdr .id-sri-badge{color:#15803D}
+.id-card-hdr .id-sri-badge.pending{color:#B45309}
+.id-sri-val{font-family:monospace;word-break:break-all}
+.id-btn-mail{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#475569;font-size:.825rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.id-btn-mail:hover{background:#F8FAFC;color:#0F172A}
+.id-btn-sri{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border:none;border-radius:10px;background:#15803D;color:#fff;font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(21,128,61,.28);transition:background .15s,transform .1s}
+.id-btn-sri:hover{background:#166534;color:#fff;transform:translateY(-1px)}
+.sri-cert-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
+.sri-cert-backdrop.open{display:flex}
+.sri-cert-modal{background:#fff;border-radius:14px;width:100%;max-width:480px;box-shadow:0 20px 50px rgba(15,23,42,.28);overflow:hidden}
+.sri-cert-hdr{background:#1E293B;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sri-cert-hdr h3{margin:0;color:#fff;font-size:1rem;font-weight:700}
+.sri-cert-close{border:none;background:transparent;color:#94A3B8;font-size:1.2rem;cursor:pointer;line-height:1}
+.sri-cert-close:hover{color:#fff}
+.sri-cert-body{padding:18px}
+.sri-cert-hint{font-size:.82rem;color:#64748B;margin:0 0 14px;line-height:1.45}
+.sri-cert-label{display:block;font-size:.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sri-cert-input{width:100%;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:.875rem;font-family:inherit;margin-bottom:14px;box-sizing:border-box}
+.sri-cert-input:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.sri-cert-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.sri-cert-cancel{padding:9px 14px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#64748B;font-size:.825rem;font-weight:600;cursor:pointer;font-family:inherit}
+.sri-cert-submit{padding:9px 16px;border:none;border-radius:10px;background:#15803D;color:#fff;font-size:.825rem;font-weight:700;cursor:pointer;font-family:inherit}
+.sri-cert-submit:disabled{opacity:.65;cursor:wait}
+.sri-cert-error{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;font-size:.82rem;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+:root[data-bs-theme="dark"] .sri-cert-modal{background:var(--surface);border:1px solid var(--border)}
+:root[data-bs-theme="dark"] .sri-cert-input{background:var(--main-bg);border-color:var(--border);color:var(--text-primary)}
+:root[data-bs-theme="dark"] .sri-cert-hint,.sri-cert-label{color:var(--text-muted)}
+:root[data-bs-theme="dark"] .sri-cert-cancel{background:var(--surface);border-color:var(--border);color:var(--text-muted)}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .id-title,
+:root[data-bs-theme="dark"] .id-info-val,
+:root[data-bs-theme="dark"] .id-prod-name,
+:root[data-bs-theme="dark"] .id-total-val,
+:root[data-bs-theme="dark"] .id-table tbody td { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .id-sub,
+:root[data-bs-theme="dark"] .id-btn-edit,
+:root[data-bs-theme="dark"] .id-btn-back,
+:root[data-bs-theme="dark"] .id-btn-mail,
+:root[data-bs-theme="dark"] .id-info-label,
+:root[data-bs-theme="dark"] .id-total-lbl,
+:root[data-bs-theme="dark"] .id-prod-group,
+:root[data-bs-theme="dark"] .id-table thead th { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .id-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .id-btn-edit,
+:root[data-bs-theme="dark"] .id-btn-back,
+:root[data-bs-theme="dark"] .id-btn-mail { background:var(--surface); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-btn-edit:hover,
+:root[data-bs-theme="dark"] .id-btn-back:hover,
+:root[data-bs-theme="dark"] .id-btn-mail:hover { background:var(--main-bg); color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .id-divider,
+:root[data-bs-theme="dark"] .id-totals-wrap { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-total-row,
+:root[data-bs-theme="dark"] .id-table tbody td { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-table thead th { border-bottom-color:var(--border); background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .id-totals-wrap { background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .id-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .id-total-grand { background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.35); }
+:root[data-bs-theme="dark"] .id-total-grand .id-total-lbl { color:#60A5FA; }
+:root[data-bs-theme="dark"] .id-total-grand .id-total-val { color:#93C5FD; }
+</style>
+
+<!-- Page header -->
+<div class="id-hdr">
+    <div class="id-hdr-left">
+        <div class="id-hdr-icon"><i class="bi bi-receipt-cutoff"></i></div>
+        <div>
+            <h2 class="id-title">Factura {{ invoice.numero_completo }}</h2>
+            <p class="id-sub">{{ invoice.invoice_date|date:"d \d\e F \d\e Y, H:i" }}</p>
+        </div>
+    </div>
+    <div class="id-hdr-btns">
+        <a href="{% url 'billing:invoice_pdf' invoice.pk %}" target="_blank" class="id-btn-pdf">
+            <i class="bi bi-printer"></i> Imprimir PDF
+        </a>
+        <a href="{% url 'billing:invoice_pdf_file' invoice.pk %}" class="id-btn-edit" download>
+            <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+        </a>
+        {% if invoice.clave_acceso %}
+        <a href="{% url 'billing:invoice_xml' invoice.pk %}" class="id-btn-edit" download>
+            <i class="bi bi-file-earmark-code"></i> Descargar XML
+        </a>
+        {% endif %}
+        {% if invoice.customer.email %}
+        <form action="{% url 'billing:invoice_send_email' invoice.pk %}" method="post" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="id-btn-mail">
+                <i class="bi bi-envelope"></i> Enviar por correo
+            </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'billing:invoice_update' invoice.pk %}" class="id-btn-edit">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        {% if invoice.tipo_pago == 'credito' %}
+        <a href="{% url 'cobros:cobro_historial' invoice.pk %}" class="id-btn-edit">
+            <i class="bi bi-cash-coin"></i> Cobros
+        </a>
+        {% endif %}
+        <a href="{% url 'billing:invoice_list' %}" class="id-btn-back">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+{% if invoice.clave_acceso %}
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-patch-check-fill"></i>
+        <span>Facturación Electrónica</span>
+        <span class="id-sri-badge" style="margin-left:auto"><span class="dot"></span> Autorizada — {% if invoice.ambiente == '1' %}Pruebas{% else %}Producción{% endif %}</span>
+    </div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div class="id-info-item">
+                <div class="id-info-label">N° Autorización</div>
+                <div class="id-info-val id-sri-val">{{ invoice.numero_autorizacion }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Fecha de Autorización</div>
+                <div class="id-info-val">{{ invoice.fecha_autorizacion|date:"d/m/Y H:i:s" }}</div>
+            </div>
+            <div class="id-info-item" style="grid-column:1/-1">
+                <div class="id-info-label">Clave de Acceso</div>
+                <div class="id-info-val id-sri-val" style="font-size:.82rem">{{ invoice.clave_acceso }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-patch-exclamation"></i>
+        <span>Facturación Electrónica</span>
+        <span class="id-sri-badge pending" style="margin-left:auto"><span class="dot"></span> Pendiente de autorización</span>
+    </div>
+    <div class="id-card-body">
+        <p style="margin:0 0 14px;font-size:.85rem;color:var(--text-muted)">
+            Esta factura todavía no tiene autorización del SRI. Al enviar, se te pedirá tu
+            certificado <strong>.p12</strong> y la contraseña solo para ese envío (ambiente de pruebas).
+            El archivo <strong>no se guarda</strong> en el servidor.
+        </p>
+        {% if perms.billing.change_invoice %}
+        <button type="button" class="id-btn-sri" id="sri-open-modal">
+            <i class="bi bi-shield-lock"></i> Enviar al SRI (pruebas)
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+{% if perms.billing.change_invoice %}
+<div class="sri-cert-backdrop" id="sri-cert-modal" aria-hidden="true">
+    <div class="sri-cert-modal" role="dialog" aria-labelledby="sri-cert-title">
+        <div class="sri-cert-hdr">
+            <h3 id="sri-cert-title"><i class="bi bi-file-earmark-lock2"></i> Firmar y enviar (pruebas)</h3>
+            <button type="button" class="sri-cert-close" id="sri-cert-close" aria-label="Cerrar">&times;</button>
+        </div>
+        <form class="sri-cert-body" method="post" action="{% url 'billing:invoice_autorizar_sri' invoice.pk %}"
+              enctype="multipart/form-data" id="sri-cert-form">
+            {% csrf_token %}
+            <p class="sri-cert-hint">
+                Selecciona tu firma electrónica (.p12 o .pfx), la contraseña y los datos
+                del emisor (RUC y razón social del certificado). Se envían solo a
+                <strong>celcer</strong> (pruebas) y <strong>no se guardan</strong>.
+            </p>
+            <label class="sri-cert-label" for="sri-cert-file">Certificado .p12 / .pfx</label>
+            <input class="sri-cert-input" type="file" name="certificado" id="sri-cert-file"
+                   accept=".p12,.pfx,application/x-pkcs12" required>
+            <label class="sri-cert-label" for="sri-cert-pass">Contraseña del certificado</label>
+            <input class="sri-cert-input" type="password" name="password" id="sri-cert-pass"
+                   autocomplete="off" required placeholder="Contraseña del .p12">
+            <label class="sri-cert-label" for="sri-ruc-emisor">RUC del emisor (13 dígitos)</label>
+            <input class="sri-cert-input" type="text" name="ruc_emisor" id="sri-ruc-emisor"
+                   inputmode="numeric" maxlength="13" pattern="\d{13}" required
+                   placeholder="Ej. 1790012345001" autocomplete="off">
+            <label class="sri-cert-label" for="sri-razon-emisor">Razón social del emisor</label>
+            <input class="sri-cert-input" type="text" name="razon_social_emisor" id="sri-razon-emisor"
+                   required placeholder="Nombre / razón social del certificado" autocomplete="organization">
+            <div id="sri-cert-error" class="sri-cert-error" style="display:none" role="alert"></div>
+            <div class="sri-cert-actions">
+                <button type="button" class="sri-cert-cancel" id="sri-cert-cancel">Cancelar</button>
+                <button type="submit" class="sri-cert-submit" id="sri-cert-submit">
+                    Firmar y enviar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function () {
+    var backdrop = document.getElementById('sri-cert-modal');
+    var openBtn = document.getElementById('sri-open-modal');
+    var closeBtn = document.getElementById('sri-cert-close');
+    var cancelBtn = document.getElementById('sri-cert-cancel');
+    var form = document.getElementById('sri-cert-form');
+    var submitBtn = document.getElementById('sri-cert-submit');
+    var errBox = document.getElementById('sri-cert-error');
+    if (!backdrop || !openBtn || !form) return;
+
+    function showError(msg) {
+        if (!errBox) return;
+        errBox.textContent = msg || 'Ocurrió un error al enviar.';
+        errBox.style.display = 'block';
+    }
+    function clearError() {
+        if (!errBox) return;
+        errBox.textContent = '';
+        errBox.style.display = 'none';
+    }
+    function openModal() {
+        clearError();
+        backdrop.classList.add('open');
+        backdrop.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal() {
+        backdrop.classList.remove('open');
+        backdrop.setAttribute('aria-hidden', 'true');
+        form.reset();
+        clearError();
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Firmar y enviar';
+        }
+    }
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) closeModal();
+    });
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearError();
+        var fileInput = document.getElementById('sri-cert-file');
+        var passInput = document.getElementById('sri-cert-pass');
+        var rucInput = document.getElementById('sri-ruc-emisor');
+        var razonInput = document.getElementById('sri-razon-emisor');
+        if (!fileInput || !fileInput.files || !fileInput.files.length) {
+            showError('Selecciona tu archivo .p12 / .pfx.');
+            return;
+        }
+        if (!passInput || !passInput.value) {
+            showError('Ingresa la contraseña del certificado.');
+            return;
+        }
+        var ruc = (rucInput && rucInput.value || '').replace(/\D/g, '');
+        if (ruc.length !== 13) {
+            showError('El RUC del emisor debe tener exactamente 13 dígitos.');
+            return;
+        }
+        if (rucInput) rucInput.value = ruc;
+        if (!razonInput || !razonInput.value.trim()) {
+            showError('Ingresa la razón social del emisor.');
+            return;
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Firmando y enviando…';
+        }
+        var fd = new FormData(form);
+        fetch(form.action, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (res) {
+            return res.json().then(function (data) {
+                return { status: res.status, data: data };
+            }).catch(function () {
+                throw new Error('Respuesta inválida del servidor (HTTP ' + res.status + '). Recarga la página.');
+            });
+        }).then(function (result) {
+            if (result.data && result.data.ok) {
+                window.location.href = result.data.redirect || window.location.href;
+                return;
+            }
+            showError((result.data && result.data.error) || ('Error HTTP ' + result.status));
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Firmar y enviar';
+            }
+        }).catch(function (err) {
+            showError(err.message || String(err));
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Firmar y enviar';
+            }
+        });
+    });
+})();
+</script>
+{% endif %}
+{% endif %}
+
+{% if invoice.tipo_pago == 'credito' %}
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-cash-coin"></i>
+        <span>Estado de Cobro</span>
+    </div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div class="id-info-item">
+                <div class="id-info-label">Tipo de Pago</div>
+                <div class="id-info-val">Crédito</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Saldo Pendiente</div>
+                <div class="id-info-val">$ {{ invoice.saldo }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Estado</div>
+                <div class="id-info-val">{% if invoice.estado == 'pagada' %}Pagada{% else %}Pendiente{% endif %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Customer info card -->
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-person-fill"></i>
+        <span>Datos del Cliente</span>
+    </div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div class="id-info-item">
+                <div class="id-info-label">Nombre</div>
+                <div class="id-info-val">{{ invoice.customer.full_name }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Cédula / RUC</div>
+                <div class="id-info-val" style="font-family:monospace">{{ invoice.customer.dni }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Teléfono</div>
+                <div class="id-info-val">{{ invoice.customer.phone|default:"—" }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Email</div>
+                <div class="id-info-val" style="font-size:.84rem">{{ invoice.customer.email|default:"—" }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Ciudad</div>
+                <div class="id-info-val">{{ invoice.customer.city|default:"—" }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Dirección</div>
+                <div class="id-info-val" style="font-size:.84rem">{{ invoice.customer.address|default:"—" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products card -->
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-box"></i>
+        <span>Detalle de Productos</span>
+    </div>
+
+    <table class="id-table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th style="width:80px">Cant.</th>
+                <th style="width:130px">P. Unitario</th>
+                <th style="width:130px">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in invoice.details.all %}
+            <tr>
+                <td>
+                    <div class="id-prod-name">{{ d.product.name }}</div>
+                    {% if d.product.group %}<div class="id-prod-group">{{ d.product.group.name }}</div>{% endif %}
+                </td>
+                <td>{{ d.quantity }}</td>
+                <td>$ {{ d.unit_price }}</td>
+                <td><strong>$ {{ d.subtotal }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="id-totals-wrap">
+        <div class="id-totals">
+            <div class="id-total-row">
+                <span class="id-total-lbl">Subtotal</span>
+                <span class="id-total-val">$ {{ invoice.subtotal }}</span>
+            </div>
+            <div class="id-total-row">
+                <span class="id-total-lbl">IVA (15%)</span>
+                <span class="id-total-val">$ {{ invoice.tax }}</span>
+            </div>
+            <div class="id-total-row id-total-grand">
+                <span class="id-total-lbl">Total</span>
+                <span class="id-total-val">$ {{ invoice.total }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

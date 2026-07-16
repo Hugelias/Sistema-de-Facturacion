@@ -1,0 +1,836 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — TecnoStock{% endblock %}
+
+{% block content %}
+{% load i18n %}
+<style>
+/* ── Dashboard-specific styles ── */
+.dash-welcome { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px; gap:16px; flex-wrap:wrap; }
+.dash-welcome-text h2 { font-size:1.45rem; font-weight:800; color:#0F172A; margin:0; }
+.dash-welcome-text p  { color:#64748B; font-size:.875rem; margin:4px 0 0; }
+
+.dash-scope-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700; margin-top:9px; }
+.scope-full     { background:#EFF6FF; color:#1D4ED8; }
+.scope-ventas   { background:#FFF7ED; color:#C2410C; }
+.scope-compras  { background:#F5F3FF; color:#7C3AED; }
+
+.date-card { background:#fff; border-radius:12px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgb(0 0 0/.07); white-space:nowrap; }
+.date-card i { color:#2563EB; font-size:1.25rem; }
+.date-card .dc-date { font-size:.9rem; font-weight:700; color:#0F172A; }
+.date-card .dc-day  { font-size:.75rem; color:#64748B; }
+
+/* ── KPI cards ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+@media(max-width:1100px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:600px) { .kpi-grid{ grid-template-columns:1fr; } }
+
+.kpi-card { background:#fff; border-radius:14px; padding:18px 20px; box-shadow:0 1px 3px rgb(0 0 0/.07); display:flex; align-items:center; gap:16px; position:relative; }
+.kpi-icon { width:52px; height:52px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:#fff; flex-shrink:0; }
+.kpi-icon.blue   { background:linear-gradient(135deg,#2563EB,#1D4ED8); box-shadow:0 4px 12px rgba(37,99,235,.3); }
+.kpi-icon.green  { background:linear-gradient(135deg,#10B981,#059669); box-shadow:0 4px 12px rgba(16,185,129,.3); }
+.kpi-icon.purple { background:linear-gradient(135deg,#8B5CF6,#7C3AED); box-shadow:0 4px 12px rgba(139,92,246,.3); }
+.kpi-icon.orange { background:linear-gradient(135deg,#F59E0B,#D97706); box-shadow:0 4px 12px rgba(245,158,11,.3); }
+.kpi-body { flex:1; min-width:0; }
+.kpi-label { font-size:.75rem; font-weight:500; color:#64748B; margin-bottom:2px; }
+.kpi-value { font-size:1.85rem; font-weight:800; color:#0F172A; line-height:1; }
+.kpi-trend { font-size:.72rem; color:#10B981; margin-top:5px; display:flex; align-items:center; gap:3px; }
+.kpi-trend.down { color:#EF4444; }
+.kpi-menu { position:absolute; top:14px; right:14px; background:none; border:none; color:#94A3B8; cursor:pointer; font-size:1.1rem; padding:2px 5px; border-radius:5px; line-height:1; }
+.kpi-menu:hover { background:#F1F5F9; }
+
+/* ── Charts row ── */
+.charts-row { display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:20px; }
+@media(max-width:900px){ .charts-row{ grid-template-columns:1fr; } }
+
+.chart-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 1px 3px rgb(0 0 0/.07); }
+.chart-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.chart-card-title { font-size:.95rem; font-weight:700; color:#0F172A; }
+
+.chart-legend { display:flex; gap:14px; }
+.legend-dot { display:flex; align-items:center; gap:5px; font-size:.75rem; color:#64748B; }
+.legend-dot span { width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+.period-btn { background:#F1F5F9; border:none; border-radius:7px; padding:5px 10px; font-size:.75rem; color:#64748B; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit; }
+.period-btn:hover { background:#E2E8F0; }
+.period-btn.dropdown-toggle::after { display:none; }
+.period-menu { min-width:110px; border-radius:10px; border:1px solid #E2E8F0; box-shadow:0 8px 24px rgb(0 0 0/.10); padding:4px; font-family:inherit; }
+.period-menu .dropdown-item { border-radius:7px; font-size:.75rem; font-weight:500; color:#64748B; padding:6px 12px; cursor:pointer; }
+.period-menu .dropdown-item:hover { background:#F1F5F9; color:#0F172A; }
+.period-menu .dropdown-item.active,.period-menu .dropdown-item:active { background:#2563EB; color:#fff; }
+
+/* Donut legend */
+.donut-wrap { display:flex; align-items:center; gap:16px; }
+.donut-canvas-wrap { position:relative; width:160px; height:160px; flex-shrink:0; }
+.donut-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
+.donut-center .dc-num  { font-size:1.5rem; font-weight:800; color:#0F172A; line-height:1; }
+.donut-center .dc-text { font-size:.65rem; color:#64748B; }
+.donut-legend { display:flex; flex-direction:column; gap:8px; flex:1; }
+.dl-item { display:flex; align-items:center; gap:8px; font-size:.78rem; }
+.dl-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.dl-name { flex:1; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dl-pct  { color:#64748B; font-weight:600; }
+
+/* ── Bottom row ── */
+.bottom-row { display:grid; grid-template-columns:3fr 2fr; gap:16px; }
+@media(max-width:900px){ .bottom-row{ grid-template-columns:1fr; } }
+
+/* Invoices table */
+.inv-card { background:#fff; border-radius:14px; box-shadow:0 1px 3px rgb(0 0 0/.07); overflow:hidden; }
+.inv-card-header { padding:16px 20px; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between; align-items:center; }
+.inv-card-header h3 { font-size:.95rem; font-weight:700; color:#0F172A; margin:0; }
+
+.inv-table { width:100%; border-collapse:collapse; }
+.inv-table th { padding:10px 16px; font-size:.72rem; font-weight:600; color:#94A3B8; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid #F1F5F9; text-align:left; }
+.inv-table td { padding:13px 16px; border-bottom:1px solid #F8FAFC; font-size:.82rem; color:#334155; vertical-align:middle; }
+.inv-table tr:last-child td { border-bottom:none; }
+.inv-table tr:hover td { background:#FAFBFF; }
+.inv-table .td-num { font-weight:700; color:#0F172A; }
+
+.status-pill { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:600; }
+.status-paid    { background:#DCFCE7; color:#15803D; }
+.status-pending { background:#FEF3C7; color:#B45309; }
+.status-cancelled { background:#FEE2E2; color:#B91C1C; }
+
+.inv-actions { display:flex; align-items:center; gap:6px; }
+.btn-ver { background:#F8FAFC; border:1px solid #E2E8F0; color:#334155; border-radius:7px; padding:4px 12px; font-size:.75rem; cursor:pointer; font-family:inherit; transition:background .15s; text-decoration:none; display:inline-block; }
+.btn-ver:hover { background:#E2E8F0; color:#0F172A; }
+.dots-btn { background:none; border:none; color:#94A3B8; cursor:pointer; font-size:1rem; padding:2px 4px; border-radius:4px; line-height:1; }
+.dots-btn:hover { background:#F1F5F9; }
+
+.inv-footer { padding:14px 20px; text-align:center; }
+.inv-footer a { color:#2563EB; font-size:.82rem; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.inv-footer a:hover { text-decoration:underline; }
+
+/* Right panel */
+.right-panel { display:flex; flex-direction:column; gap:16px; }
+
+.qa-card { background:#fff; border-radius:14px; box-shadow:0 1px 3px rgb(0 0 0/.07); overflow:hidden; }
+.qa-card-title { font-size:.9rem; font-weight:700; color:#0F172A; padding:16px 18px 10px; border-bottom:1px solid #F1F5F9; }
+.qa-item { display:flex; align-items:center; gap:12px; padding:11px 18px; border-bottom:1px solid #F8FAFC; cursor:pointer; transition:background .15s; text-decoration:none; }
+.qa-item:last-child { border-bottom:none; }
+.qa-item:hover { background:#F8FAFC; }
+.qa-item-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.95rem; color:#fff; flex-shrink:0; }
+.qa-item-icon.blue   { background:linear-gradient(135deg,#2563EB,#1D4ED8); }
+.qa-item-icon.orange { background:linear-gradient(135deg,#F59E0B,#D97706); }
+.qa-item-icon.green  { background:linear-gradient(135deg,#10B981,#059669); }
+.qa-item-icon.purple { background:linear-gradient(135deg,#8B5CF6,#7C3AED); }
+.qa-item-body { flex:1; }
+.qa-item-name { font-size:.82rem; font-weight:600; color:#0F172A; }
+.qa-item-desc { font-size:.7rem; color:#64748B; }
+.qa-item-arrow { color:#CBD5E1; font-size:.85rem; }
+
+.fin-card { background:#fff; border-radius:14px; box-shadow:0 1px 3px rgb(0 0 0/.07); padding:18px; }
+.fin-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.fin-card-title { font-size:.9rem; font-weight:700; color:#0F172A; }
+.fin-card-sub   { font-size:.7rem; color:#94A3B8; background:#F1F5F9; padding:2px 8px; border-radius:20px; }
+.fin-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F8FAFC; }
+.fin-item:last-child { border-bottom:none; }
+.fin-circle { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; color:#fff; flex-shrink:0; }
+.fin-circle.green  { background:linear-gradient(135deg,#10B981,#059669); }
+.fin-circle.orange { background:linear-gradient(135deg,#F59E0B,#D97706); }
+.fin-circle.blue   { background:linear-gradient(135deg,#2563EB,#1D4ED8); }
+.fin-body { flex:1; }
+.fin-label  { font-size:.72rem; color:#64748B; }
+.fin-amount { font-size:1rem; font-weight:700; color:#0F172A; line-height:1.2; }
+.fin-pct    { font-size:.72rem; font-weight:600; }
+.fin-pct.up   { color:#10B981; }
+.fin-pct.down { color:#EF4444; }
+.fin-footer { text-align:center; padding-top:10px; }
+.fin-footer a { color:#2563EB; font-size:.78rem; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.fin-footer a:hover { text-decoration:underline; }
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .dash-welcome-text h2,
+:root[data-bs-theme="dark"] .chart-card-title,
+:root[data-bs-theme="dark"] .inv-card-header h3,
+:root[data-bs-theme="dark"] .qa-card-title,
+:root[data-bs-theme="dark"] .fin-card-title,
+:root[data-bs-theme="dark"] .kpi-value,
+:root[data-bs-theme="dark"] .dc-num,
+:root[data-bs-theme="dark"] .dc-date,
+:root[data-bs-theme="dark"] .dl-name,
+:root[data-bs-theme="dark"] .td-num,
+:root[data-bs-theme="dark"] .qa-item-name,
+:root[data-bs-theme="dark"] .fin-amount { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .dash-welcome-text p,
+:root[data-bs-theme="dark"] .kpi-label,
+:root[data-bs-theme="dark"] .dc-day,
+:root[data-bs-theme="dark"] .dc-text,
+:root[data-bs-theme="dark"] .dl-pct,
+:root[data-bs-theme="dark"] .qa-item-desc,
+:root[data-bs-theme="dark"] .fin-label,
+:root[data-bs-theme="dark"] .inv-table td,
+:root[data-bs-theme="dark"] .period-btn,
+:root[data-bs-theme="dark"] .legend-dot { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .date-card,
+:root[data-bs-theme="dark"] .kpi-card,
+:root[data-bs-theme="dark"] .chart-card,
+:root[data-bs-theme="dark"] .inv-card,
+:root[data-bs-theme="dark"] .qa-card,
+:root[data-bs-theme="dark"] .fin-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .inv-table th { color:var(--text-muted); border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .inv-table td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .inv-table tr:hover td { background:rgba(255,255,255,.03); }
+:root[data-bs-theme="dark"] .inv-card-header,
+:root[data-bs-theme="dark"] .qa-card-title { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .qa-item,
+:root[data-bs-theme="dark"] .fin-item { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .qa-item:hover { background:rgba(255,255,255,.03); }
+:root[data-bs-theme="dark"] .period-btn { background:var(--main-bg); }
+:root[data-bs-theme="dark"] .period-btn:hover { background:var(--border); }
+:root[data-bs-theme="dark"] .btn-ver { background:var(--main-bg); border-color:var(--border); color:var(--text-muted); }
+:root[data-bs-theme="dark"] .btn-ver:hover { background:var(--border); color:var(--text-primary); }
+:root[data-bs-theme="dark"] .fin-card-sub { background:var(--main-bg); color:var(--text-muted); }
+:root[data-bs-theme="dark"] .dots-btn:hover,
+:root[data-bs-theme="dark"] .kpi-menu:hover { background:var(--main-bg); }
+</style>
+
+{% now "j \d\e F \d\e Y" as today_date %}
+{% now "l" as today_day %}
+
+<!-- ── Welcome + Date ── -->
+<div class="dash-welcome">
+    <div class="dash-welcome-text">
+        <h2>¡Bienvenido, {{ user.get_full_name|default:user.username }}! 👋</h2>
+        <p>
+            {% if dash_scope == 'ventas' %}Aquí tienes el resumen de tus clientes y facturación.
+            {% elif dash_scope == 'compras' %}Aquí tienes el resumen de tus compras y proveedores.
+            {% else %}Aquí tienes un resumen general de tu negocio.{% endif %}
+        </p>
+        {% if dash_scope == 'ventas' %}
+        <span class="dash-scope-badge scope-ventas"><i class="bi bi-cart-fill"></i> Vista de Ventas</span>
+        {% elif dash_scope == 'compras' %}
+        <span class="dash-scope-badge scope-compras"><i class="bi bi-bag-fill"></i> Vista de Compras</span>
+        {% else %}
+        <span class="dash-scope-badge scope-full"><i class="bi bi-globe2"></i> Vista General</span>
+        {% endif %}
+    </div>
+    <div class="date-card">
+        <i class="bi bi-calendar3"></i>
+        <div>
+            <div class="dc-date">{{ today_date }}</div>
+            <div class="dc-day">{{ today_day }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── KPI Cards ── -->
+<div class="kpi-grid">
+{% if dash_scope == 'ventas' %}
+
+    <div class="kpi-card">
+        <div class="kpi-icon blue"><i class="bi bi-box-seam"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Productos Activos</div>
+            <div class="kpi-value">{{ total_products }}</div>
+            <div class="kpi-trend"><i class="bi bi-arrow-up-short"></i> En stock</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon green"><i class="bi bi-people-fill"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Clientes Activos</div>
+            <div class="kpi-value">{{ total_customers }}</div>
+            <div class="kpi-trend"><i class="bi bi-arrow-up-short"></i> Registrados</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="bi bi-receipt-cutoff"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Facturas Emitidas</div>
+            <div class="kpi-value">{{ total_invoices }}</div>
+            <div class="kpi-trend">
+                {% if income_pct >= 0 %}
+                    <i class="bi bi-arrow-up-short"></i> ↑ {{ income_pct }}% vs mes anterior
+                {% else %}
+                    <i class="bi bi-arrow-down-short"></i>
+                    <span style="color:#EF4444">↓ {{ income_pct|slice:"1:" }}% vs mes anterior</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon orange"><i class="bi bi-hourglass-split"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Facturas Pendientes</div>
+            <div class="kpi-value">{{ total_invoices_pending }}</div>
+            <div class="kpi-trend"><i class="bi bi-cash-coin"></i> Por cobrar</div>
+        </div>
+    </div>
+
+{% elif dash_scope == 'compras' %}
+
+    <div class="kpi-card">
+        <div class="kpi-icon blue"><i class="bi bi-box-seam"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Productos Activos</div>
+            <div class="kpi-value">{{ total_products }}</div>
+            <div class="kpi-trend"><i class="bi bi-arrow-up-short"></i> En stock</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon green"><i class="bi bi-building"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Proveedores Activos</div>
+            <div class="kpi-value">{{ total_suppliers }}</div>
+            <div class="kpi-trend"><i class="bi bi-arrow-up-short"></i> Registrados</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="bi bi-cart-fill"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Compras Realizadas</div>
+            <div class="kpi-value">{{ total_purchases }}</div>
+            <div class="kpi-trend">
+                {% if expense_pct >= 0 %}
+                    <i class="bi bi-arrow-up-short"></i> ↑ {{ expense_pct }}% vs mes anterior
+                {% else %}
+                    <i class="bi bi-arrow-down-short"></i>
+                    <span style="color:#EF4444">↓ {{ expense_pct|slice:"1:" }}% vs mes anterior</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon orange"><i class="bi bi-hourglass-split"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Compras Pendientes</div>
+            <div class="kpi-value">{{ total_purchases_pending }}</div>
+            <div class="kpi-trend"><i class="bi bi-wallet2"></i> Por pagar</div>
+        </div>
+    </div>
+
+{% else %}
+
+    <div class="kpi-card">
+        <div class="kpi-icon blue"><i class="bi bi-box-seam"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Productos Activos</div>
+            <div class="kpi-value">{{ total_products }}</div>
+            <div class="kpi-trend"><i class="bi bi-arrow-up-short"></i> En stock</div>
+        </div>
+        <button class="kpi-menu">⋮</button>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon green"><i class="bi bi-people-fill"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Clientes Activos</div>
+            <div class="kpi-value">{{ total_customers }}</div>
+            <div class="kpi-trend"><i class="bi bi-arrow-up-short"></i> Registrados</div>
+        </div>
+        <button class="kpi-menu">⋮</button>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="bi bi-receipt-cutoff"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Facturas Emitidas</div>
+            <div class="kpi-value">{{ total_invoices }}</div>
+            <div class="kpi-trend">
+                {% if income_pct >= 0 %}
+                    <i class="bi bi-arrow-up-short"></i> ↑ {{ income_pct }}% vs mes anterior
+                {% else %}
+                    <i class="bi bi-arrow-down-short"></i>
+                    <span style="color:#EF4444">↓ {{ income_pct|slice:"1:" }}% vs mes anterior</span>
+                {% endif %}
+            </div>
+        </div>
+        <button class="kpi-menu">⋮</button>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon orange"><i class="bi bi-cart-fill"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-label">Compras Realizadas</div>
+            <div class="kpi-value">{{ total_purchases }}</div>
+            <div class="kpi-trend">
+                {% if expense_pct >= 0 %}
+                    <i class="bi bi-arrow-up-short"></i> ↑ {{ expense_pct }}% vs mes anterior
+                {% else %}
+                    <i class="bi bi-arrow-down-short"></i>
+                    <span style="color:#EF4444">↓ {{ expense_pct|slice:"1:" }}% vs mes anterior</span>
+                {% endif %}
+            </div>
+        </div>
+        <button class="kpi-menu">⋮</button>
+    </div>
+
+{% endif %}
+</div>
+
+<!-- ── Charts row ── -->
+<div class="charts-row">
+
+    <!-- Line chart -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div>
+                <div class="chart-card-title">
+                    {% if dash_scope == 'ventas' %}Mis Ventas
+                    {% elif dash_scope == 'compras' %}Mis Compras
+                    {% else %}Ventas vs Compras{% endif %}
+                </div>
+                <div class="chart-legend" style="margin-top:6px">
+                    {% if dash_scope != 'compras' %}
+                    <div class="legend-dot"><span style="background:#2563EB"></span> Ventas</div>
+                    {% endif %}
+                    {% if dash_scope != 'ventas' %}
+                    <div class="legend-dot"><span style="background:#F59E0B"></span> Compras</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="dropdown">
+            <button class="period-btn dropdown-toggle" id="granularityBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                <span id="granularityLabel">Meses</span>&nbsp;<i class="bi bi-chevron-down"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end period-menu" aria-labelledby="granularityBtn">
+                <li><a class="dropdown-item period-opt" href="#" data-g="dias">Días</a></li>
+                <li><a class="dropdown-item period-opt" href="#" data-g="semanas">Semanas</a></li>
+                <li><a class="dropdown-item period-opt active" href="#" data-g="meses">Meses</a></li>
+            </ul>
+        </div>
+        </div>
+        <canvas id="lineChart" height="120"></canvas>
+    </div>
+
+    <!-- Donut chart -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-card-title">Distribución de Productos</div>
+        </div>
+        {% if total_grouped > 0 %}
+        <div class="donut-wrap">
+            <div class="donut-canvas-wrap">
+                <canvas id="donutChart" width="160" height="160"></canvas>
+                <div class="donut-center">
+                    <div class="dc-num">{{ total_grouped }}</div>
+                    <div class="dc-text">Total</div>
+                </div>
+            </div>
+            <div class="donut-legend" id="donutLegend"></div>
+        </div>
+        {% else %}
+        <div class="text-center py-4" style="color:#94A3B8;font-size:.85rem">
+            <i class="bi bi-pie-chart" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+            Sin datos de grupos todavía.
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ── Bottom row ── -->
+<div class="bottom-row">
+
+    {% if dash_scope == 'compras' %}
+    <!-- Recent purchases -->
+    <div class="inv-card">
+        <div class="inv-card-header">
+            <h3>Últimas Compras</h3>
+        </div>
+        <table class="inv-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Proveedor</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in recent_purchases %}
+                <tr>
+                    <td class="td-num">{{ p.number }}</td>
+                    <td>{{ p.supplier.name }}</td>
+                    <td>{{ p.purchase_date|date:"d/m/Y H:i" }}</td>
+                    <td><strong>$ {{ p.total }}</strong></td>
+                    <td>
+                        {% if p.estado == 'pagada' %}
+                        <span class="status-pill status-paid">Pagada</span>
+                        {% else %}
+                        <span class="status-pill status-pending">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="inv-actions">
+                            <a href="{% url 'purchasing:purchase_detail' p.pk %}" class="btn-ver">Ver</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:28px;color:#94A3B8;font-size:.85rem">
+                        <i class="bi bi-cart3" style="font-size:1.5rem;display:block;margin-bottom:6px"></i>
+                        No hay compras registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="inv-footer">
+            <a href="{% url 'purchasing:purchase_list' %}">Ver todas las compras <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+    {% else %}
+    <!-- Recent invoices -->
+    <div class="inv-card">
+        <div class="inv-card-header">
+            <h3>Últimas Facturas</h3>
+        </div>
+        <table class="inv-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in recent_invoices %}
+                <tr>
+                    <td class="td-num">{{ inv.number }}</td>
+                    <td>{{ inv.customer.full_name }}</td>
+                    <td>{{ inv.invoice_date|date:"d/m/Y H:i" }}</td>
+                    <td><strong>$ {{ inv.total }}</strong></td>
+                    <td>
+                        {% if inv.estado == 'pagada' %}
+                        <span class="status-pill status-paid">Pagada</span>
+                        {% else %}
+                        <span class="status-pill status-pending">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="inv-actions">
+                            <a href="{% url 'billing:invoice_detail' inv.pk %}" class="btn-ver">Ver</a>
+                            <button class="dots-btn">⋮</button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:28px;color:#94A3B8;font-size:.85rem">
+                        <i class="bi bi-receipt" style="font-size:1.5rem;display:block;margin-bottom:6px"></i>
+                        No hay facturas registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="inv-footer">
+            <a href="{% url 'billing:invoice_list' %}">Ver todas las facturas <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Right panel -->
+    <div class="right-panel">
+
+        <!-- Quick actions -->
+        <div class="qa-card">
+            <div class="qa-card-title">Acciones Rápidas</div>
+            {% if dash_scope == 'ventas' %}
+            <a href="{% url 'billing:invoice_create' %}" class="qa-item">
+                <div class="qa-item-icon blue"><i class="bi bi-receipt-cutoff"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nueva Factura</div>
+                    <div class="qa-item-desc">Crear una nueva factura</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'billing:customer_create' %}" class="qa-item">
+                <div class="qa-item-icon purple"><i class="bi bi-person-plus-fill"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nuevo Cliente</div>
+                    <div class="qa-item-desc">Registrar nuevo cliente</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'cobros:factura_pendiente_list' %}" class="qa-item">
+                <div class="qa-item-icon orange"><i class="bi bi-cash-coin"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Cobrar Facturas</div>
+                    <div class="qa-item-desc">Ver facturas pendientes de cobro</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            {% elif dash_scope == 'compras' %}
+            <a href="{% url 'purchasing:purchase_create' %}" class="qa-item">
+                <div class="qa-item-icon orange"><i class="bi bi-cart-plus"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nueva Compra</div>
+                    <div class="qa-item-desc">Registrar nueva compra</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'billing:supplier_create' %}" class="qa-item">
+                <div class="qa-item-icon purple"><i class="bi bi-building-add"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nuevo Proveedor</div>
+                    <div class="qa-item-desc">Registrar nuevo proveedor</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'pagos:compra_pendiente_list' %}" class="qa-item">
+                <div class="qa-item-icon green"><i class="bi bi-wallet2"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Pagar Compras</div>
+                    <div class="qa-item-desc">Ver compras pendientes de pago</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:invoice_create' %}" class="qa-item">
+                <div class="qa-item-icon blue"><i class="bi bi-receipt-cutoff"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nueva Factura</div>
+                    <div class="qa-item-desc">Crear una nueva factura</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'purchasing:purchase_create' %}" class="qa-item">
+                <div class="qa-item-icon orange"><i class="bi bi-cart-plus"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nueva Compra</div>
+                    <div class="qa-item-desc">Registrar nueva compra</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'billing:product_create' %}" class="qa-item">
+                <div class="qa-item-icon green"><i class="bi bi-box-seam"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nuevo Producto</div>
+                    <div class="qa-item-desc">Agregar nuevo producto</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            <a href="{% url 'billing:customer_create' %}" class="qa-item">
+                <div class="qa-item-icon purple"><i class="bi bi-person-plus-fill"></i></div>
+                <div class="qa-item-body">
+                    <div class="qa-item-name">Nuevo Cliente</div>
+                    <div class="qa-item-desc">Registrar nuevo cliente</div>
+                </div>
+                <i class="bi bi-chevron-right qa-item-arrow"></i>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Financial summary -->
+        <div class="fin-card">
+            <div class="fin-card-header">
+                <div class="fin-card-title">
+                    {% if dash_scope == 'ventas' %}Resumen de Ventas
+                    {% elif dash_scope == 'compras' %}Resumen de Compras
+                    {% else %}Resumen Financiero{% endif %}
+                </div>
+                <span class="fin-card-sub">Mes actual</span>
+            </div>
+
+            {% if dash_scope != 'compras' %}
+            <div class="fin-item">
+                <div class="fin-circle green"><i class="bi bi-currency-dollar"></i></div>
+                <div class="fin-body">
+                    <div class="fin-label">Ingresos</div>
+                    <div class="fin-amount">$ {{ income_cur|floatformat:2 }}</div>
+                </div>
+                <div class="fin-pct {% if income_pct >= 0 %}up{% else %}down{% endif %}">
+                    {% if income_pct >= 0 %}↑{% else %}↓{% endif %} {{ income_pct|default:"0" }}%
+                </div>
+            </div>
+            {% endif %}
+
+            {% if dash_scope != 'ventas' %}
+            <div class="fin-item">
+                <div class="fin-circle orange"><i class="bi bi-cart-fill"></i></div>
+                <div class="fin-body">
+                    <div class="fin-label">Gastos (Compras)</div>
+                    <div class="fin-amount">$ {{ expense_cur|floatformat:2 }}</div>
+                </div>
+                <div class="fin-pct {% if expense_pct >= 0 %}up{% else %}down{% endif %}">
+                    {% if expense_pct >= 0 %}↑{% else %}↓{% endif %} {{ expense_pct|default:"0" }}%
+                </div>
+            </div>
+            {% endif %}
+
+            {% if dash_scope == 'full' %}
+            <div class="fin-item">
+                <div class="fin-circle blue"><i class="bi bi-graph-up"></i></div>
+                <div class="fin-body">
+                    <div class="fin-label">Ganancia</div>
+                    <div class="fin-amount">$ {{ profit_cur|floatformat:2 }}</div>
+                </div>
+                <div class="fin-pct {% if profit_pct >= 0 %}up{% else %}down{% endif %}">
+                    {% if profit_pct >= 0 %}↑{% else %}↓{% endif %} {{ profit_pct|default:"0" }}%
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="fin-footer">
+                {% if dash_scope == 'ventas' %}
+                <a href="{% url 'billing:invoice_list' %}">Ver mis facturas <i class="bi bi-arrow-right"></i></a>
+                {% elif dash_scope == 'compras' %}
+                <a href="{% url 'purchasing:purchase_list' %}">Ver mis compras <i class="bi bi-arrow-right"></i></a>
+                {% else %}
+                <a href="{% url 'billing:invoice_list' %}">Ver reporte completo <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /right-panel -->
+</div><!-- /bottom-row -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+
+    var MONTHS    = {{ chart_months|safe }};
+    var SALES     = {{ chart_sales|safe }};
+    var PURCHASES = {{ chart_purchases|safe }};
+    var DAYS      = {{ chart_days|safe }};
+    var SALES_D   = {{ chart_sales_daily|safe }};
+    var PURCH_D   = {{ chart_purchases_daily|safe }};
+    var WEEKS     = {{ chart_weeks|safe }};
+    var SALES_W   = {{ chart_sales_weekly|safe }};
+    var PURCH_W   = {{ chart_purchases_weekly|safe }};
+    var G_LABELS  = {{ group_labels|safe }};
+    var G_COUNTS  = {{ group_counts|safe }};
+    var G_TOTAL   = {{ total_grouped }};
+    var DASH_SCOPE = '{{ dash_scope }}';
+    var SHOW_SALES = DASH_SCOPE !== 'compras';
+    var SHOW_PURCH = DASH_SCOPE !== 'ventas';
+
+    /* ── Line chart (with granularity switcher) ── */
+    var lineCtx = document.getElementById('lineChart');
+    if (lineCtx) {
+
+        var GRANULARITY = {
+            meses:   { labels: MONTHS, sales: SALES,   purchases: PURCHASES },
+            semanas: { labels: WEEKS,  sales: SALES_W, purchases: PURCH_W },
+            dias:    { labels: DAYS,   sales: SALES_D, purchases: PURCH_D }
+        };
+
+        function makeDataset(label, data, borderColor, bgColor) {
+            return {
+                label: label,
+                data: data,
+                borderColor: borderColor,
+                backgroundColor: bgColor,
+                borderWidth: 2.5,
+                pointBackgroundColor: borderColor,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0.4,
+                fill: true
+            };
+        }
+
+        var chartOpts = {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(ctx){ return ' $ ' + ctx.parsed.y.toFixed(2); } } }
+            },
+            scales: {
+                x: { grid:{ display:false }, ticks:{ color:'#94A3B8', font:{ size:11 } }, border:{ display:false } },
+                y: { grid:{ color:'#F1F5F9' }, ticks:{ color:'#94A3B8', font:{ size:11 }, callback:function(v){ return '$ '+v.toLocaleString(); } }, border:{ display:false } }
+            },
+            animation: { duration: 420, easing: 'easeInOutQuart' }
+        };
+
+        function buildDatasets(d) {
+            var sets = [];
+            if (SHOW_SALES) sets.push(makeDataset('Ventas',  d.sales,     '#2563EB', 'rgba(37,99,235,.08)'));
+            if (SHOW_PURCH) sets.push(makeDataset('Compras', d.purchases, '#F59E0B', 'rgba(245,158,11,.07)'));
+            return sets;
+        }
+
+        var initData = GRANULARITY['meses'];
+        var lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: initData.labels,
+                datasets: buildDatasets(initData)
+            },
+            options: chartOpts
+        });
+
+        /* dropdown state handler */
+        var LABEL_MAP = { dias: 'Días', semanas: 'Semanas', meses: 'Meses' };
+        var granLabel = document.getElementById('granularityLabel');
+        document.querySelectorAll('.period-opt').forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+                e.preventDefault();
+                var g = this.dataset.g;
+                var d = GRANULARITY[g];
+                if (!d) return;
+                document.querySelectorAll('.period-opt').forEach(function(o){ o.classList.remove('active'); });
+                this.classList.add('active');
+                if (granLabel) granLabel.textContent = LABEL_MAP[g];
+                lineChart.data.labels   = d.labels;
+                lineChart.data.datasets = buildDatasets(d);
+                lineChart.update();
+            });
+        });
+    }
+
+    /* ── Donut chart ── */
+    var donutCtx = document.getElementById('donutChart');
+    if (donutCtx && G_LABELS.length) {
+        var COLORS = ['#2563EB','#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4'];
+
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: G_LABELS,
+                datasets: [{
+                    data: G_COUNTS,
+                    backgroundColor: COLORS,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: false,
+                cutout: '68%',
+                plugins: { legend: { display: false }, tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed + ' productos'; }
+                    }
+                }}
+            }
+        });
+
+        /* Build custom legend */
+        var legend = document.getElementById('donutLegend');
+        if (legend) {
+            G_LABELS.forEach(function (lbl, i) {
+                var pct = G_TOTAL > 0 ? Math.round(G_COUNTS[i] / G_TOTAL * 100) : 0;
+                legend.innerHTML += '<div class="dl-item">' +
+                    '<span class="dl-dot" style="background:' + COLORS[i % COLORS.length] + '"></span>' +
+                    '<span class="dl-name">' + lbl + '</span>' +
+                    '<span class="dl-pct">' + pct + '%</span>' +
+                    '</div>';
+            });
+        }
+    }
+})();
+</script>
+{% endblock %}

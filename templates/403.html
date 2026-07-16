@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Acceso Denegado — TecnoStock S.A.{% endblock %}
+
+{% block content %}
+<style>
+.e403-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px 20px}
+.e403-icon{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#DC2626,#B91C1C);display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 8px 24px rgba(220,38,38,.25)}
+.e403-icon i{font-size:2rem;color:#fff}
+.e403-code{font-size:4rem;font-weight:800;color:#DC2626;line-height:1;margin-bottom:8px}
+.e403-title{font-size:1.25rem;font-weight:700;color:var(--text-primary);margin-bottom:10px}
+.e403-desc{color:var(--text-muted);max-width:420px;margin-bottom:32px;line-height:1.6}
+.e403-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.e403-btn-primary{display:inline-flex;align-items:center;gap:8px;background:#2563EB;color:#fff;padding:10px 22px;border-radius:9px;text-decoration:none;font-size:.875rem;font-weight:600;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.e403-btn-secondary{display:inline-flex;align-items:center;gap:8px;background:var(--main-bg);color:var(--text-primary);padding:10px 22px;border-radius:9px;text-decoration:none;font-size:.875rem;font-weight:600;border:1px solid var(--border)}
+.e403-session{margin-top:32px;font-size:.78rem;color:var(--text-muted)}
+</style>
+<div class="e403-wrap">
+
+    <div class="e403-icon"><i class="bi bi-shield-lock-fill"></i></div>
+
+    <h1 class="e403-code">403</h1>
+    <h2 class="e403-title">Acceso denegado</h2>
+    <p class="e403-desc">
+        No tienes permiso para acceder a este recurso.<br>
+        Contacta con el administrador si crees que esto es un error.
+    </p>
+
+    <div class="e403-actions">
+        <a href="{% url 'billing:home' %}" class="e403-btn-primary">
+            <i class="bi bi-house-fill"></i> Ir al Dashboard
+        </a>
+        <a href="javascript:history.back()" class="e403-btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    {% if user.is_authenticated %}
+    <p class="e403-session">
+        Conectado como <strong>{{ user.username }}</strong>
+        {% with g=user.groups.first %}{% if g %}· Rol: <strong>{{ g.name }}</strong>{% endif %}{% endwith %}
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

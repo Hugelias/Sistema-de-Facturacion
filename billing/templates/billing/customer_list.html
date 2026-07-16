@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+{% block title %}Clientes — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+/* ── Customer List ──────────────────────────────────────────────── */
+
+/* Header */
+.cl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.cl-header-left{display:flex;align-items:center;gap:16px}
+.cl-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.cl-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.cl-subtitle{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.btn-new-customer{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:#2563EB;color:#fff;border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.btn-new-customer:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+
+/* KPI row */
+.cl-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:900px){.cl-kpi-row{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.cl-kpi-row{grid-template-columns:1fr}}
+
+.cl-kpi-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:18px 20px;display:flex;align-items:center;gap:14px}
+.cl-kpi-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.kpi-blue .cl-kpi-icon{background:#EFF6FF;color:#2563EB}
+.kpi-green .cl-kpi-icon{background:#DCFCE7;color:#16A34A}
+.kpi-orange .cl-kpi-icon{background:#FFF7ED;color:#EA580C}
+.kpi-purple .cl-kpi-icon{background:#F5F3FF;color:#7C3AED}
+
+.cl-kpi-body{}
+.cl-kpi-label{font-size:.76rem;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.cl-kpi-value{font-size:1.8rem;font-weight:800;color:#0F172A;line-height:1.1;margin-bottom:3px}
+.cl-kpi-sub{font-size:.775rem;font-weight:600}
+.kpi-blue  .cl-kpi-sub{color:#2563EB}
+.kpi-green .cl-kpi-sub{color:#16A34A}
+.kpi-orange .cl-kpi-sub{color:#EA580C}
+.kpi-purple .cl-kpi-sub{color:#7C3AED}
+
+/* Filter card */
+.cl-filter-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:20px 22px 18px;margin-bottom:16px}
+.cl-filter-title{font-size:.95rem;font-weight:700;color:#0F172A;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.cl-filter-title i{color:#2563EB;font-size:1rem}
+
+.cl-fi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+@media(max-width:900px){.cl-fi-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.cl-fi-grid{grid-template-columns:1fr}}
+
+.cl-fi-label{font-size:.775rem;font-weight:600;color:#374151;margin-bottom:6px;display:block}
+.cl-fi-wrap{position:relative}
+.cl-fi-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.85rem;pointer-events:none;z-index:1}
+.cl-fi-input,.cl-fi-select{width:100%;padding:9px 12px 9px 34px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff}
+.cl-fi-input::placeholder{color:#CBD5E1}
+.cl-fi-input:focus,.cl-fi-select:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+.cl-fi-btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-cl-search{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;background:#2563EB;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-cl-search:hover{background:#1D4ED8}
+.btn-cl-clear{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s,border-color .15s}
+.btn-cl-clear:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.btn-cl-pdf{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:9px;background:#EF4444;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-cl-pdf:hover{background:#DC2626}
+.btn-cl-excel{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:9px;background:#10B981;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-cl-excel:hover{background:#059669}
+
+/* Table card */
+.cl-table-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+.cl-table-heading{padding:16px 20px 14px;font-size:.95rem;font-weight:700;color:#0F172A;border-bottom:1.5px solid #F1F5F9}
+
+/* Table */
+.cl-table{width:100%;border-collapse:collapse}
+.cl-table thead th{padding:11px 16px;font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;white-space:nowrap;background:#fff;text-align:left}
+.cl-table th:first-child,.cl-table td:first-child{padding-left:20px}
+.cl-table tbody td{padding:13px 16px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.cl-table tbody tr:last-child td{border-bottom:none}
+.cl-table tbody tr:hover td{background:#FAFBFF}
+
+/* Row number */
+.cl-row-num{font-size:.8rem;color:#94A3B8;font-weight:500;width:28px}
+
+/* Avatar + name cell */
+.cl-name-cell{display:flex;align-items:center;gap:11px}
+.cl-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.5px}
+.av-1{background:#3B82F6}
+.av-2{background:#8B5CF6}
+.av-3{background:#F59E0B}
+.av-4{background:#10B981}
+.av-5{background:#EC4899}
+.av-6{background:#EF4444}
+.av-7{background:#06B6D4}
+.av-8{background:#F97316}
+
+.cl-name-text{}
+.cl-name-full{font-weight:600;color:#0F172A;font-size:.875rem;line-height:1.3}
+.cl-name-date{font-size:.73rem;color:#94A3B8;margin-top:1px}
+
+/* DNI */
+.cl-dni{font-size:.845rem;color:#475569;font-family:'SF Mono','Fira Code',monospace,sans-serif;letter-spacing:.3px}
+
+/* Email */
+.cl-email{color:#2563EB;text-decoration:none;font-size:.845rem}
+.cl-email:hover{text-decoration:underline}
+
+/* Phone */
+.cl-phone{display:inline-flex;align-items:center;gap:5px;color:#475569;font-size:.845rem}
+
+/* City */
+.cl-city{color:#475569;font-size:.845rem}
+
+/* Status */
+.cl-status{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.cl-active{background:#DCFCE7;color:#15803D}
+.cl-inactive{background:#FEE2E2;color:#B91C1C}
+.cl-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cl-active .cl-sdot{background:#22C55E}
+.cl-inactive .cl-sdot{background:#EF4444}
+
+/* Actions */
+.cl-act-group{display:flex;align-items:center;gap:5px}
+.cl-act-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s;flex-shrink:0}
+.act-view{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-view:hover{background:#EFF6FF;color:#1D4ED8}
+.act-edit{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-edit:hover{background:#EFF6FF;color:#1D4ED8}
+.act-del{border-color:#FECACA;color:#EF4444;background:#fff}
+.act-del:hover{background:#FEF2F2;color:#DC2626}
+
+/* Empty */
+.cl-empty{text-align:center;padding:52px 24px;color:#94A3B8}
+.cl-empty i{font-size:2.5rem;display:block;margin-bottom:10px;color:#CBD5E1}
+.cl-empty p{font-size:.9rem;margin:0}
+
+/* Table footer */
+.cl-table-footer{display:flex;justify-content:space-between;align-items:center;padding:13px 20px;border-top:1px solid #F1F5F9;flex-wrap:wrap;gap:10px}
+.cl-count{font-size:.8rem;color:#64748B}
+
+/* Pagination */
+.cl-pagination{display:flex;align-items:center;gap:5px}
+.cl-page-btn{width:32px;height:32px;border:1.5px solid #E2E8F0;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:#64748B;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s;font-family:inherit;background:#fff}
+.cl-page-btn:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.cl-page-btn.pg-active{background:#2563EB;border-color:#2563EB;color:#fff}
+.cl-page-btn.pg-disabled{opacity:.35;pointer-events:none}
+.cl-page-btn.pg-ellipsis{border-color:transparent;background:transparent;pointer-events:none}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .cl-title,
+:root[data-bs-theme="dark"] .cl-kpi-value,
+:root[data-bs-theme="dark"] .cl-filter-title,
+:root[data-bs-theme="dark"] .cl-fi-label,
+:root[data-bs-theme="dark"] .cl-fi-input,
+:root[data-bs-theme="dark"] .cl-fi-select,
+:root[data-bs-theme="dark"] .cl-table-heading,
+:root[data-bs-theme="dark"] .cl-table tbody td,
+:root[data-bs-theme="dark"] .cl-name-full { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .cl-subtitle,
+:root[data-bs-theme="dark"] .cl-kpi-label,
+:root[data-bs-theme="dark"] .cl-fi-icon,
+:root[data-bs-theme="dark"] .btn-cl-clear,
+:root[data-bs-theme="dark"] .cl-table thead th,
+:root[data-bs-theme="dark"] .cl-row-num,
+:root[data-bs-theme="dark"] .cl-name-date,
+:root[data-bs-theme="dark"] .cl-dni,
+:root[data-bs-theme="dark"] .cl-phone,
+:root[data-bs-theme="dark"] .cl-city,
+:root[data-bs-theme="dark"] .cl-empty,
+:root[data-bs-theme="dark"] .cl-count,
+:root[data-bs-theme="dark"] .cl-page-btn { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .cl-kpi-card,
+:root[data-bs-theme="dark"] .cl-filter-card,
+:root[data-bs-theme="dark"] .cl-table-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .act-view,
+:root[data-bs-theme="dark"] .act-edit,
+:root[data-bs-theme="dark"] .act-del { background:var(--surface); }
+
+:root[data-bs-theme="dark"] .cl-fi-input,
+:root[data-bs-theme="dark"] .cl-fi-select,
+:root[data-bs-theme="dark"] .btn-cl-clear,
+:root[data-bs-theme="dark"] .cl-page-btn { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .cl-table-heading,
+:root[data-bs-theme="dark"] .cl-table thead th { background:var(--surface); border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .cl-table tbody td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .cl-table-footer { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .cl-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+:root[data-bs-theme="dark"] .btn-cl-clear:hover,
+:root[data-bs-theme="dark"] .cl-page-btn:hover { background:rgba(255,255,255,.03); color:var(--text-primary); }
+</style>
+
+{# ── HEADER ──────────────────────────────────────────────────────── #}
+<div class="cl-header">
+    <div class="cl-header-left">
+        <div class="cl-hdr-icon"><i class="bi bi-people-fill"></i></div>
+        <div>
+            <h2 class="cl-title">Clientes</h2>
+            <p class="cl-subtitle">Administra y gestiona tus clientes</p>
+        </div>
+    </div>
+    <a href="{% url 'billing:customer_create' %}" class="btn-new-customer">
+        <i class="bi bi-plus-circle"></i> Nuevo Cliente
+    </a>
+</div>
+
+{# ── KPI CARDS ───────────────────────────────────────────────────── #}
+<div class="cl-kpi-row">
+    {# Total #}
+    <div class="cl-kpi-card kpi-blue">
+        <div class="cl-kpi-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="cl-kpi-body">
+            <div class="cl-kpi-label">Total Clientes</div>
+            <div class="cl-kpi-value">{{ kpi_total }}</div>
+            <div class="cl-kpi-sub">Clientes registrados</div>
+        </div>
+    </div>
+
+    {# Activos #}
+    <div class="cl-kpi-card kpi-green">
+        <div class="cl-kpi-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="cl-kpi-body">
+            <div class="cl-kpi-label">Clientes Activos</div>
+            <div class="cl-kpi-value">{{ kpi_active }}</div>
+            <div class="cl-kpi-sub">{{ kpi_active_pct }}% del total</div>
+        </div>
+    </div>
+
+    {# Inactivos #}
+    <div class="cl-kpi-card kpi-orange">
+        <div class="cl-kpi-icon"><i class="bi bi-person-dash-fill"></i></div>
+        <div class="cl-kpi-body">
+            <div class="cl-kpi-label">Clientes Inactivos</div>
+            <div class="cl-kpi-value">{{ kpi_inactive }}</div>
+            <div class="cl-kpi-sub">{{ kpi_inactive_pct }}% del total</div>
+        </div>
+    </div>
+
+    {# Nuevos este mes #}
+    <div class="cl-kpi-card kpi-purple">
+        <div class="cl-kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="cl-kpi-body">
+            <div class="cl-kpi-label">Nuevos (Este mes)</div>
+            <div class="cl-kpi-value">{{ kpi_new }}</div>
+            <div class="cl-kpi-sub">
+                {% if kpi_new_pct >= 0 %}+{% endif %}{{ kpi_new_pct }}% vs mes anterior
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── FILTER CARD ─────────────────────────────────────────────────── #}
+<div class="cl-filter-card">
+    <div class="cl-filter-title">
+        <i class="bi bi-funnel-fill"></i> Búsqueda y Filtros
+    </div>
+    <form method="get" id="cl-filter-form">
+        <div class="cl-fi-grid">
+            {# Search #}
+            <div>
+                <label class="cl-fi-label">Búsqueda</label>
+                <div class="cl-fi-wrap">
+                    <i class="bi bi-search cl-fi-icon"></i>
+                    <input type="text" name="q" class="cl-fi-input"
+                           placeholder="Buscar por nombre, cédula o email..."
+                           value="{{ params.q|default:'' }}">
+                </div>
+            </div>
+
+            {# Estado #}
+            <div>
+                <label class="cl-fi-label">Estado</label>
+                <div class="cl-fi-wrap">
+                    <i class="bi bi-toggle-on cl-fi-icon"></i>
+                    <select name="status" class="cl-fi-select">
+                        <option value="">Todos</option>
+                        <option value="1" {% if params.status == '1' %}selected{% endif %}>Activo</option>
+                        <option value="0" {% if params.status == '0' %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            {# Ciudad #}
+            <div>
+                <label class="cl-fi-label">Ciudad</label>
+                <div class="cl-fi-wrap">
+                    <i class="bi bi-geo-alt cl-fi-icon"></i>
+                    <input type="text" name="city" class="cl-fi-input"
+                           placeholder="Buscar por ciudad..."
+                           value="{{ params.city|default:'' }}">
+                </div>
+            </div>
+
+            {# Fecha de registro #}
+            <div>
+                <label class="cl-fi-label">Fecha de registro</label>
+                <div class="cl-fi-wrap">
+                    <i class="bi bi-calendar3 cl-fi-icon"></i>
+                    <input type="date" name="date" class="cl-fi-input"
+                           value="{{ params.date|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="cl-fi-btn-row" style="justify-content:space-between">
+            <div class="cl-fi-btn-row">
+                <button type="submit" class="btn-cl-search">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+                <a href="{% url 'billing:customer_list' %}" class="btn-cl-clear">
+                    <i class="bi bi-arrow-counterclockwise"></i> Limpiar filtros
+                </a>
+            </div>
+            <div class="cl-fi-btn-row">
+                {% if perms.billing.can_export %}
+                <button type="button" class="btn-cl-pdf"
+                        data-bs-toggle="modal" data-bs-target="#exportModal" data-export="pdf">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> Exportar PDF
+                </button>
+                <button type="button" class="btn-cl-excel"
+                        data-bs-toggle="modal" data-bs-target="#exportModal" data-export="excel">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ── TABLE CARD ──────────────────────────────────────────────────── #}
+<div class="cl-table-card">
+    <div class="cl-table-heading">Lista de Clientes</div>
+    <table class="cl-table">
+        <thead>
+            <tr>
+                <th style="width:36px">#</th>
+                <th>Cliente</th>
+                <th>Cédula / RUC</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Ciudad</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in customers %}
+            {% with row_num=forloop.counter %}
+            <tr>
+                {# Number #}
+                <td class="cl-row-num">
+                    {% if is_paginated %}
+                        {{ page_obj.start_index|add:forloop.counter0 }}
+                    {% else %}
+                        {{ forloop.counter }}
+                    {% endif %}
+                </td>
+
+                {# Avatar + Name #}
+                <td>
+                    <div class="cl-name-cell">
+                        {% with mod=forloop.counter|divisibleby:8 %}
+                        <div class="cl-av
+                            {% if forloop.counter|divisibleby:8 %}av-8
+                            {% elif forloop.counter|divisibleby:7 %}av-7
+                            {% elif forloop.counter|divisibleby:6 %}av-6
+                            {% elif forloop.counter|divisibleby:5 %}av-5
+                            {% elif forloop.counter|divisibleby:4 %}av-4
+                            {% elif forloop.counter|divisibleby:3 %}av-3
+                            {% elif forloop.counter|divisibleby:2 %}av-2
+                            {% else %}av-1{% endif %}">
+                            {{ c.first_name|slice:":1" }}{{ c.last_name|slice:":1" }}
+                        </div>
+                        {% endwith %}
+                        <div class="cl-name-text">
+                            <div class="cl-name-full">{{ c.full_name }}</div>
+                            <div class="cl-name-date">
+                                Registrado:
+                                {% if c.created_at %}{{ c.created_at|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+
+                {# DNI #}
+                <td><span class="cl-dni">{{ c.dni }}</span></td>
+
+                {# Email #}
+                <td>
+                    {% if c.email %}
+                    <a href="mailto:{{ c.email }}" class="cl-email">{{ c.email }}</a>
+                    {% else %}<span style="color:#CBD5E1">—</span>{% endif %}
+                </td>
+
+                {# Phone #}
+                <td>
+                    {% if c.phone %}
+                    <span class="cl-phone"><i class="bi bi-telephone"></i> {{ c.phone }}</span>
+                    {% else %}<span style="color:#CBD5E1">—</span>{% endif %}
+                </td>
+
+                {# City #}
+                <td class="cl-city">{{ c.city|default:"—" }}</td>
+
+                {# Status #}
+                <td>
+                    {% if c.is_active %}
+                    <span class="cl-status cl-active"><span class="cl-sdot"></span> Activo</span>
+                    {% else %}
+                    <span class="cl-status cl-inactive"><span class="cl-sdot"></span> Inactivo</span>
+                    {% endif %}
+                </td>
+
+                {# Actions #}
+                <td>
+                    <div class="cl-act-group">
+                        <a href="{% url 'billing:customer_detail' c.pk %}" class="cl-act-btn act-view" title="Ver"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'billing:customer_update' c.pk %}" class="cl-act-btn act-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'billing:customer_delete' c.pk %}" class="cl-act-btn act-del" title="Eliminar"><i class="bi bi-trash3"></i></a>
+                    </div>
+                </td>
+            </tr>
+            {% endwith %}
+            {% empty %}
+            <tr>
+                <td colspan="8">
+                    <div class="cl-empty">
+                        <i class="bi bi-people"></i>
+                        <p>No se encontraron clientes con los filtros aplicados.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {# Footer: count + pagination #}
+    <div class="cl-table-footer">
+        <div class="cl-count">
+            {% if is_paginated %}
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} cliente{{ paginator.count|pluralize }}
+            {% else %}
+                {{ customers|length }} cliente{{ customers|length|pluralize }}
+            {% endif %}
+        </div>
+
+        {% if is_paginated %}
+        <div class="cl-pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.previous_page_number }}" class="cl-page-btn" title="Anterior">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="cl-page-btn pg-disabled"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+
+            {% for num in elided_page_range %}
+                {% if num == paginator.ELLIPSIS %}
+                <span class="cl-page-btn pg-ellipsis">…</span>
+                {% elif num == page_obj.number %}
+                <span class="cl-page-btn pg-active">{{ num }}</span>
+                {% else %}
+                <a href="?{{ filter_qs_pfx }}page={{ num }}" class="cl-page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.next_page_number }}" class="cl-page-btn" title="Siguiente">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="cl-page-btn pg-disabled"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.field-card{border:2px solid #dee2e6;border-radius:.5rem;padding:.5rem .75rem;cursor:pointer;transition:border-color .15s,background .15s,color .15s,box-shadow .15s;display:flex;align-items:center;gap:.55rem;font-size:.85rem;user-select:none;background:#fff;width:100%}
+.field-card:hover{border-color:#86b7fe;background:#f0f6ff;box-shadow:0 0 0 3px rgba(13,110,253,.1)}
+.field-card.checked{border-color:#0d6efd;background:#e7f1ff;color:#0a58ca;font-weight:600}
+.field-card .field-icon{font-size:1rem;opacity:.6}
+.field-card.checked .field-icon{opacity:1;color:#0d6efd}
+.field-card .chk-icon{margin-left:auto;font-size:.85rem;opacity:0;transition:opacity .15s}
+.field-card.checked .chk-icon{opacity:1;color:#0d6efd}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .field-card { background:var(--surface); border-color:var(--border); }
+</style>
+
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            <div class="modal-header text-white" id="export-modal-header"
+                 style="background:linear-gradient(135deg,#343a40 0%,#495057 100%);">
+                <h5 class="modal-title fw-bold" id="exportModalLabel">
+                    <i class="bi bi-sliders me-2" id="export-modal-icon"></i>
+                    <span id="export-modal-title">Configurar Exportación</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                    Elige los campos que quieres que aparezcan en el documento:
+                </p>
+                <div class="row g-2" id="col-checks"></div>
+                <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="sel-all"><i class="bi bi-check-all"></i> Todos</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="sel-none"><i class="bi bi-x-lg"></i> Ninguno</button>
+                    <span class="ms-auto small text-muted"><span id="sel-count">0</span> seleccionados</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-do-export">
+                    <i class="bi bi-download me-1"></i> Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:11000;">
+    <div id="export-toast" class="toast align-items-center border-0 text-white bg-success"
+         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+        <div class="d-flex">
+            <div class="toast-body" style="font-size:.95rem;">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span id="export-toast-msg">¡Documento exportado exitosamente!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const LABELS = {{ export_field_labels_json|safe }};
+    const ICONS  = {
+        'Nombre':      'bi-person-fill',
+        'Cédula/RUC':  'bi-card-text',
+        'Email':       'bi-envelope-fill',
+        'Teléfono':    'bi-telephone-fill',
+        'Ciudad':      'bi-geo-alt-fill',
+        'Estado':      'bi-toggle-on',
+    };
+
+    let exportFormat = 'pdf';
+    const container = document.getElementById('col-checks');
+    const selCount  = document.getElementById('sel-count');
+    const exportBtn = document.getElementById('btn-do-export');
+    const hdr       = document.getElementById('export-modal-header');
+    const hdrTitle  = document.getElementById('export-modal-title');
+    const hdrIcon   = document.getElementById('export-modal-icon');
+
+    LABELS.forEach(function (label) {
+        const icon = ICONS[label] || 'bi-layout-text-window';
+        const col  = document.createElement('div');
+        col.className = 'col-6';
+        col.innerHTML =
+            '<div class="field-card checked" data-label="' + label + '">' +
+                '<i class="bi ' + icon + ' field-icon"></i>' +
+                '<span>' + label + '</span>' +
+                '<i class="bi bi-check-circle-fill chk-icon"></i>' +
+            '</div>';
+        container.appendChild(col);
+        col.querySelector('.field-card').addEventListener('click', function () {
+            this.classList.toggle('checked');
+            updateCount();
+        });
+    });
+
+    function updateCount() {
+        const n = container.querySelectorAll('.field-card.checked').length;
+        selCount.textContent = n;
+        exportBtn.disabled = (n === 0);
+    }
+    updateCount();
+
+    document.getElementById('sel-all').addEventListener('click', function () {
+        container.querySelectorAll('.field-card').forEach(function (c) { c.classList.add('checked'); });
+        updateCount();
+    });
+    document.getElementById('sel-none').addEventListener('click', function () {
+        container.querySelectorAll('.field-card').forEach(function (c) { c.classList.remove('checked'); });
+        updateCount();
+    });
+
+    document.querySelectorAll('[data-export]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            exportFormat = this.dataset.export;
+            if (exportFormat === 'pdf') {
+                hdr.style.background = 'linear-gradient(135deg,#b02a37 0%,#dc3545 100%)';
+                exportBtn.className  = 'btn btn-danger';
+                exportBtn.innerHTML  = '<i class="bi bi-file-earmark-pdf-fill me-1"></i>Exportar PDF';
+                hdrIcon.className    = 'bi bi-file-earmark-pdf-fill me-2';
+                hdrTitle.textContent = 'Exportar a PDF';
+            } else {
+                hdr.style.background = 'linear-gradient(135deg,#146c43 0%,#198754 100%)';
+                exportBtn.className  = 'btn btn-success';
+                exportBtn.innerHTML  = '<i class="bi bi-file-earmark-excel-fill me-1"></i>Exportar Excel';
+                hdrIcon.className    = 'bi bi-file-earmark-excel-fill me-2';
+                hdrTitle.textContent = 'Exportar a Excel';
+            }
+        });
+    });
+
+    exportBtn.addEventListener('click', function () {
+        const selected = Array.from(container.querySelectorAll('.field-card.checked'))
+                              .map(function (c) { return c.dataset.label; });
+        if (selected.length === 0) return;
+
+        const form    = document.getElementById('cl-filter-form');
+        const modal   = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+        const toastEl = document.getElementById('export-toast');
+        const toastMsg= document.getElementById('export-toast-msg');
+
+        form.querySelectorAll('.export-hidden').forEach(function (el) { el.remove(); });
+
+        var fmtEl = document.createElement('input');
+        fmtEl.type = 'hidden'; fmtEl.name = 'export';
+        fmtEl.value = exportFormat; fmtEl.className = 'export-hidden';
+        form.appendChild(fmtEl);
+
+        selected.forEach(function (label) {
+            var colEl = document.createElement('input');
+            colEl.type = 'hidden'; colEl.name = 'col';
+            colEl.value = label; colEl.className = 'export-hidden';
+            form.appendChild(colEl);
+        });
+
+        modal.hide();
+        setTimeout(function () {
+            form.submit();
+            toastEl.className = 'toast align-items-center border-0 text-white ' +
+                (exportFormat === 'pdf' ? 'bg-danger' : 'bg-success');
+            toastMsg.textContent = exportFormat === 'pdf'
+                ? '¡PDF exportado exitosamente!'
+                : '¡Excel exportado exitosamente!';
+            new bootstrap.Toast(toastEl).show();
+        }, 350);
+    });
+})();
+</script>
+{% endblock %}

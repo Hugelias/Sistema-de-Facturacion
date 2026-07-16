@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Proveedor — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.frm-page-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.frm-page-left{display:flex;align-items:center;gap:14px}
+.frm-page-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.frm-page-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.frm-page-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.frm-back-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-back-btn:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+.frm-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.frm-card-hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;gap:12px}
+.frm-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.frm-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.frm-card-body{padding:24px}
+.frm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.frm-grid-2{grid-template-columns:1fr}}
+.frm-field{margin-bottom:18px}
+.frm-field:last-child,.frm-grid-2 .frm-field{margin-bottom:0}
+.frm-label{font-size:.8rem;font-weight:600;color:#374151;display:flex;align-items:center;gap:4px;margin-bottom:7px}
+.frm-req{color:#EF4444;font-size:.85rem}
+.frm-iw{display:flex;align-items:stretch}
+.frm-iw-ta{align-items:flex-start}
+.frm-icon{
+    width:40px;min-width:40px;background:#F8FAFC;border:1.5px solid #E2E8F0;
+    border-right:none;border-radius:9px 0 0 9px;
+    display:flex;align-items:center;justify-content:center;
+    color:#94A3B8;font-size:.95rem;flex-shrink:0;
+    transition:border-color .15s,color .15s,background .15s;
+}
+.frm-iw-ta .frm-icon{align-items:flex-start;padding-top:11px}
+.frm-iw:focus-within .frm-icon{border-color:#2563EB;color:#2563EB;background:#EFF6FF}
+.frm-iw input,.frm-iw select,.frm-iw textarea{
+    flex:1;min-width:0;
+    border:1.5px solid #E2E8F0;border-left:none;border-radius:0 9px 9px 0;
+    padding:10px 12px;font-size:.875rem;color:#0F172A;
+    outline:none;background:#fff;font-family:inherit;
+    transition:border-color .15s,box-shadow .15s;
+}
+.frm-iw input:focus,.frm-iw select:focus,.frm-iw textarea:focus{
+    border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.frm-iw textarea{resize:vertical}
+.frm-iw input::placeholder,.frm-iw textarea::placeholder{color:#CBD5E1}
+.frm-error{font-size:.74rem;color:#EF4444;margin-top:5px;display:flex;align-items:center;gap:4px}
+.frm-global-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:.82rem;color:#B91C1C;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.frm-divider{border:none;border-top:1px solid #F1F5F9;margin:20px 0}
+.frm-actions{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+.frm-btn-save{display:inline-flex;align-items:center;gap:7px;padding:11px 26px;border:none;border-radius:10px;background:#1E293B;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s;box-shadow:0 2px 8px rgba(15,23,42,.2)}
+.frm-btn-save:hover{background:#0F172A;transform:translateY(-1px)}
+.frm-btn-cancel{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border:1.5px solid #94A3B8;border-radius:10px;background:#64748B;color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-btn-cancel:hover{background:#475569}
+.frm-ruc-row{display:flex;gap:8px;align-items:stretch}
+.frm-ruc-row .frm-iw{flex:1}
+.frm-sri-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;border:none;border-radius:9px;background:#2563EB;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s}
+.frm-sri-btn:hover{background:#1D4ED8}
+.frm-sri-btn:disabled{opacity:.6;cursor:wait}
+.frm-sri-msg{font-size:.74rem;margin-top:6px;line-height:1.4}
+.frm-sri-msg.ok{color:#15803D}
+.frm-sri-msg.warn{color:#B45309}
+.frm-sri-msg.error{color:#DC2626}
+.frm-doc-type{display:flex;gap:8px;margin-bottom:8px}
+.frm-doc-opt{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;color:#64748B;cursor:pointer;padding:6px 12px;border:1.5px solid #E2E8F0;border-radius:8px;background:#fff}
+.frm-doc-opt input{display:none}
+.frm-doc-opt.active{border-color:#2563EB;color:#1D4ED8;background:#EFF6FF}
+.sri-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
+.sri-modal-backdrop.open{display:flex}
+.sri-modal{background:#fff;border-radius:14px;width:100%;max-width:520px;box-shadow:0 20px 50px rgba(15,23,42,.28);overflow:hidden}
+.sri-modal-hdr{background:#1E293B;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sri-modal-hdr h3{margin:0;color:#fff;font-size:1rem;font-weight:700}
+.sri-modal-close{border:none;background:transparent;color:#94A3B8;font-size:1.2rem;cursor:pointer;line-height:1}
+.sri-modal-close:hover{color:#fff}
+.sri-modal-body{padding:18px}
+.sri-modal-hint{font-size:.82rem;color:#64748B;margin:0 0 14px;line-height:1.45}
+.sri-opt{display:block;width:100%;text-align:left;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;padding:12px 14px;margin-bottom:10px;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s}
+.sri-opt:hover{border-color:#2563EB;background:#EFF6FF}
+.sri-opt-title{font-size:.88rem;font-weight:700;color:#0F172A;margin-bottom:4px}
+.sri-opt-sub{font-size:.75rem;color:#64748B;line-height:1.35}
+.sri-opt-badge{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:20px;background:#DBEAFE;color:#1D4ED8;margin-bottom:6px}
+.sri-opt-badge.est{background:#FEF3C7;color:#B45309}
+:root[data-bs-theme="dark"] .sri-modal{background:var(--surface);border:1px solid var(--border)}
+:root[data-bs-theme="dark"] .sri-opt{background:var(--main-bg);border-color:var(--border)}
+:root[data-bs-theme="dark"] .sri-opt-title{color:var(--text-primary)}
+:root[data-bs-theme="dark"] .sri-opt-sub,.sri-modal-hint{color:var(--text-muted)}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .frm-page-title,
+:root[data-bs-theme="dark"] .frm-label,
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .frm-iw textarea { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .frm-page-sub,
+:root[data-bs-theme="dark"] .frm-back-btn,
+:root[data-bs-theme="dark"] .frm-icon { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .frm-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .frm-back-btn { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .frm-back-btn:hover { background:var(--main-bg); color:var(--text-primary); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .frm-icon { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .frm-iw textarea { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .frm-divider { border-top-color:var(--border); }
+</style>
+
+<div class="frm-page-hdr">
+    <div class="frm-page-left">
+        <div class="frm-page-icon"><i class="bi bi-truck"></i></div>
+        <div>
+            <h2 class="frm-page-title">{% if object %}Editar{% else %}Nuevo{% endif %} Proveedor</h2>
+            <p class="frm-page-sub">Completa los campos para {% if object %}actualizar el{% else %}registrar un nuevo{% endif %} proveedor.</p>
+        </div>
+    </div>
+    <a href="{% url 'billing:supplier_list' %}" class="frm-back-btn">
+        <i class="bi bi-arrow-left"></i> Volver a Proveedores
+    </a>
+</div>
+
+<div class="frm-card">
+    <div class="frm-card-hdr">
+        <i class="bi bi-truck"></i>
+        <span>Información del Proveedor</span>
+    </div>
+    <div class="frm-card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="frm-global-err">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Tipo de identificación (fuera del grid para no desalinearlo) -->
+            <div class="frm-field" style="margin-bottom:14px">
+                <label class="frm-label">Tipo de identificación <span class="frm-req">*</span></label>
+                <div class="frm-doc-type" id="doc-type-group" style="margin-bottom:0">
+                    <label class="frm-doc-opt active" data-type="ruc">
+                        <input type="radio" name="doc_type" value="ruc" checked> RUC (13 dígitos)
+                    </label>
+                    <label class="frm-doc-opt" data-type="cedula">
+                        <input type="radio" name="doc_type" value="cedula"> Cédula (10 dígitos)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Fila 1: Identificación + Nombre (misma altura) -->
+            <div class="frm-grid-2" style="margin-bottom:18px;align-items:start">
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.ruc.id_for_label }}">
+                        Identificación <span class="frm-req">*</span>
+                    </label>
+                    <div class="frm-ruc-row">
+                        <div class="frm-iw">
+                            <div class="frm-icon"><i class="bi bi-upc-scan"></i></div>
+                            <input type="text"
+                                   name="{{ form.ruc.html_name }}"
+                                   id="{{ form.ruc.id_for_label }}"
+                                   value="{{ form.ruc.value|default:'' }}"
+                                   placeholder="Ingrese el RUC o cédula"
+                                   maxlength="13"
+                                   {% if form.ruc.errors %}style="border-color:#EF4444"{% endif %}>
+                        </div>
+                        <button type="button" id="sri-consult-btn" class="frm-sri-btn" title="Consultar en el SRI">
+                            <i class="bi bi-search"></i> Consultar SRI
+                        </button>
+                    </div>
+                    <div id="sri-consult-msg" class="frm-sri-msg"></div>
+                    {% for e in form.ruc.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+                </div>
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.name.id_for_label }}">
+                        Nombre o Razón Social <span class="frm-req">*</span>
+                    </label>
+                    <div class="frm-iw">
+                        <div class="frm-icon"><i class="bi bi-person"></i></div>
+                        <input type="text"
+                               name="{{ form.name.html_name }}"
+                               id="{{ form.name.id_for_label }}"
+                               value="{{ form.name.value|default:'' }}"
+                               placeholder="Ingrese el nombre o razón social"
+                               {% if form.name.errors %}style="border-color:#EF4444"{% endif %}>
+                    </div>
+                    {% for e in form.name.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <!-- Fila 2: Teléfono + Correo -->
+            <div class="frm-grid-2" style="margin-bottom:18px">
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.phone.id_for_label }}">Teléfono</label>
+                    <div class="frm-iw">
+                        <div class="frm-icon"><i class="bi bi-telephone"></i></div>
+                        <input type="text"
+                               name="{{ form.phone.html_name }}"
+                               id="{{ form.phone.id_for_label }}"
+                               value="{{ form.phone.value|default:'' }}"
+                               placeholder="Ingrese el teléfono"
+                               {% if form.phone.errors %}style="border-color:#EF4444"{% endif %}>
+                    </div>
+                    {% for e in form.phone.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+                </div>
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.email.id_for_label }}">Correo Electrónico</label>
+                    <div class="frm-iw">
+                        <div class="frm-icon"><i class="bi bi-envelope"></i></div>
+                        <input type="email"
+                               name="{{ form.email.html_name }}"
+                               id="{{ form.email.id_for_label }}"
+                               value="{{ form.email.value|default:'' }}"
+                               placeholder="Ingrese el correo electrónico"
+                               {% if form.email.errors %}style="border-color:#EF4444"{% endif %}>
+                    </div>
+                    {% for e in form.email.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <!-- Fila 3: Contacto + Estado -->
+            <div class="frm-grid-2" style="margin-bottom:18px">
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.contact_name.id_for_label }}">Nombre de Contacto</label>
+                    <div class="frm-iw">
+                        <div class="frm-icon"><i class="bi bi-person-lines-fill"></i></div>
+                        <input type="text"
+                               name="{{ form.contact_name.html_name }}"
+                               id="{{ form.contact_name.id_for_label }}"
+                               value="{{ form.contact_name.value|default:'' }}"
+                               placeholder="Nombre del contacto principal"
+                               {% if form.contact_name.errors %}style="border-color:#EF4444"{% endif %}>
+                    </div>
+                    {% for e in form.contact_name.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+                </div>
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.is_active.id_for_label }}">Estado</label>
+                    <div class="frm-iw">
+                        <div class="frm-icon"><i class="bi bi-check-circle"></i></div>
+                        {{ form.is_active }}
+                    </div>
+                    {% for e in form.is_active.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <!-- Fila 4: Dirección (full width) -->
+            <div class="frm-field">
+                <label class="frm-label" for="{{ form.address.id_for_label }}">Dirección</label>
+                <div class="frm-iw frm-iw-ta">
+                    <div class="frm-icon" style="min-height:72px"><i class="bi bi-geo-alt"></i></div>
+                    <textarea name="{{ form.address.html_name }}"
+                              id="{{ form.address.id_for_label }}"
+                              rows="3"
+                              placeholder="Ingrese la dirección completa"
+                              style="border-radius:0 9px 9px 0"
+                              {% if form.address.errors %}style="border-color:#EF4444"{% endif %}>{{ form.address.value|default:'' }}</textarea>
+                </div>
+                {% for e in form.address.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="frm-actions">
+                <button type="submit" class="frm-btn-save">
+                    <i class="bi bi-floppy2"></i> Guardar Proveedor
+                </button>
+                <a href="{% url 'billing:supplier_list' %}" class="frm-btn-cancel">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="sri-modal-backdrop" id="sri-modal" aria-hidden="true">
+    <div class="sri-modal" role="dialog" aria-labelledby="sri-modal-title">
+        <div class="sri-modal-hdr">
+            <h3 id="sri-modal-title"><i class="bi bi-building"></i> Elegir nombre del proveedor</h3>
+            <button type="button" class="sri-modal-close" id="sri-modal-close" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="sri-modal-body">
+            <p class="sri-modal-hint">
+                Elige si el <strong>Nombre</strong> será la razón social del RUC o el nombre comercial de un establecimiento.
+                El <strong>contacto</strong> se llenará siempre con la razón social.
+            </p>
+            <div id="sri-modal-options"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    var rucInput = document.getElementById('{{ form.ruc.id_for_label }}');
+    var nameInput = document.getElementById('{{ form.name.id_for_label }}');
+    var contactInput = document.getElementById('{{ form.contact_name.id_for_label }}');
+    var addressInput = document.getElementById('{{ form.address.id_for_label }}');
+    var consultBtn = document.getElementById('sri-consult-btn');
+    var msgBox = document.getElementById('sri-consult-msg');
+    var docGroup = document.getElementById('doc-type-group');
+    var modal = document.getElementById('sri-modal');
+    var modalOptions = document.getElementById('sri-modal-options');
+    var modalClose = document.getElementById('sri-modal-close');
+    var consultUrl = '{% url "billing:supplier_consultar_ruc" %}';
+    var pendingSri = null;
+
+    function docType(){
+        var checked = document.querySelector('input[name="doc_type"]:checked');
+        return checked ? checked.value : 'ruc';
+    }
+    function showSriMsg(text, kind){
+        msgBox.textContent = text;
+        msgBox.className = 'frm-sri-msg ' + (kind || '');
+    }
+    function closeModal(){
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+    function openModal(data){
+        pendingSri = data;
+        modalOptions.innerHTML = '';
+
+        // Opción 1: razón social
+        var btnRazon = document.createElement('button');
+        btnRazon.type = 'button';
+        btnRazon.className = 'sri-opt';
+        btnRazon.innerHTML =
+            '<span class="sri-opt-badge">Razón social</span>' +
+            '<div class="sri-opt-title"></div>' +
+            '<div class="sri-opt-sub"></div>';
+        btnRazon.querySelector('.sri-opt-title').textContent = data.razon_social || '(sin razón social)';
+        btnRazon.querySelector('.sri-opt-sub').textContent =
+            (data.tipo_contribuyente || '') +
+            (data.estado ? ' · Estado: ' + data.estado : '') +
+            (data.direccion ? ' · ' + data.direccion : '');
+        btnRazon.addEventListener('click', function(){
+            applySriChoice({
+                name: data.razon_social || '',
+                contact: data.razon_social || '',
+                address: data.direccion || '',
+                label: 'razón social'
+            });
+        });
+        modalOptions.appendChild(btnRazon);
+
+        // Opciones: establecimientos con nombre comercial
+        var vistos = {};
+        (data.establecimientos || []).forEach(function(est){
+            var comercial = (est.nombre_comercial || '').trim();
+            if (!comercial) return;
+            var key = comercial.toUpperCase();
+            if (vistos[key]) return;
+            vistos[key] = true;
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'sri-opt';
+            btn.innerHTML =
+                '<span class="sri-opt-badge est">Establecimiento' +
+                (est.numero ? ' #' + est.numero : '') +
+                (est.matriz === 'SI' ? ' · Matriz' : '') +
+                '</span>' +
+                '<div class="sri-opt-title"></div>' +
+                '<div class="sri-opt-sub"></div>';
+            btn.querySelector('.sri-opt-title').textContent = comercial;
+            btn.querySelector('.sri-opt-sub').textContent =
+                (est.estado || '') +
+                (est.direccion ? ' · ' + est.direccion : '');
+            btn.addEventListener('click', function(){
+                applySriChoice({
+                    name: comercial,
+                    contact: data.razon_social || '',
+                    address: est.direccion || data.direccion || '',
+                    label: 'establecimiento'
+                });
+            });
+            modalOptions.appendChild(btn);
+        });
+
+        if (!Object.keys(vistos).length) {
+            var note = document.createElement('p');
+            note.className = 'sri-modal-hint';
+            note.textContent = 'Este RUC no tiene nombre comercial de establecimiento. Solo puedes usar la razón social.';
+            modalOptions.appendChild(note);
+        }
+
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+    function applySriChoice(choice){
+        if (choice.name) nameInput.value = choice.name;
+        if (choice.contact) contactInput.value = choice.contact;
+        if (choice.address) addressInput.value = choice.address;
+        closeModal();
+        showSriMsg(
+            'Se cargó el nombre desde ' + choice.label +
+            '. Contacto: razón social.' +
+            (pendingSri && pendingSri.estado ? ' Estado SRI: ' + pendingSri.estado : ''),
+            'ok'
+        );
+    }
+
+    docGroup.querySelectorAll('.frm-doc-opt').forEach(function(opt){
+        opt.addEventListener('click', function(){
+            docGroup.querySelectorAll('.frm-doc-opt').forEach(function(o){ o.classList.remove('active'); });
+            opt.classList.add('active');
+            var type = opt.dataset.type;
+            rucInput.placeholder = type === 'ruc' ? '13 dígitos — consulta SRI disponible' : '10 dígitos — ingreso manual';
+            rucInput.maxLength = type === 'ruc' ? 13 : 10;
+            consultBtn.disabled = type !== 'ruc';
+            showSriMsg(type === 'ruc' ? '' : 'La consulta automática al SRI solo aplica para RUC de 13 dígitos.', 'warn');
+        });
+    });
+
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e){
+        if (e.target === modal) closeModal();
+    });
+
+    consultBtn.addEventListener('click', function(){
+        var ruc = (rucInput.value || '').trim();
+        if (docType() !== 'ruc') {
+            showSriMsg('Seleccione tipo RUC para consultar en el SRI.', 'warn');
+            return;
+        }
+        if (!/^\d{13}$/.test(ruc)) {
+            showSriMsg('Ingrese un RUC válido de 13 dígitos numéricos.', 'error');
+            return;
+        }
+        consultBtn.disabled = true;
+        showSriMsg('Consultando en el SRI…', 'ok');
+        fetch(consultUrl + '?ruc=' + encodeURIComponent(ruc), {headers: {'Accept': 'application/json'}})
+        .then(function(r){ return r.json().then(function(data){ return {ok: r.ok, data: data}; }); })
+        .then(function(res){
+            consultBtn.disabled = false;
+            if (!res.ok || res.data.error) {
+                showSriMsg(res.data.error || 'No se encontró el RUC en el SRI.', 'error');
+                return;
+            }
+            openModal(res.data);
+        }).catch(function(){
+            consultBtn.disabled = false;
+            showSriMsg('No se pudo conectar. ¿Está corriendo sri_service/app.py en el puerto 5002?', 'error');
+        });
+    });
+})();
+</script>
+{% endblock %}

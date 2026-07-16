@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selecciona tu perfil — TecnoStock S.A.</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    font-family:'Inter','Segoe UI',sans-serif;
+    min-height:100vh;
+    background:linear-gradient(150deg,#EEF0FF 0%,#DDE2FF 35%,#CDD5FF 65%,#BCC8FE 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;position:relative;overflow-x:hidden;overflow-y:auto;
+}
+
+/* ── Background shapes ── */
+.blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.blob-tl{width:80px;height:80px;top:7%;left:3%;background:#3B82F6;opacity:.75}
+.blob-tr{width:300px;height:300px;top:-9%;right:-6%;
+    background:radial-gradient(circle,#818CF8 0%,#6366F1 55%,transparent 80%);opacity:.6}
+.blob-bl{width:520px;height:520px;bottom:-22%;left:-13%;
+    background:radial-gradient(circle at 42% 42%,#2563EB 0%,#1D4ED8 48%,transparent 75%);opacity:.88}
+.blob-br{width:440px;height:440px;bottom:-20%;right:-11%;
+    background:radial-gradient(circle,#7C3AED 0%,#5B21B6 48%,transparent 75%);opacity:.78}
+
+.dots{position:fixed;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle,rgba(71,85,105,.28) 1.5px,transparent 1.5px);
+    background-size:22px 22px}
+.dots-l{width:130px;height:290px;top:12%;left:1.5%}
+.dots-r{width:130px;height:290px;top:12%;right:1.5%}
+
+/* ── Card wrapper ── */
+.auth-outer{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:640px}
+
+/* ── Card ── */
+.auth-card{
+    background:#fff;border-radius:24px;
+    box-shadow:0 24px 60px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.08);
+    padding:40px 36px 32px;width:100%;
+}
+
+/* ── Brand ── */
+.brand{text-align:center;margin-bottom:22px}
+.brand-hex{
+    width:60px;height:60px;margin:0 auto 12px;
+    background:linear-gradient(135deg,#3B82F6,#2563EB);
+    clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:1.45rem;
+}
+.brand-name{font-size:1.15rem;font-weight:800;color:#0F172A;letter-spacing:-.3px}
+.brand-sub{font-size:.77rem;color:#64748B;margin-top:3px}
+
+/* ── Heading ── */
+.card-heading{text-align:center;margin-bottom:26px}
+.card-title{font-size:1.35rem;font-weight:800;color:#0F172A}
+.card-desc{font-size:.85rem;color:#64748B;margin-top:5px}
+
+/* ── Role grid ── */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:520px){.role-grid{grid-template-columns:1fr}}
+
+.role-card{
+    border:1.5px solid #E2E8F0;border-radius:16px;
+    padding:22px 18px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;
+    transition:border-color .15s,box-shadow .15s,transform .15s;
+}
+.role-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
+
+.role-icon{
+    width:56px;height:56px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.5rem;margin-bottom:14px;
+}
+.role-name{font-size:1.02rem;font-weight:800;margin-bottom:6px}
+.role-desc{font-size:.8rem;color:#64748B;line-height:1.4;margin-bottom:18px;min-height:52px}
+
+.role-btn{
+    width:100%;padding:10px;border:none;border-radius:11px;
+    color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;
+    font-family:'Inter',sans-serif;text-decoration:none;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    transition:opacity .15s,transform .1s;
+}
+.role-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+/* Role color themes */
+.role-administrador .role-icon{background:#EFF6FF;color:#2563EB}
+.role-administrador .role-name{color:#2563EB}
+.role-administrador .role-btn{background:#2563EB;box-shadow:0 4px 12px rgba(37,99,235,.32)}
+
+.role-gerente .role-icon{background:#ECFDF5;color:#16A34A}
+.role-gerente .role-name{color:#16A34A}
+.role-gerente .role-btn{background:#16A34A;box-shadow:0 4px 12px rgba(22,163,74,.32)}
+
+.role-vendedor .role-icon{background:#FFF7ED;color:#EA580C}
+.role-vendedor .role-name{color:#EA580C}
+.role-vendedor .role-btn{background:#EA580C;box-shadow:0 4px 12px rgba(234,88,12,.32)}
+
+.role-comprador .role-icon{background:#F5F3FF;color:#7C3AED}
+.role-comprador .role-name{color:#7C3AED}
+.role-comprador .role-btn{background:#7C3AED;box-shadow:0 4px 12px rgba(124,58,237,.32)}
+
+/* ── Footer note ── */
+.card-foot-note{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    margin-top:26px;font-size:.78rem;color:#94A3B8;
+}
+
+/* ── Register footer ── */
+.card-foot{text-align:center;margin-top:18px}
+.card-foot p{font-size:.82rem;color:#64748B;margin-bottom:9px}
+.foot-link{
+    display:inline-flex;align-items:center;gap:6px;
+    color:#2563EB;text-decoration:none;font-size:.82rem;font-weight:600;
+    padding:7px 18px;border-radius:10px;
+    border:1.5px solid rgba(37,99,235,.22);
+    background:rgba(37,99,235,.05);transition:background .15s;
+}
+.foot-link:hover{background:rgba(37,99,235,.1)}
+
+/* ── Copyright ── */
+.copyright{margin-top:18px;font-size:.72rem;color:rgba(255,255,255,.65);text-align:center;letter-spacing:.3px}
+
+@media(max-width:480px){
+    .auth-card{padding:30px 20px 26px}
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="blob blob-tl"></div>
+<div class="blob blob-tr"></div>
+<div class="blob blob-bl"></div>
+<div class="blob blob-br"></div>
+<div class="dots dots-l"></div>
+<div class="dots dots-r"></div>
+
+<div class="auth-outer">
+<div class="auth-card">
+
+    <!-- Brand -->
+    <div class="brand">
+        <div class="brand-hex"><i class="bi bi-box-seam"></i></div>
+        <div class="brand-name">TecnoStock S.A.</div>
+        <div class="brand-sub">Sistema de Ventas y Facturación</div>
+    </div>
+
+    <!-- Heading -->
+    <div class="card-heading">
+        <div class="card-title">Selecciona tu perfil</div>
+        <div class="card-desc">Elige el perfil con el que deseas ingresar al sistema</div>
+    </div>
+
+    <!-- Role grid -->
+    <div class="role-grid">
+
+        <div class="role-card role-administrador">
+            <div class="role-icon"><i class="bi bi-shield-lock-fill"></i></div>
+            <div class="role-name">Administrador</div>
+            <div class="role-desc">Control total del sistema, usuarios y configuraciones.</div>
+            <a href="{% url 'login' %}?role=administrador{% if request.GET.next %}&next={{ request.GET.next|urlencode }}{% endif %}" class="role-btn">
+                Ingresar <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="role-card role-gerente">
+            <div class="role-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="role-name">Gerente</div>
+            <div class="role-desc">Visualiza reportes y supervisa el rendimiento del negocio.</div>
+            <a href="{% url 'login' %}?role=gerente{% if request.GET.next %}&next={{ request.GET.next|urlencode }}{% endif %}" class="role-btn">
+                Ingresar <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="role-card role-vendedor">
+            <div class="role-icon"><i class="bi bi-cart-fill"></i></div>
+            <div class="role-name">Vendedor</div>
+            <div class="role-desc">Gestiona ventas, clientes y facturación.</div>
+            <a href="{% url 'login' %}?role=vendedor{% if request.GET.next %}&next={{ request.GET.next|urlencode }}{% endif %}" class="role-btn">
+                Ingresar <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="role-card role-comprador">
+            <div class="role-icon"><i class="bi bi-bag-fill"></i></div>
+            <div class="role-name">Comprador</div>
+            <div class="role-desc">Gestiona compras, proveedores e inventario.</div>
+            <a href="{% url 'login' %}?role=comprador{% if request.GET.next %}&next={{ request.GET.next|urlencode }}{% endif %}" class="role-btn">
+                Ingresar <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="card-foot-note">
+        <i class="bi bi-shield-check"></i> Accede a las funcionalidades según tu rol
+    </div>
+
+    <div class="card-foot">
+        <p>¿No tienes cuenta?</p>
+        <a href="{% url 'security:signup' %}" class="foot-link">
+            <i class="bi bi-person-plus"></i> Solicita acceso aquí
+        </a>
+    </div>
+
+</div><!-- /auth-card -->
+<p class="copyright">© 2026 TecnoStock S.A. - Todos los derechos reservados.</p>
+</div><!-- /auth-outer -->
+
+</body>
+</html>

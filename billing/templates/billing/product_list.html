@@ -1,0 +1,633 @@
+{% extends 'base.html' %}
+{% block title %}Productos — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+/* ── Product List ─────────────────────────────────────────────── */
+
+/* Header */
+.pl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.pl-header-left{display:flex;align-items:center;gap:16px}
+.pl-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.pl-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.pl-subtitle{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.btn-new-product{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:#2563EB;color:#fff;border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.btn-new-product:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+
+/* Filter card */
+.pl-filter-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:20px 22px 18px;margin-bottom:16px}
+.pl-filter-title{font-size:.95rem;font-weight:700;color:#0F172A;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.pl-filter-title i{color:#2563EB;font-size:1rem}
+
+/* Filter grids */
+.fi-grid{display:grid;gap:14px;margin-bottom:14px}
+.fi-g3{grid-template-columns:repeat(3,1fr)}
+.fi-g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.fi-g3{grid-template-columns:1fr 1fr}.fi-g4{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.fi-g3,.fi-g4{grid-template-columns:1fr}}
+
+.fi-label{font-size:.775rem;font-weight:600;color:#374151;margin-bottom:6px;display:block}
+
+/* Input/select with icon */
+.fi-wrap{position:relative}
+.fi-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.85rem;pointer-events:none;z-index:1}
+.fi-input,.fi-select{width:100%;padding:9px 12px 9px 34px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff}
+.fi-input::placeholder{color:#CBD5E1}
+.fi-input:focus,.fi-select:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* Prefix ($ sign) */
+.fi-pfx-wrap{position:relative}
+.fi-pfx{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#64748B;font-size:.8rem;font-weight:700;pointer-events:none;z-index:1}
+.fi-pfx-input{width:100%;padding:9px 12px 9px 24px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff}
+.fi-pfx-input::placeholder{color:#CBD5E1}
+.fi-pfx-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* Filter buttons row */
+.fi-btn-row{display:flex;justify-content:space-between;align-items:center;margin-top:4px;flex-wrap:wrap;gap:10px}
+.fi-btn-left,.fi-btn-right{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn-fi-search{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;background:#2563EB;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-fi-search:hover{background:#1D4ED8}
+.btn-fi-clear{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s,border-color .15s}
+.btn-fi-clear:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.btn-fi-pdf{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:9px;background:#EF4444;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-fi-pdf:hover{background:#DC2626}
+.btn-fi-excel{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:9px;background:#10B981;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-fi-excel:hover{background:#059669}
+
+/* Table card */
+.pl-table-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+
+/* Table */
+.pl-table{width:100%;border-collapse:collapse}
+.pl-table thead th{padding:11px 16px;font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;white-space:nowrap;background:#fff;text-align:left}
+.pl-table tbody td{padding:13px 16px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.pl-table tbody tr:last-child td{border-bottom:none}
+.pl-table tbody tr:hover td{background:#FAFBFF}
+.td-name{font-weight:500;color:#0F172A;max-width:280px}
+.td-brand{color:#475569;font-size:.82rem}
+
+/* Photo */
+.prod-photo{width:46px;height:46px;border-radius:9px;object-fit:cover;border:1.5px solid #E2E8F0;display:block}
+.prod-photo-ph{width:46px;height:46px;border-radius:9px;border:1.5px dashed #E2E8F0;background:#F8FAFC;display:flex;align-items:center;justify-content:center;color:#CBD5E1;font-size:1.1rem}
+
+/* Group badge */
+.group-badge{display:inline-flex;align-items:center;gap:5px;background:#F5F3FF;color:#6D28D9;border-radius:20px;padding:3px 10px;font-size:.74rem;font-weight:600;white-space:nowrap}
+.group-badge i{font-size:.7rem}
+
+/* Stock warning */
+.stock-low{display:inline-flex;align-items:center;justify-content:center;background:#FEE2E2;color:#B91C1C;border-radius:6px;padding:2px 8px;font-size:.8rem;font-weight:700;min-width:30px}
+.stock-ok{color:#0F172A;font-weight:500}
+
+/* Status pill */
+.status-pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.status-active{background:#DCFCE7;color:#15803D}
+.status-inactive{background:#FEE2E2;color:#B91C1C}
+.s-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-active .s-dot{background:#22C55E}
+.status-inactive .s-dot{background:#EF4444}
+
+/* Action buttons */
+.act-group{display:flex;align-items:center;gap:5px}
+.act-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s;flex-shrink:0}
+.act-view{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-view:hover{background:#EFF6FF;color:#1D4ED8}
+.act-edit{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-edit:hover{background:#EFF6FF;color:#1D4ED8}
+.act-del{border-color:#FECACA;color:#EF4444;background:#fff}
+.act-del:hover{background:#FEF2F2;color:#DC2626}
+
+/* Empty state */
+.pl-empty{text-align:center;padding:52px 24px;color:#94A3B8}
+.pl-empty i{font-size:2.5rem;display:block;margin-bottom:10px;color:#CBD5E1}
+.pl-empty p{font-size:.9rem;margin:0}
+
+/* Table footer */
+.pl-table-footer{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-top:1px solid #F1F5F9;flex-wrap:wrap;gap:10px}
+.pl-count{font-size:.8rem;color:#64748B}
+
+/* Pagination */
+.pl-pagination{display:flex;align-items:center;gap:5px}
+.pl-page-btn{width:32px;height:32px;border:1.5px solid #E2E8F0;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:#64748B;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s;font-family:inherit;background:#fff}
+.pl-page-btn:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.pl-page-btn.pg-active{background:#2563EB;border-color:#2563EB;color:#fff}
+.pl-page-btn.pg-disabled{opacity:.35;pointer-events:none}
+.pl-page-btn.pg-ellipsis{border-color:transparent;background:transparent;pointer-events:none}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .pl-title,
+:root[data-bs-theme="dark"] .pl-filter-title,
+:root[data-bs-theme="dark"] .fi-label,
+:root[data-bs-theme="dark"] .fi-input,
+:root[data-bs-theme="dark"] .fi-select,
+:root[data-bs-theme="dark"] .fi-pfx-input,
+:root[data-bs-theme="dark"] .pl-table tbody td,
+:root[data-bs-theme="dark"] .td-name,
+:root[data-bs-theme="dark"] .stock-ok { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .pl-subtitle,
+:root[data-bs-theme="dark"] .fi-icon,
+:root[data-bs-theme="dark"] .fi-pfx,
+:root[data-bs-theme="dark"] .btn-fi-clear,
+:root[data-bs-theme="dark"] .pl-table thead th,
+:root[data-bs-theme="dark"] .td-brand,
+:root[data-bs-theme="dark"] .pl-empty,
+:root[data-bs-theme="dark"] .pl-count,
+:root[data-bs-theme="dark"] .pl-page-btn { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .pl-filter-card,
+:root[data-bs-theme="dark"] .pl-table-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .act-view,
+:root[data-bs-theme="dark"] .act-edit,
+:root[data-bs-theme="dark"] .act-del { background:var(--surface); }
+
+:root[data-bs-theme="dark"] .fi-input,
+:root[data-bs-theme="dark"] .fi-select,
+:root[data-bs-theme="dark"] .fi-pfx-input,
+:root[data-bs-theme="dark"] .btn-fi-clear,
+:root[data-bs-theme="dark"] .pl-page-btn,
+:root[data-bs-theme="dark"] .prod-photo,
+:root[data-bs-theme="dark"] .prod-photo-ph { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .pl-table thead th { background:var(--surface); border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .pl-table tbody td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .pl-table-footer { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .pl-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+:root[data-bs-theme="dark"] .btn-fi-clear:hover,
+:root[data-bs-theme="dark"] .pl-page-btn:hover { background:rgba(255,255,255,.03); color:var(--text-primary); }
+</style>
+
+{# ── HEADER ──────────────────────────────────────────────────────── #}
+<div class="pl-header">
+    <div class="pl-header-left">
+        <div class="pl-hdr-icon"><i class="bi bi-box-seam"></i></div>
+        <div>
+            <h2 class="pl-title">Productos</h2>
+            <p class="pl-subtitle">Gestiona y administra tu catálogo de productos</p>
+        </div>
+    </div>
+    <a href="{% url 'billing:product_create' %}" class="btn-new-product">
+        <i class="bi bi-plus-circle"></i> Nuevo Producto
+    </a>
+</div>
+
+{# ── FILTER CARD ─────────────────────────────────────────────────── #}
+<div class="pl-filter-card">
+    <div class="pl-filter-title">
+        <i class="bi bi-funnel-fill"></i> Búsqueda y Filtros
+    </div>
+    <form method="get" id="filter-form">
+
+        {# Row 1: Nombre · Descripción · Estado #}
+        <div class="fi-grid fi-g3">
+            <div>
+                <label class="fi-label">Nombre</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-tag fi-icon"></i>
+                    <input type="text" name="name" class="fi-input"
+                           placeholder="Nombre del producto..."
+                           value="{{ params.name|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Descripción</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-card-text fi-icon"></i>
+                    <input type="text" name="description" class="fi-input"
+                           placeholder="Palabra clave en descripción..."
+                           value="{{ params.description|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Estado</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-toggle-on fi-icon"></i>
+                    <select name="is_active" class="fi-select">
+                        <option value="">— Todos —</option>
+                        <option value="1" {% if params.is_active == '1' %}selected{% endif %}>Activo</option>
+                        <option value="0" {% if params.is_active == '0' %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {# Row 2: Marca · Grupo · Proveedor #}
+        <div class="fi-grid fi-g3">
+            <div>
+                <label class="fi-label">Marca</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-award fi-icon"></i>
+                    <select name="brand" class="fi-select">
+                        <option value="">— Todas las Marcas —</option>
+                        {% for b in brands %}
+                        <option value="{{ b.pk }}" {% if params.brand == b.pk|stringformat:'s' %}selected{% endif %}>{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Grupo</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-collection fi-icon"></i>
+                    <select name="group" class="fi-select">
+                        <option value="">— Todos los Grupos —</option>
+                        {% for g in groups %}
+                        <option value="{{ g.pk }}" {% if params.group == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Proveedor</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-building fi-icon"></i>
+                    <select name="supplier" class="fi-select">
+                        <option value="">— Todos los Proveedores —</option>
+                        {% for s in suppliers %}
+                        <option value="{{ s.pk }}" {% if params.supplier == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {# Row 3: Precio mín/máx · Stock mín/máx #}
+        <div class="fi-grid fi-g4">
+            <div>
+                <label class="fi-label">Precio mínimo</label>
+                <div class="fi-pfx-wrap">
+                    <span class="fi-pfx">$</span>
+                    <input type="number" name="price_min" class="fi-pfx-input"
+                           placeholder="0.00" step="0.01" min="0"
+                           value="{{ params.price_min|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Precio máximo</label>
+                <div class="fi-pfx-wrap">
+                    <span class="fi-pfx">$</span>
+                    <input type="number" name="price_max" class="fi-pfx-input"
+                           placeholder="9999.99" step="0.01" min="0"
+                           value="{{ params.price_max|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Stock mínimo</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-box fi-icon"></i>
+                    <input type="number" name="stock_min" class="fi-input"
+                           placeholder="0" min="0"
+                           value="{{ params.stock_min|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="fi-label">Stock máximo</label>
+                <div class="fi-wrap">
+                    <i class="bi bi-box fi-icon"></i>
+                    <input type="number" name="stock_max" class="fi-input"
+                           placeholder="9999" min="0"
+                           value="{{ params.stock_max|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        {# Buttons #}
+        <div class="fi-btn-row">
+            <div class="fi-btn-left">
+                <button type="submit" class="btn-fi-search">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+                <a href="{% url 'billing:product_list' %}" class="btn-fi-clear">
+                    <i class="bi bi-arrow-counterclockwise"></i> Limpiar Filtros
+                </a>
+            </div>
+            <div class="fi-btn-right">
+                {% if perms.billing.can_export %}
+                <button type="button" class="btn-fi-pdf"
+                        data-bs-toggle="modal" data-bs-target="#exportModal" data-export="pdf">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> Exportar PDF
+                </button>
+                <button type="button" class="btn-fi-excel"
+                        data-bs-toggle="modal" data-bs-target="#exportModal" data-export="excel">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+    </form>
+</div>
+
+{# ── TABLE CARD ──────────────────────────────────────────────────── #}
+<div class="pl-table-card">
+    <table class="pl-table">
+        <thead>
+            <tr>
+                <th style="width:60px">Foto</th>
+                <th>Nombre</th>
+                <th>Marca</th>
+                <th>Grupo</th>
+                <th style="text-align:right">Precio</th>
+                <th style="text-align:right">Stock</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+            <tr>
+                {# Photo #}
+                <td>
+                    {% if p.image %}
+                    <img src="{{ p.image.url }}" alt="{{ p.name }}" class="prod-photo">
+                    {% else %}
+                    <div class="prod-photo-ph"><i class="bi bi-image"></i></div>
+                    {% endif %}
+                </td>
+
+                {# Name #}
+                <td class="td-name">{{ p.name }}</td>
+
+                {# Brand #}
+                <td class="td-brand">{{ p.brand }}</td>
+
+                {# Group badge #}
+                <td>
+                    <span class="group-badge">
+                        <i class="bi bi-collection"></i> {{ p.group }}
+                    </span>
+                </td>
+
+                {# Price #}
+                <td style="text-align:right;font-weight:600;color:var(--text-primary)">
+                    $ {{ p.unit_price }}
+                </td>
+
+                {# Stock #}
+                <td style="text-align:right">
+                    {% if p.stock <= 5 %}
+                    <span class="stock-low">{{ p.stock }}</span>
+                    {% else %}
+                    <span class="stock-ok">{{ p.stock }}</span>
+                    {% endif %}
+                </td>
+
+                {# Status #}
+                <td>
+                    {% if p.is_active %}
+                    <span class="status-pill status-active">
+                        <span class="s-dot"></span> Activo
+                    </span>
+                    {% else %}
+                    <span class="status-pill status-inactive">
+                        <span class="s-dot"></span> Inactivo
+                    </span>
+                    {% endif %}
+                </td>
+
+                {# Actions #}
+                <td>
+                    <div class="act-group">
+                        <a href="{% url 'billing:product_detail' p.pk %}" class="act-btn act-view" title="Ver"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'billing:product_update' p.pk %}" class="act-btn act-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'billing:product_delete' p.pk %}" class="act-btn act-del" title="Eliminar"><i class="bi bi-trash3"></i></a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">
+                    <div class="pl-empty">
+                        <i class="bi bi-box-seam"></i>
+                        <p>No se encontraron productos con los filtros aplicados.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {# ── Footer: count + pagination ── #}
+    <div class="pl-table-footer">
+        {# Count #}
+        <div class="pl-count">
+            {% if is_paginated %}
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} producto{{ paginator.count|pluralize }}
+            {% else %}
+                {{ products|length }} producto{{ products|length|pluralize }}
+            {% endif %}
+        </div>
+
+        {# Pagination #}
+        {% if is_paginated %}
+        <div class="pl-pagination">
+            {# Prev arrow #}
+            {% if page_obj.has_previous %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.previous_page_number }}" class="pl-page-btn" title="Anterior">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="pl-page-btn pg-disabled"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+
+            {# Numbered pages with ellipsis #}
+            {% for num in elided_page_range %}
+                {% if num == paginator.ELLIPSIS %}
+                <span class="pl-page-btn pg-ellipsis">…</span>
+                {% elif num == page_obj.number %}
+                <span class="pl-page-btn pg-active">{{ num }}</span>
+                {% else %}
+                <a href="?{{ filter_qs_pfx }}page={{ num }}" class="pl-page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {# Next arrow #}
+            {% if page_obj.has_next %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.next_page_number }}" class="pl-page-btn" title="Siguiente">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="pl-page-btn pg-disabled"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.field-card{border:2px solid #dee2e6;border-radius:.5rem;padding:.5rem .75rem;cursor:pointer;transition:border-color .15s,background .15s,color .15s,box-shadow .15s;display:flex;align-items:center;gap:.55rem;font-size:.85rem;user-select:none;background:#fff;width:100%}
+.field-card:hover{border-color:#86b7fe;background:#f0f6ff;box-shadow:0 0 0 3px rgba(13,110,253,.1)}
+.field-card.checked{border-color:#0d6efd;background:#e7f1ff;color:#0a58ca;font-weight:600}
+.field-card .field-icon{font-size:1rem;opacity:.6}
+.field-card.checked .field-icon{opacity:1;color:#0d6efd}
+.field-card .chk-icon{margin-left:auto;font-size:.85rem;opacity:0;transition:opacity .15s}
+.field-card.checked .chk-icon{opacity:1;color:#0d6efd}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .field-card { background:var(--surface); border-color:var(--border); }
+</style>
+
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            <div class="modal-header text-white" id="export-modal-header"
+                 style="background:linear-gradient(135deg,#343a40 0%,#495057 100%);">
+                <h5 class="modal-title fw-bold" id="exportModalLabel">
+                    <i class="bi bi-sliders me-2" id="export-modal-icon"></i>
+                    <span id="export-modal-title">Configurar Exportación</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                    Elige los campos que quieres que aparezcan en el documento:
+                </p>
+                <div class="row g-2" id="col-checks"></div>
+                <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="sel-all"><i class="bi bi-check-all"></i> Todos</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="sel-none"><i class="bi bi-x-lg"></i> Ninguno</button>
+                    <span class="ms-auto small text-muted"><span id="sel-count">0</span> seleccionados</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-do-export">
+                    <i class="bi bi-download me-1"></i> Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:11000;">
+    <div id="export-toast" class="toast align-items-center border-0 text-white bg-success"
+         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+        <div class="d-flex">
+            <div class="toast-body" style="font-size:.95rem;">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span id="export-toast-msg">¡Documento exportado exitosamente!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const LABELS = {{ export_field_labels_json|safe }};
+    const ICONS  = {
+        'Nombre':          'bi-tag-fill',
+        'Descripción':     'bi-card-text',
+        'Marca':           'bi-award-fill',
+        'Grupo':           'bi-collection-fill',
+        'Precio Unitario': 'bi-currency-dollar',
+        'Stock':           'bi-boxes',
+        'Estado':          'bi-toggle-on',
+    };
+
+    let exportFormat = 'pdf';
+    const container = document.getElementById('col-checks');
+    const selCount  = document.getElementById('sel-count');
+    const exportBtn = document.getElementById('btn-do-export');
+    const hdr       = document.getElementById('export-modal-header');
+    const hdrTitle  = document.getElementById('export-modal-title');
+    const hdrIcon   = document.getElementById('export-modal-icon');
+
+    LABELS.forEach(function (label) {
+        const icon = ICONS[label] || 'bi-layout-text-window';
+        const col  = document.createElement('div');
+        col.className = 'col-6';
+        col.innerHTML =
+            '<div class="field-card checked" data-label="' + label + '">' +
+                '<i class="bi ' + icon + ' field-icon"></i>' +
+                '<span>' + label + '</span>' +
+                '<i class="bi bi-check-circle-fill chk-icon"></i>' +
+            '</div>';
+        container.appendChild(col);
+        col.querySelector('.field-card').addEventListener('click', function () {
+            this.classList.toggle('checked');
+            updateCount();
+        });
+    });
+
+    function updateCount() {
+        const n = container.querySelectorAll('.field-card.checked').length;
+        selCount.textContent = n;
+        exportBtn.disabled = (n === 0);
+    }
+    updateCount();
+
+    document.getElementById('sel-all').addEventListener('click', function () {
+        container.querySelectorAll('.field-card').forEach(function (c) { c.classList.add('checked'); });
+        updateCount();
+    });
+    document.getElementById('sel-none').addEventListener('click', function () {
+        container.querySelectorAll('.field-card').forEach(function (c) { c.classList.remove('checked'); });
+        updateCount();
+    });
+
+    document.querySelectorAll('[data-export]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            exportFormat = this.dataset.export;
+            if (exportFormat === 'pdf') {
+                hdr.style.background = 'linear-gradient(135deg,#b02a37 0%,#dc3545 100%)';
+                exportBtn.className  = 'btn btn-danger';
+                exportBtn.innerHTML  = '<i class="bi bi-file-earmark-pdf-fill me-1"></i>Exportar PDF';
+                hdrIcon.className    = 'bi bi-file-earmark-pdf-fill me-2';
+                hdrTitle.textContent = 'Exportar a PDF';
+            } else {
+                hdr.style.background = 'linear-gradient(135deg,#146c43 0%,#198754 100%)';
+                exportBtn.className  = 'btn btn-success';
+                exportBtn.innerHTML  = '<i class="bi bi-file-earmark-excel-fill me-1"></i>Exportar Excel';
+                hdrIcon.className    = 'bi bi-file-earmark-excel-fill me-2';
+                hdrTitle.textContent = 'Exportar a Excel';
+            }
+        });
+    });
+
+    exportBtn.addEventListener('click', function () {
+        const selected = Array.from(container.querySelectorAll('.field-card.checked'))
+                              .map(function (c) { return c.dataset.label; });
+        if (selected.length === 0) return;
+
+        const form    = document.getElementById('filter-form');
+        const modal   = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+        const toastEl = document.getElementById('export-toast');
+        const toastMsg= document.getElementById('export-toast-msg');
+
+        form.querySelectorAll('.export-hidden').forEach(function (el) { el.remove(); });
+
+        var fmtEl = document.createElement('input');
+        fmtEl.type = 'hidden'; fmtEl.name = 'export';
+        fmtEl.value = exportFormat; fmtEl.className = 'export-hidden';
+        form.appendChild(fmtEl);
+
+        selected.forEach(function (label) {
+            var colEl = document.createElement('input');
+            colEl.type = 'hidden'; colEl.name = 'col';
+            colEl.value = label; colEl.className = 'export-hidden';
+            form.appendChild(colEl);
+        });
+
+        modal.hide();
+        setTimeout(function () {
+            form.submit();
+            toastEl.className = 'toast align-items-center border-0 text-white ' +
+                (exportFormat === 'pdf' ? 'bg-danger' : 'bg-success');
+            toastMsg.textContent = exportFormat === 'pdf'
+                ? '¡PDF exportado exitosamente!'
+                : '¡Excel exportado exitosamente!';
+            new bootstrap.Toast(toastEl).show();
+        }, 350);
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Pagos — Compra #{{ compra.number|default:compra.id }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.id-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.id-hdr-left{display:flex;align-items:center;gap:14px}
+.id-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.id-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.id-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.id-hdr-btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.id-btn-pdf{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border:none;border-radius:10px;background:#2563EB;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.id-btn-pdf:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+.id-btn-back{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#64748B;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.id-btn-back:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+.id-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.id-card-hdr{background:#1E293B;padding:14px 22px;display:flex;align-items:center;gap:12px}
+.id-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.id-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.id-card-body{padding:24px}
+.id-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:700px){.id-info-grid{grid-template-columns:1fr 1fr}}
+.id-info-label{font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.id-info-val{font-size:.9rem;color:#0F172A;font-weight:600}
+.id-table{width:100%;border-collapse:collapse}
+.id-table thead th{padding:10px 14px;font-size:.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;text-align:left;white-space:nowrap;background:#FAFBFF}
+.id-table thead th:first-child{padding-left:20px}
+.id-table tbody td{padding:12px 14px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.id-table tbody td:first-child{padding-left:20px}
+.id-table tbody tr:last-child td{border-bottom:none}
+.id-table tbody tr:hover td{background:#FAFBFF}
+.mod-act-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;font-size:.85rem;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s}
+.act-edit{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-edit:hover{background:#EFF6FF;color:#1D4ED8}
+.act-del{border-color:#FECACA;color:#EF4444;background:#fff}
+.act-del:hover{background:#FEF2F2;color:#DC2626}
+.mod-act-group{display:flex;align-items:center;gap:5px}
+.mod-empty{text-align:center;padding:40px 24px;color:#94A3B8}
+.mod-empty i{font-size:2.2rem;display:block;margin-bottom:8px;color:#CBD5E1}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .id-title,
+:root[data-bs-theme="dark"] .id-info-val,
+:root[data-bs-theme="dark"] .id-table tbody td { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .id-sub,
+:root[data-bs-theme="dark"] .id-btn-back,
+:root[data-bs-theme="dark"] .id-info-label,
+:root[data-bs-theme="dark"] .id-table thead th,
+:root[data-bs-theme="dark"] .mod-empty { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .id-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .id-btn-back { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .id-btn-back:hover { background:var(--main-bg); color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .id-table thead th { border-bottom-color:var(--border); background:var(--main-bg); }
+:root[data-bs-theme="dark"] .id-table tbody td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .id-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .act-edit,
+:root[data-bs-theme="dark"] .act-del { background:var(--surface); }
+</style>
+
+<div class="id-hdr">
+    <div class="id-hdr-left">
+        <div class="id-hdr-icon"><i class="bi bi-cart-check-fill"></i></div>
+        <div>
+            <h2 class="id-title">Compra #{{ compra.number|default:compra.id }}</h2>
+            <p class="id-sub">{{ compra.supplier.name }}</p>
+        </div>
+    </div>
+    <div class="id-hdr-btns">
+        {% if compra.is_active and compra.estado != 'pagada' %}
+        <a href="{% url 'pagos:pago_create' compra.pk %}" class="id-btn-pdf">
+            <i class="bi bi-plus-circle"></i> Registrar Pago
+        </a>
+        {% endif %}
+        <a href="{% url 'purchasing:purchase_detail' compra.pk %}" class="id-btn-back">
+            <i class="bi bi-cart3"></i> Ver Compra
+        </a>
+        <a href="{% url 'pagos:compra_pendiente_list' %}" class="id-btn-back">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="id-card">
+    <div class="id-card-hdr"><i class="bi bi-info-circle"></i><span>Resumen de Pago</span></div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div><div class="id-info-label">Total Compra</div><div class="id-info-val">$ {{ compra.total }}</div></div>
+            <div><div class="id-info-label">Saldo Pendiente</div><div class="id-info-val">$ {{ compra.saldo }}</div></div>
+            <div><div class="id-info-label">Estado</div><div class="id-info-val">{% if compra.estado == 'pagada' %}Pagada{% else %}Pendiente{% endif %}</div></div>
+            <div><div class="id-info-label">Tipo de Pago</div><div class="id-info-val">{% if compra.tipo_pago == 'credito' %}Crédito{% else %}Contado{% endif %}</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="id-card">
+    <div class="id-card-hdr"><i class="bi bi-clock-history"></i><span>Historial de Pagos</span></div>
+    <table class="id-table">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Valor</th>
+                <th>Observación</th>
+                <th style="width:90px">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pago in pagos %}
+            <tr>
+                <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+                <td style="font-weight:700;color:var(--text-success)">$ {{ pago.valor }}</td>
+                <td>{{ pago.observacion|default:"—" }}</td>
+                <td>
+                    <div class="mod-act-group">
+                        <a href="{% url 'pagos:pago_update' pago.pk %}" class="mod-act-btn act-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                        {% if compra.estado != 'pagada' %}
+                        <a href="{% url 'pagos:pago_delete' pago.pk %}" class="mod-act-btn act-del" title="Eliminar"><i class="bi bi-trash3"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="mod-empty"><i class="bi bi-inbox"></i><p>Aún no se han registrado pagos para esta compra.</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

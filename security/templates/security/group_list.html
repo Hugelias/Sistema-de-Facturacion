@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Grupos y Permisos — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.sg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.sg-header-left{display:flex;align-items:center;gap:16px}
+.sg-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#7C3AED;box-shadow:0 2px 8px rgba(124,58,237,.14);flex-shrink:0}
+.sg-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.sg-subtitle{font-size:.825rem;color:#64748B;margin:3px 0 0}
+
+.sg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:24px}
+@media(max-width:800px){.sg-grid{grid-template-columns:1fr}}
+
+.sg-card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+.sg-card-header{padding:20px 22px 16px;display:flex;align-items:center;gap:14px;border-bottom:1.5px solid #F1F5F9}
+.sg-card-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.icon-admin{background:#FEF2F2;color:#B91C1C}
+.icon-gerente{background:#EFF6FF;color:#1D4ED8}
+.icon-compras{background:#FFF7ED;color:#C2410C}
+.icon-ventas{background:#DCFCE7;color:#15803D}
+.icon-default{background:#F5F3FF;color:#7C3AED}
+
+.sg-card-name{font-size:1.1rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.sg-card-counts{font-size:.78rem;color:#64748B;margin:3px 0 0}
+.sg-card-counts span{font-weight:600}
+
+.sg-card-body{padding:18px 22px 22px}
+
+.sg-section-title{font-size:.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+
+.sg-user-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;min-height:36px}
+.sg-user-item{display:flex;align-items:center;gap:9px;padding:8px 12px;background:#F8FAFC;border-radius:8px;border:1px solid #F1F5F9}
+.sg-user-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;flex-shrink:0}
+.av-a{background:#B91C1C}.av-g{background:#1D4ED8}.av-c{background:#C2410C}.av-v{background:#15803D}.av-d{background:#7C3AED}
+.sg-user-name{font-size:.83rem;font-weight:600;color:#0F172A;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg-user-status{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.status-on{background:#22C55E}
+.status-off{background:#EF4444}
+
+.sg-no-users{color:#CBD5E1;font-size:.82rem;padding:10px 0;text-align:center}
+
+.sg-app-label{font-size:.72rem;font-weight:700;color:#7C3AED;background:#F5F3FF;display:inline-block;padding:3px 10px;border-radius:6px;margin:14px 0 8px}
+.sg-app-label:first-child{margin-top:0}
+.sg-perms-area{border:1px solid #F1F5F9;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.sg-perm-group{border-bottom:1px solid #F1F5F9}
+.sg-perm-group:last-child{border-bottom:none}
+.sg-perm-group-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#FAFBFF;font-size:.78rem;font-weight:700;color:#374151;cursor:pointer;user-select:none}
+.sg-perm-group-header:hover{background:#F5F7FF}
+.sg-perm-badges{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px}
+.sg-perm-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.pb-view{background:#EFF6FF;color:#1D4ED8}
+.pb-add{background:#DCFCE7;color:#15803D}
+.pb-change{background:#FFF7ED;color:#C2410C}
+.pb-delete{background:#FEF2F2;color:#B91C1C}
+
+.sg-summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.sg-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.pill-blue{background:#EFF6FF;color:#1D4ED8}
+.pill-green{background:#DCFCE7;color:#15803D}
+.pill-orange{background:#FFF7ED;color:#C2410C}
+.pill-red{background:#FEF2F2;color:#B91C1C}
+.pill-purple{background:#F5F3FF;color:#7C3AED}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .sg-title,
+:root[data-bs-theme="dark"] .sg-card-name,
+:root[data-bs-theme="dark"] .sg-user-name,
+:root[data-bs-theme="dark"] .sg-perm-group-header { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .sg-subtitle,
+:root[data-bs-theme="dark"] .sg-card-counts,
+:root[data-bs-theme="dark"] .sg-section-title { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .sg-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .sg-card-header,
+:root[data-bs-theme="dark"] .sg-perm-group { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .sg-user-item { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .sg-perms-area { border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .sg-perm-group-header { background:var(--main-bg); }
+</style>
+
+{# ── HEADER ── #}
+<div class="sg-header">
+    <div class="sg-header-left">
+        <div class="sg-hdr-icon"><i class="bi bi-diagram-3-fill"></i></div>
+        <div>
+            <h2 class="sg-title">Grupos y Permisos</h2>
+            <p class="sg-subtitle">Visualiza los roles del sistema y sus accesos configurados</p>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px">
+        <a href="{% url 'security:user_list' %}" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text-primary);border:1.5px solid var(--border);border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none">
+            <i class="bi bi-people"></i> Ver Usuarios
+        </a>
+        <a href="{% url 'security:group_create' %}" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:#7C3AED;color:#fff;border:none;border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none">
+            <i class="bi bi-plus-lg"></i> Nuevo Grupo
+        </a>
+    </div>
+</div>
+
+{# ── TARJETAS POR GRUPO ── #}
+<div class="sg-grid">
+{% for group in groups %}
+{% with gname=group.name %}
+
+<div class="sg-card">
+    {# Cabecera #}
+    <div class="sg-card-header">
+        <div class="sg-card-icon
+            {% if gname == 'Administrador' %}icon-admin
+            {% elif gname == 'Gerente' %}icon-gerente
+            {% elif gname == 'Compras' %}icon-compras
+            {% elif gname == 'Ventas' %}icon-ventas
+            {% else %}icon-default{% endif %}">
+            <i class="bi bi-{% if gname == 'Administrador' %}shield-fill-check{% elif gname == 'Gerente' %}briefcase-fill{% elif gname == 'Compras' %}cart-fill{% elif gname == 'Ventas' %}receipt{% else %}people-fill{% endif %}"></i>
+        </div>
+        <div style="flex:1;min-width:0">
+            <div class="sg-card-name">{{ gname }}</div>
+            <div class="sg-card-counts">
+                <span>{{ group.user_count }}</span> usuario{{ group.user_count|pluralize }} ·
+                <span>{{ group.perm_count }}</span> permiso{{ group.perm_count|pluralize }}
+            </div>
+        </div>
+        <a href="{% url 'security:group_edit' group.pk %}" title="Editar permisos" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:#F5F3FF;color:#7C3AED;flex-shrink:0;text-decoration:none">
+            <i class="bi bi-sliders"></i>
+        </a>
+    </div>
+
+    <div class="sg-card-body">
+        {# Usuarios asignados #}
+        <div class="sg-section-title"><i class="bi bi-people"></i> Usuarios asignados</div>
+        <div class="sg-user-list">
+            {% for u in group.user_set.all|slice:":5" %}
+            <div class="sg-user-item">
+                <div class="sg-user-av
+                    {% if gname == 'Administrador' %}av-a
+                    {% elif gname == 'Gerente' %}av-g
+                    {% elif gname == 'Compras' %}av-c
+                    {% elif gname == 'Ventas' %}av-v
+                    {% else %}av-d{% endif %}">
+                    {{ u.username|first|upper }}
+                </div>
+                <span class="sg-user-name">{{ u.username }}{% if u.get_full_name %} — {{ u.get_full_name }}{% endif %}</span>
+                <span class="sg-user-status {% if u.is_active %}status-on{% else %}status-off{% endif %}" title="{% if u.is_active %}Activo{% else %}Inactivo{% endif %}"></span>
+            </div>
+            {% empty %}
+            <div class="sg-no-users"><i class="bi bi-person-dash" style="margin-right:5px"></i>Sin usuarios asignados</div>
+            {% endfor %}
+            {% if group.user_count > 5 %}
+            <div style="font-size:.78rem;color:#94A3B8;text-align:center;padding-top:4px">
+                + {{ group.user_count|add:"-5" }} más…
+            </div>
+            {% endif %}
+        </div>
+
+        {# Permisos agrupados por modelo #}
+        <div class="sg-section-title" style="margin-top:16px"><i class="bi bi-key-fill"></i> Permisos asignados</div>
+
+        {% if group.perm_sections %}
+        {% for section in group.perm_sections %}
+        <div class="sg-app-label">{{ section.app_display }}</div>
+        <div class="sg-perms-area">
+            {% for row in section.rows %}
+            <div class="sg-perm-group">
+                <div class="sg-perm-group-header">
+                    <span><i class="bi bi-table" style="margin-right:5px;color:#94A3B8"></i>{{ row.label }}</span>
+                    <span style="background:var(--border);color:var(--text-muted);padding:2px 7px;border-radius:10px;font-size:.7rem">{{ row.actions|length }}</span>
+                </div>
+                <div class="sg-perm-badges">
+                    {% for action in row.actions %}
+                    <span class="sg-perm-badge {{ action.css }}">
+                        <i class="bi bi-{{ action.icon }}"></i>
+                        {{ action.label }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#CBD5E1;font-size:.82rem;text-align:center;padding:12px 0">Sin permisos asignados</div>
+        {% endif %}
+
+        {# Resumen de acciones #}
+        <div class="sg-summary-row">
+            {% with perms_list=group.permissions.all %}
+            {% for p in perms_list %}{% if 'view_' in p.codename %}{% if forloop.first %}<span class="sg-pill pill-blue"><i class="bi bi-eye"></i> Ver</span>{% endif %}{% endif %}{% endfor %}
+            {% for p in perms_list %}{% if 'add_' in p.codename %}{% if forloop.first %}<span class="sg-pill pill-green"><i class="bi bi-plus-circle"></i> Crear</span>{% endif %}{% endif %}{% endfor %}
+            {% for p in perms_list %}{% if 'change_' in p.codename %}{% if forloop.first %}<span class="sg-pill pill-orange"><i class="bi bi-pencil"></i> Editar</span>{% endif %}{% endif %}{% endfor %}
+            {% for p in perms_list %}{% if 'delete_' in p.codename %}{% if forloop.first %}<span class="sg-pill pill-red"><i class="bi bi-trash3"></i> Eliminar</span>{% endif %}{% endif %}{% endfor %}
+            {% endwith %}
+            {% if group.has_export %}<span class="sg-pill pill-purple"><i class="bi bi-download"></i> Exportar PDF/Excel</span>{% endif %}
+        </div>
+    </div>
+</div>
+
+{% endwith %}
+{% empty %}
+<div style="grid-column:1/-1;text-align:center;padding:52px;color:#94A3B8">
+    <i class="bi bi-diagram-3" style="font-size:2.5rem;display:block;margin-bottom:10px"></i>
+    No hay grupos configurados. Ejecuta <code>python manage.py setup_security</code>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

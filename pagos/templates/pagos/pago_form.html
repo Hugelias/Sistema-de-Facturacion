@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.frm-page-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.frm-page-left{display:flex;align-items:center;gap:14px}
+.frm-page-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.frm-page-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.frm-page-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.frm-back-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-back-btn:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+.frm-wrap{max-width:640px}
+.frm-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.frm-card-hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;gap:12px}
+.frm-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.frm-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.frm-card-body{padding:24px}
+.frm-info-banner{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.frm-info-item .frm-info-label{font-size:.7rem;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.frm-info-item .frm-info-val{font-size:.95rem;font-weight:700;color:#0F172A}
+.frm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:560px){.frm-grid-2{grid-template-columns:1fr}}
+.frm-field{margin-bottom:18px}
+.frm-field:last-child{margin-bottom:0}
+.frm-label{font-size:.8rem;font-weight:600;color:#374151;display:flex;align-items:center;gap:4px;margin-bottom:7px}
+.frm-req{color:#EF4444;font-size:.85rem}
+.frm-error{font-size:.74rem;color:#EF4444;margin-top:5px;display:flex;align-items:center;gap:4px}
+.frm-global-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:.82rem;color:#B91C1C;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.frm-actions{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+.frm-btn-save{display:inline-flex;align-items:center;gap:7px;padding:11px 26px;border:none;border-radius:10px;background:#1E293B;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s;box-shadow:0 2px 8px rgba(15,23,42,.2)}
+.frm-btn-save:hover{background:#0F172A;transform:translateY(-1px)}
+.frm-btn-cancel{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border:1.5px solid #94A3B8;border-radius:10px;background:#64748B;color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-btn-cancel:hover{background:#475569}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .frm-page-title,
+:root[data-bs-theme="dark"] .frm-info-item .frm-info-val,
+:root[data-bs-theme="dark"] .frm-label { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .frm-page-sub,
+:root[data-bs-theme="dark"] .frm-back-btn { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .frm-info-banner { background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.35); }
+:root[data-bs-theme="dark"] .frm-info-item .frm-info-label { color:#60A5FA; }
+
+:root[data-bs-theme="dark"] .frm-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .frm-back-btn { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .frm-back-btn:hover { background:var(--main-bg); color:var(--text-primary); }
+</style>
+
+<div class="frm-page-hdr">
+    <div class="frm-page-left">
+        <div class="frm-page-icon"><i class="bi bi-cash-coin"></i></div>
+        <div>
+            <h2 class="frm-page-title">{{ title }}</h2>
+            <p class="frm-page-sub">Compra #{{ compra.number|default:compra.id }} — {{ compra.supplier.name }}</p>
+        </div>
+    </div>
+    <a href="{% url 'pagos:pago_historial' compra.pk %}" class="frm-back-btn">
+        <i class="bi bi-arrow-left"></i> Volver al Historial
+    </a>
+</div>
+
+<div class="frm-wrap">
+    <div class="frm-card">
+        <div class="frm-card-hdr"><i class="bi bi-cart3"></i><span>Datos del Pago</span></div>
+        <div class="frm-card-body">
+            <div class="frm-info-banner">
+                <div class="frm-info-item">
+                    <div class="frm-info-label">Total Compra</div>
+                    <div class="frm-info-val">$ {{ compra.total }}</div>
+                </div>
+                <div class="frm-info-item">
+                    <div class="frm-info-label">Saldo Pendiente</div>
+                    <div class="frm-info-val">$ {{ compra.saldo }}</div>
+                </div>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="frm-global-err">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="frm-grid-2">
+                    <div class="frm-field">
+                        <label class="frm-label" for="{{ form.fecha.id_for_label }}">Fecha de Pago <span class="frm-req">*</span></label>
+                        {{ form.fecha }}
+                        {% for e in form.fecha.errors %}
+                        <div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="frm-field">
+                        <label class="frm-label" for="{{ form.valor.id_for_label }}">Valor Pagado <span class="frm-req">*</span></label>
+                        {{ form.valor }}
+                        {% for e in form.valor.errors %}
+                        <div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.observacion.id_for_label }}">Observación</label>
+                    {{ form.observacion }}
+                    {% for e in form.observacion.errors %}
+                    <div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="frm-actions">
+                    <button type="submit" class="frm-btn-save">
+                        <i class="bi bi-floppy2"></i> Guardar Pago
+                    </button>
+                    <a href="{% url 'pagos:pago_historial' compra.pk %}" class="frm-btn-cancel">
+                        <i class="bi bi-x-lg"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

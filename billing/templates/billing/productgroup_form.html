@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Grupo — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.frm-page-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.frm-page-left{display:flex;align-items:center;gap:14px}
+.frm-page-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.frm-page-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.frm-page-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.frm-back-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-back-btn:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+.frm-wrap{max-width:640px}
+.frm-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.frm-card-hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;gap:12px}
+.frm-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.frm-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.frm-card-body{padding:24px}
+.frm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:560px){.frm-grid-2{grid-template-columns:1fr}}
+.frm-field{margin-bottom:18px}
+.frm-field:last-child{margin-bottom:0}
+.frm-label{font-size:.8rem;font-weight:600;color:#374151;display:flex;align-items:center;gap:4px;margin-bottom:7px}
+.frm-req{color:#EF4444;font-size:.85rem}
+.frm-iw{display:flex;align-items:stretch}
+.frm-iw-ta{align-items:flex-start}
+.frm-icon{
+    width:40px;min-width:40px;background:#F8FAFC;border:1.5px solid #E2E8F0;
+    border-right:none;border-radius:9px 0 0 9px;
+    display:flex;align-items:center;justify-content:center;
+    color:#94A3B8;font-size:.95rem;flex-shrink:0;
+    transition:border-color .15s,color .15s,background .15s;
+}
+.frm-iw-ta .frm-icon{align-items:flex-start;padding-top:11px}
+.frm-iw:focus-within .frm-icon{border-color:#2563EB;color:#2563EB;background:#EFF6FF}
+.frm-iw input,.frm-iw select,.frm-iw textarea{
+    flex:1;min-width:0;
+    border:1.5px solid #E2E8F0;border-left:none;border-radius:0 9px 9px 0;
+    padding:10px 12px;font-size:.875rem;color:#0F172A;
+    outline:none;background:#fff;font-family:inherit;
+    transition:border-color .15s,box-shadow .15s;
+}
+.frm-iw input:focus,.frm-iw select:focus,.frm-iw textarea:focus{
+    border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.frm-iw textarea{resize:vertical}
+.frm-iw input::placeholder,.frm-iw textarea::placeholder{color:#CBD5E1}
+.frm-error{font-size:.74rem;color:#EF4444;margin-top:5px;display:flex;align-items:center;gap:4px}
+.frm-global-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:.82rem;color:#B91C1C;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.frm-actions{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+.frm-btn-save{display:inline-flex;align-items:center;gap:7px;padding:11px 26px;border:none;border-radius:10px;background:#1E293B;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s;box-shadow:0 2px 8px rgba(15,23,42,.2)}
+.frm-btn-save:hover{background:#0F172A;transform:translateY(-1px)}
+.frm-btn-cancel{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border:1.5px solid #94A3B8;border-radius:10px;background:#64748B;color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-btn-cancel:hover{background:#475569}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .frm-page-title,
+:root[data-bs-theme="dark"] .frm-label,
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .frm-iw textarea { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .frm-page-sub,
+:root[data-bs-theme="dark"] .frm-back-btn,
+:root[data-bs-theme="dark"] .frm-icon { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .frm-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .frm-back-btn { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .frm-back-btn:hover { background:var(--main-bg); color:var(--text-primary); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .frm-icon { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .frm-iw textarea { background:var(--main-bg); border-color:var(--border); }
+</style>
+
+<div class="frm-page-hdr">
+    <div class="frm-page-left">
+        <div class="frm-page-icon"><i class="bi bi-collection-fill"></i></div>
+        <div>
+            <h2 class="frm-page-title">{% if object %}Editar{% else %}Nuevo{% endif %} Grupo de Productos</h2>
+            <p class="frm-page-sub">Completa los campos para {% if object %}actualizar el{% else %}crear un nuevo{% endif %} grupo de productos.</p>
+        </div>
+    </div>
+    <a href="{% url 'billing:productgroup_list' %}" class="frm-back-btn">
+        <i class="bi bi-arrow-left"></i> Volver a Grupos
+    </a>
+</div>
+
+<div class="frm-wrap">
+    <div class="frm-card">
+        <div class="frm-card-hdr">
+            <i class="bi bi-folder2-open"></i>
+            <span>Información del Grupo</span>
+        </div>
+        <div class="frm-card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="frm-global-err">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Nombre del Grupo -->
+                <div class="frm-field">
+                    <label class="frm-label" for="{{ form.name.id_for_label }}">
+                        Nombre del Grupo <span class="frm-req">*</span>
+                    </label>
+                    <div class="frm-iw">
+                        <div class="frm-icon"><i class="bi bi-folder2"></i></div>
+                        <input type="text"
+                               name="{{ form.name.html_name }}"
+                               id="{{ form.name.id_for_label }}"
+                               value="{{ form.name.value|default:'' }}"
+                               placeholder="Ingrese el nombre del grupo"
+                               {% if form.name.field.required %}required{% endif %}
+                               {% if form.name.errors %}style="border-color:#EF4444"{% endif %}>
+                    </div>
+                    {% for e in form.name.errors %}
+                    <div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Descripción + Estado -->
+                <div class="frm-grid-2">
+                    <div class="frm-field" style="margin-bottom:0">
+                        <label class="frm-label" for="{{ form.description.id_for_label }}">Descripción</label>
+                        <div class="frm-iw frm-iw-ta">
+                            <div class="frm-icon" style="min-height:90px"><i class="bi bi-text-left"></i></div>
+                            <textarea name="{{ form.description.html_name }}"
+                                      id="{{ form.description.id_for_label }}"
+                                      rows="4"
+                                      placeholder="Ingrese una descripción (opcional)"
+                                      style="border-radius:0 9px 9px 0">{{ form.description.value|default:'' }}</textarea>
+                        </div>
+                        {% for e in form.description.errors %}
+                        <div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="frm-field" style="margin-bottom:0">
+                        <label class="frm-label" for="{{ form.is_active.id_for_label }}">Estado</label>
+                        <div class="frm-iw">
+                            <div class="frm-icon"><i class="bi bi-check-circle"></i></div>
+                            {{ form.is_active }}
+                        </div>
+                        {% for e in form.is_active.errors %}
+                        <div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="frm-actions">
+                    <button type="submit" class="frm-btn-save">
+                        <i class="bi bi-floppy2"></i> Guardar Grupo
+                    </button>
+                    <a href="{% url 'billing:productgroup_list' %}" class="frm-btn-cancel">
+                        <i class="bi bi-x-lg"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

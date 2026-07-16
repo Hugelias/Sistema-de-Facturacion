@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+{% block title %}Facturación — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+/* ── Shared Module List ─────────────────────────────────────────── */
+.mod-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.mod-header-left{display:flex;align-items:center;gap:16px}
+.mod-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.mod-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.mod-subtitle{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.btn-mod-new{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:#2563EB;color:#fff;border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.btn-mod-new:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+
+.mod-filter-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:20px 22px 18px;margin-bottom:16px}
+.mod-filter-title{font-size:.95rem;font-weight:700;color:#0F172A;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.mod-filter-title i{color:#2563EB}
+.mod-fi-grid{display:grid;gap:14px;margin-bottom:14px}
+.mod-fi-g4{grid-template-columns:repeat(4,1fr)}
+.mod-fi-g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.mod-fi-g4,.mod-fi-g3{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.mod-fi-g4,.mod-fi-g3{grid-template-columns:1fr}}
+.mod-fi-label{font-size:.775rem;font-weight:600;color:#374151;margin-bottom:6px;display:block}
+.mod-fi-wrap{position:relative}
+.mod-fi-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.85rem;pointer-events:none;z-index:1}
+.mod-fi-input,.mod-fi-select{width:100%;padding:9px 12px 9px 34px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff}
+.mod-fi-input::placeholder{color:#CBD5E1}
+.mod-fi-input:focus,.mod-fi-select:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.mod-fi-pfx-wrap{position:relative}
+.mod-fi-pfx{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#64748B;font-size:.8rem;font-weight:700;pointer-events:none;z-index:1}
+.mod-fi-pfx-input{width:100%;padding:9px 12px 9px 24px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff}
+.mod-fi-pfx-input::placeholder{color:#CBD5E1}
+.mod-fi-pfx-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.mod-fi-btn-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:4px}
+.mod-fi-btn-left{display:flex;gap:8px}
+.btn-mod-search{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;background:#2563EB;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-mod-search:hover{background:#1D4ED8}
+.btn-mod-clear{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s}
+.btn-mod-clear:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.btn-mod-adv{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:1.5px solid #BFDBFE;border-radius:9px;background:#EFF6FF;color:#2563EB;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-mod-adv:hover{background:#DBEAFE}
+.btn-mod-pdf{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:9px;background:#EF4444;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-mod-pdf:hover{background:#DC2626}
+.btn-mod-excel{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:9px;background:#10B981;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-mod-excel:hover{background:#059669}
+.mod-fi-btn-right{display:flex;gap:8px;flex-wrap:wrap}
+.mod-adv-row{display:none;margin-top:14px}
+.mod-adv-row.open{display:grid}
+
+.mod-table-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+.mod-table{width:100%;border-collapse:collapse}
+.mod-table thead th{padding:11px 16px;font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;white-space:nowrap;background:#fff;text-align:left}
+.mod-table thead th:first-child,.mod-table tbody td:first-child{padding-left:20px}
+.mod-table tbody td{padding:13px 16px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.mod-table tbody tr:last-child td{border-bottom:none}
+.mod-table tbody tr:hover td{background:#FAFBFF}
+.mod-row-num{font-size:.8rem;color:#94A3B8;font-weight:500;width:28px}
+
+.inv-number{display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:7px;padding:4px 10px;font-size:.8rem;font-weight:700;color:#0F172A;font-family:'SF Mono','Fira Code',monospace,sans-serif;letter-spacing:.5px}
+
+.mod-status{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.mod-st-green{background:#DCFCE7;color:#15803D}
+.mod-st-red{background:#FEE2E2;color:#B91C1C}
+.mod-st-amber{background:#FEF3C7;color:#B45309}
+.mod-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.mod-st-green .mod-sdot{background:#22C55E}
+.mod-st-red .mod-sdot{background:#EF4444}
+.mod-st-amber .mod-sdot{background:#F59E0B}
+
+.mod-pago-badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.mod-pago-contado{background:#F1F5F9;color:#475569}
+.mod-pago-credito{background:#DBEAFE;color:#1D4ED8}
+
+.mod-act-group{display:flex;align-items:center;gap:5px}
+.mod-act-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s;flex-shrink:0}
+.act-view{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-view:hover{background:#EFF6FF;color:#1D4ED8}
+.act-edit{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-edit:hover{background:#EFF6FF;color:#1D4ED8}
+.act-del{border-color:#FECACA;color:#EF4444;background:#fff}
+.act-del:hover{background:#FEF2F2;color:#DC2626}
+
+.mod-empty{text-align:center;padding:52px 24px;color:#94A3B8}
+.mod-empty i{font-size:2.5rem;display:block;margin-bottom:10px;color:#CBD5E1}
+.mod-empty p{font-size:.9rem;margin:0}
+
+.mod-table-footer{display:flex;justify-content:space-between;align-items:center;padding:13px 20px;border-top:1px solid #F1F5F9;flex-wrap:wrap;gap:10px}
+.mod-count{font-size:.8rem;color:#64748B}
+.mod-pagination{display:flex;align-items:center;gap:5px}
+.mod-page-btn{width:32px;height:32px;border:1.5px solid #E2E8F0;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:#64748B;text-decoration:none;transition:background .15s;font-family:inherit;background:#fff}
+.mod-page-btn:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.mod-page-btn.pg-active{background:#2563EB;border-color:#2563EB;color:#fff}
+.mod-page-btn.pg-disabled{opacity:.35;pointer-events:none}
+.mod-page-btn.pg-ellipsis{border-color:transparent;background:transparent;pointer-events:none}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .mod-title,
+:root[data-bs-theme="dark"] .mod-filter-title,
+:root[data-bs-theme="dark"] .mod-fi-label,
+:root[data-bs-theme="dark"] .mod-fi-input,
+:root[data-bs-theme="dark"] .mod-fi-select,
+:root[data-bs-theme="dark"] .mod-fi-pfx-input,
+:root[data-bs-theme="dark"] .inv-number,
+:root[data-bs-theme="dark"] .mod-table tbody td { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .mod-subtitle,
+:root[data-bs-theme="dark"] .mod-fi-icon,
+:root[data-bs-theme="dark"] .mod-fi-pfx,
+:root[data-bs-theme="dark"] .btn-mod-clear,
+:root[data-bs-theme="dark"] .mod-table thead th,
+:root[data-bs-theme="dark"] .mod-row-num,
+:root[data-bs-theme="dark"] .mod-pago-contado,
+:root[data-bs-theme="dark"] .mod-empty,
+:root[data-bs-theme="dark"] .mod-count,
+:root[data-bs-theme="dark"] .mod-page-btn { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .mod-filter-card,
+:root[data-bs-theme="dark"] .mod-table-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .act-view,
+:root[data-bs-theme="dark"] .act-edit,
+:root[data-bs-theme="dark"] .act-del { background:var(--surface); }
+
+:root[data-bs-theme="dark"] .mod-pago-contado { background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .mod-fi-input,
+:root[data-bs-theme="dark"] .mod-fi-select,
+:root[data-bs-theme="dark"] .mod-fi-pfx-input,
+:root[data-bs-theme="dark"] .btn-mod-clear,
+:root[data-bs-theme="dark"] .mod-page-btn,
+:root[data-bs-theme="dark"] .inv-number { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .mod-table thead th { background:var(--surface); border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .mod-table tbody td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .mod-table-footer { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .mod-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+:root[data-bs-theme="dark"] .btn-mod-clear:hover,
+:root[data-bs-theme="dark"] .mod-page-btn:hover { background:rgba(255,255,255,.03); color:var(--text-primary); }
+</style>
+
+{# HEADER #}
+<div class="mod-header">
+    <div class="mod-header-left">
+        <div class="mod-hdr-icon"><i class="bi bi-receipt"></i></div>
+        <div>
+            <h2 class="mod-title">Facturación</h2>
+            <p class="mod-subtitle">Gestiona y consulta tus facturas</p>
+        </div>
+    </div>
+    <a href="{% url 'billing:invoice_create' %}" class="btn-mod-new">
+        <i class="bi bi-plus-circle"></i> Nueva Factura
+    </a>
+</div>
+
+{# FILTER CARD #}
+<div class="mod-filter-card">
+    <div class="mod-filter-title"><i class="bi bi-funnel-fill"></i> Búsqueda y Filtros</div>
+    <form method="get" id="mod-filter-form">
+        {# Row 1: Cliente · Fecha desde · Fecha hasta · Estado #}
+        <div class="mod-fi-grid mod-fi-g4">
+            <div>
+                <label class="mod-fi-label">Cliente</label>
+                <div class="mod-fi-wrap">
+                    <i class="bi bi-person mod-fi-icon"></i>
+                    <input type="text" name="client" class="mod-fi-input" placeholder="Buscar cliente..."
+                           value="{{ params.client|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="mod-fi-label">Fecha desde</label>
+                <div class="mod-fi-wrap">
+                    <i class="bi bi-calendar3 mod-fi-icon"></i>
+                    <input type="date" name="date_from" class="mod-fi-input" value="{{ params.date_from|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="mod-fi-label">Fecha hasta</label>
+                <div class="mod-fi-wrap">
+                    <i class="bi bi-calendar3 mod-fi-icon"></i>
+                    <input type="date" name="date_to" class="mod-fi-input" value="{{ params.date_to|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="mod-fi-label">Estado</label>
+                <div class="mod-fi-wrap">
+                    <i class="bi bi-toggle-on mod-fi-icon"></i>
+                    <select name="status" class="mod-fi-select">
+                        <option value="">— Todos —</option>
+                        <option value="1" {% if params.status == '1' %}selected{% endif %}>Activa</option>
+                        <option value="0" {% if params.status == '0' %}selected{% endif %}>Anulada</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {# Row 2: Advanced (N° Factura · Total mín · Total máx) #}
+        <div class="mod-adv-row mod-fi-g3 {% if params.number or params.total_min or params.total_max %}open{% endif %}" id="adv-row">
+            <div>
+                <label class="mod-fi-label">Número de factura</label>
+                <div class="mod-fi-wrap">
+                    <i class="bi bi-hash mod-fi-icon"></i>
+                    <input type="number" name="number" class="mod-fi-input" placeholder="Buscar número..."
+                           value="{{ params.number|default:'' }}" min="1">
+                </div>
+            </div>
+            <div>
+                <label class="mod-fi-label">Total mínimo</label>
+                <div class="mod-fi-pfx-wrap">
+                    <span class="mod-fi-pfx">$</span>
+                    <input type="number" name="total_min" class="mod-fi-pfx-input" placeholder="0.00"
+                           step="0.01" min="0" value="{{ params.total_min|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="mod-fi-label">Total máximo</label>
+                <div class="mod-fi-pfx-wrap">
+                    <span class="mod-fi-pfx">$</span>
+                    <input type="number" name="total_max" class="mod-fi-pfx-input" placeholder="9999.99"
+                           step="0.01" min="0" value="{{ params.total_max|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="mod-fi-btn-row">
+            <div class="mod-fi-btn-left">
+                <button type="submit" class="btn-mod-search"><i class="bi bi-search"></i> Buscar</button>
+                <a href="{% url 'billing:invoice_list' %}" class="btn-mod-clear">
+                    <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+                </a>
+            </div>
+            <div class="mod-fi-btn-right">
+                <button type="button" class="btn-mod-adv" id="adv-toggle">
+                    <i class="bi bi-sliders" id="adv-icon"></i>
+                    <span id="adv-label">Filtros avanzados</span>
+                </button>
+                {% if perms.billing.can_export %}
+                <button type="button" class="btn-mod-pdf"
+                        data-bs-toggle="modal" data-bs-target="#exportModal" data-export="pdf">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> Exportar PDF
+                </button>
+                <button type="button" class="btn-mod-excel"
+                        data-bs-toggle="modal" data-bs-target="#exportModal" data-export="excel">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+{# TABLE CARD #}
+<div class="mod-table-card">
+    <table class="mod-table">
+        <thead>
+            <tr>
+                <th style="width:36px">#</th>
+                <th>Número</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th style="text-align:right">Total</th>
+                <th>Tipo de Pago</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inv in invoices %}
+            <tr>
+                <td class="mod-row-num">
+                    {% if is_paginated %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                </td>
+                <td>
+                    <span class="inv-number">
+                        FAC-{% if inv.number %}{{ inv.number|stringformat:"06d" }}{% else %}??????{% endif %}
+                    </span>
+                </td>
+                <td style="font-weight:500;color:var(--text-primary)">{{ inv.customer.full_name }}</td>
+                <td style="color:var(--text-muted);font-size:.82rem">{{ inv.invoice_date|date:"d/m/Y H:i" }}</td>
+                <td style="text-align:right;font-weight:700;color:var(--text-primary)">$ {{ inv.total }}</td>
+                <td>
+                    {% if inv.tipo_pago == 'credito' %}
+                    <span class="mod-pago-badge mod-pago-credito"><i class="bi bi-credit-card"></i> Crédito</span>
+                    {% else %}
+                    <span class="mod-pago-badge mod-pago-contado"><i class="bi bi-cash"></i> Contado</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not inv.is_active %}
+                    <span class="mod-status mod-st-red"><span class="mod-sdot"></span> Anulada</span>
+                    {% elif inv.estado == 'pagada' %}
+                    <span class="mod-status mod-st-green"><span class="mod-sdot"></span> Pagada</span>
+                    {% else %}
+                    <span class="mod-status mod-st-amber"><span class="mod-sdot"></span> Pendiente</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="mod-act-group">
+                        <a href="{% url 'billing:invoice_detail' inv.pk %}" class="mod-act-btn act-view" title="Ver"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'billing:invoice_update' inv.pk %}" class="mod-act-btn act-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'billing:invoice_delete' inv.pk %}" class="mod-act-btn act-del" title="Anular"><i class="bi bi-trash3"></i></a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8"><div class="mod-empty"><i class="bi bi-receipt"></i><p>No se encontraron facturas.</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mod-table-footer">
+        <div class="mod-count">
+            {% if is_paginated %}
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} factura{{ paginator.count|pluralize }}
+            {% else %}
+                {{ invoices|length }} factura{{ invoices|length|pluralize }}
+            {% endif %}
+        </div>
+        {% if is_paginated %}
+        <div class="mod-pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.previous_page_number }}" class="mod-page-btn"><i class="bi bi-chevron-left"></i></a>
+            {% else %}
+            <span class="mod-page-btn pg-disabled"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+            {% for num in elided_page_range %}
+                {% if num == paginator.ELLIPSIS %}<span class="mod-page-btn pg-ellipsis">…</span>
+                {% elif num == page_obj.number %}<span class="mod-page-btn pg-active">{{ num }}</span>
+                {% else %}<a href="?{{ filter_qs_pfx }}page={{ num }}" class="mod-page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.next_page_number }}" class="mod-page-btn"><i class="bi bi-chevron-right"></i></a>
+            {% else %}
+            <span class="mod-page-btn pg-disabled"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function(){
+    var btn   = document.getElementById('adv-toggle');
+    var row   = document.getElementById('adv-row');
+    var label = document.getElementById('adv-label');
+    var icon  = document.getElementById('adv-icon');
+    function update(){
+        var open = row.classList.contains('open');
+        label.textContent = open ? 'Ocultar avanzados' : 'Filtros avanzados';
+        icon.className    = open ? 'bi bi-chevron-up'  : 'bi bi-sliders';
+    }
+    update();
+    btn.addEventListener('click', function(){
+        row.classList.toggle('open');
+        update();
+    });
+})();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.field-card{border:2px solid #dee2e6;border-radius:.5rem;padding:.5rem .75rem;cursor:pointer;transition:border-color .15s,background .15s,color .15s,box-shadow .15s;display:flex;align-items:center;gap:.55rem;font-size:.85rem;user-select:none;background:#fff;width:100%}
+.field-card:hover{border-color:#86b7fe;background:#f0f6ff;box-shadow:0 0 0 3px rgba(13,110,253,.1)}
+.field-card.checked{border-color:#0d6efd;background:#e7f1ff;color:#0a58ca;font-weight:600}
+.field-card .field-icon{font-size:1rem;opacity:.6}
+.field-card.checked .field-icon{opacity:1;color:#0d6efd}
+.field-card .chk-icon{margin-left:auto;font-size:.85rem;opacity:0;transition:opacity .15s}
+.field-card.checked .chk-icon{opacity:1;color:#0d6efd}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .field-card { background:var(--surface); border-color:var(--border); }
+</style>
+
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            <div class="modal-header text-white" id="export-modal-header"
+                 style="background:linear-gradient(135deg,#343a40 0%,#495057 100%);">
+                <h5 class="modal-title fw-bold" id="exportModalLabel">
+                    <i class="bi bi-sliders me-2" id="export-modal-icon"></i>
+                    <span id="export-modal-title">Configurar Exportación</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                    Elige los campos que quieres que aparezcan en el documento:
+                </p>
+                <div class="row g-2" id="col-checks"></div>
+                <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="sel-all"><i class="bi bi-check-all"></i> Todos</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="sel-none"><i class="bi bi-x-lg"></i> Ninguno</button>
+                    <span class="ms-auto small text-muted"><span id="sel-count">0</span> seleccionados</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-do-export">
+                    <i class="bi bi-download me-1"></i> Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:11000;">
+    <div id="export-toast" class="toast align-items-center border-0 text-white bg-success"
+         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+        <div class="d-flex">
+            <div class="toast-body" style="font-size:.95rem;">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span id="export-toast-msg">¡Documento exportado exitosamente!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const LABELS = {{ export_field_labels_json|safe }};
+    const ICONS  = {
+        'N° Factura': 'bi-hash',
+        'Cliente':    'bi-person-fill',
+        'Fecha':      'bi-calendar3',
+        'Subtotal':   'bi-cash',
+        'IVA (15%)':  'bi-percent',
+        'Total':      'bi-currency-dollar',
+        'Tipo de Pago': 'bi-credit-card',
+        'Estado':     'bi-toggle-on',
+    };
+
+    let exportFormat = 'pdf';
+    const container = document.getElementById('col-checks');
+    const selCount  = document.getElementById('sel-count');
+    const exportBtn = document.getElementById('btn-do-export');
+    const hdr       = document.getElementById('export-modal-header');
+    const hdrTitle  = document.getElementById('export-modal-title');
+    const hdrIcon   = document.getElementById('export-modal-icon');
+
+    LABELS.forEach(function (label) {
+        const icon = ICONS[label] || 'bi-layout-text-window';
+        const col  = document.createElement('div');
+        col.className = 'col-6';
+        col.innerHTML =
+            '<div class="field-card checked" data-label="' + label + '">' +
+                '<i class="bi ' + icon + ' field-icon"></i>' +
+                '<span>' + label + '</span>' +
+                '<i class="bi bi-check-circle-fill chk-icon"></i>' +
+            '</div>';
+        container.appendChild(col);
+        col.querySelector('.field-card').addEventListener('click', function () {
+            this.classList.toggle('checked');
+            updateCount();
+        });
+    });
+
+    function updateCount() {
+        const n = container.querySelectorAll('.field-card.checked').length;
+        selCount.textContent = n;
+        exportBtn.disabled = (n === 0);
+    }
+    updateCount();
+
+    document.getElementById('sel-all').addEventListener('click', function () {
+        container.querySelectorAll('.field-card').forEach(function (c) { c.classList.add('checked'); });
+        updateCount();
+    });
+    document.getElementById('sel-none').addEventListener('click', function () {
+        container.querySelectorAll('.field-card').forEach(function (c) { c.classList.remove('checked'); });
+        updateCount();
+    });
+
+    document.querySelectorAll('[data-export]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            exportFormat = this.dataset.export;
+            if (exportFormat === 'pdf') {
+                hdr.style.background = 'linear-gradient(135deg,#b02a37 0%,#dc3545 100%)';
+                exportBtn.className  = 'btn btn-danger';
+                exportBtn.innerHTML  = '<i class="bi bi-file-earmark-pdf-fill me-1"></i>Exportar PDF';
+                hdrIcon.className    = 'bi bi-file-earmark-pdf-fill me-2';
+                hdrTitle.textContent = 'Exportar a PDF';
+            } else {
+                hdr.style.background = 'linear-gradient(135deg,#146c43 0%,#198754 100%)';
+                exportBtn.className  = 'btn btn-success';
+                exportBtn.innerHTML  = '<i class="bi bi-file-earmark-excel-fill me-1"></i>Exportar Excel';
+                hdrIcon.className    = 'bi bi-file-earmark-excel-fill me-2';
+                hdrTitle.textContent = 'Exportar a Excel';
+            }
+        });
+    });
+
+    exportBtn.addEventListener('click', function () {
+        const selected = Array.from(container.querySelectorAll('.field-card.checked'))
+                              .map(function (c) { return c.dataset.label; });
+        if (selected.length === 0) return;
+
+        const form    = document.getElementById('mod-filter-form');
+        const modal   = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+        const toastEl = document.getElementById('export-toast');
+        const toastMsg= document.getElementById('export-toast-msg');
+
+        form.querySelectorAll('.export-hidden').forEach(function (el) { el.remove(); });
+
+        var fmtEl = document.createElement('input');
+        fmtEl.type = 'hidden'; fmtEl.name = 'export';
+        fmtEl.value = exportFormat; fmtEl.className = 'export-hidden';
+        form.appendChild(fmtEl);
+
+        selected.forEach(function (label) {
+            var colEl = document.createElement('input');
+            colEl.type = 'hidden'; colEl.name = 'col';
+            colEl.value = label; colEl.className = 'export-hidden';
+            form.appendChild(colEl);
+        });
+
+        modal.hide();
+        setTimeout(function () {
+            form.submit();
+            toastEl.className = 'toast align-items-center border-0 text-white ' +
+                (exportFormat === 'pdf' ? 'bg-danger' : 'bg-success');
+            toastMsg.textContent = exportFormat === 'pdf'
+                ? '¡PDF exportado exitosamente!'
+                : '¡Excel exportado exitosamente!';
+            new bootstrap.Toast(toastEl).show();
+        }, 350);
+    });
+})();
+</script>
+{% endblock %}

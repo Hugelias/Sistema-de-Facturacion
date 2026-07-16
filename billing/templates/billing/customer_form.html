@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Editar Cliente{% else %}Nuevo Cliente{% endif %} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+/* ── Customer form card ─────────────────────────────────────────────── */
+.cf-wrap { max-width: 860px; margin: 0 auto; }
+
+.cf-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(15,23,42,.09), 0 1px 4px rgba(15,23,42,.06);
+    overflow: hidden;
+}
+
+/* Header */
+.cf-header {
+    background: #1E293B;
+    color: #fff;
+    padding: 16px 24px;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: .2px;
+}
+.cf-header i { font-size: 1.1rem; }
+
+/* Body */
+.cf-body { padding: 18px 24px 26px; }
+
+/* Two-column grid */
+.cf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+@media(max-width: 640px) { .cf-grid { grid-template-columns: 1fr; } }
+
+/* Field group */
+.cf-field { display: flex; flex-direction: column; }
+.cf-label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.cf-req { color: #EF4444; font-size: .85rem; line-height: 1; }
+
+/* Input wrapper */
+.cf-input-wrap { position: relative; }
+.cf-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+    font-size: .95rem;
+    pointer-events: none;
+    z-index: 1;
+}
+.cf-icon.top-align { top: 14px; transform: none; }
+
+.cf-input {
+    width: 100%;
+    padding: 10px 13px 10px 37px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    font-size: .865rem;
+    color: #0F172A;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    background: #fff;
+}
+.cf-input::placeholder { color: #CBD5E1; }
+.cf-input:focus { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.cf-input.is-err { border-color: #EF4444; }
+.cf-input.is-err:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+
+/* Textarea */
+.cf-textarea {
+    resize: vertical;
+    min-height: 88px;
+    padding-top: 12px;
+    line-height: 1.5;
+}
+
+/* Error message */
+.cf-err-msg {
+    font-size: .74rem;
+    color: #EF4444;
+    margin-top: 5px;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    min-height: 0;
+}
+.cf-err-msg:empty { display: none; }
+.cf-err-msg i { font-size: .8rem; flex-shrink: 0; margin-top: 1px; }
+
+/* Numeric-only warning pill */
+.num-warn {
+    display: none;
+    font-size: .73rem;
+    color: #B45309;
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    border-radius: 6px;
+    padding: 3px 8px;
+    margin-top: 4px;
+    align-items: center;
+    gap: 4px;
+}
+.num-warn.show { display: flex; }
+
+/* ── Active section ── */
+.cf-active-section {
+    border-top: 1px solid #F1F5F9;
+    padding-top: 16px;
+    margin-bottom: 22px;
+}
+.cf-active-label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 9px;
+}
+.cf-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+.cf-check-row input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #2563EB;
+    cursor: pointer;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.cf-check-row label {
+    font-size: .84rem;
+    color: #64748B;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* ── Buttons ── */
+.cf-actions { display: flex; align-items: center; gap: 10px; }
+
+.btn-cf-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    background: #1E293B;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: .875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+}
+.btn-cf-save:hover { background: #0F172A; transform: translateY(-1px); }
+.btn-cf-save:active { transform: translateY(0); }
+
+.btn-cf-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    background: #64748B;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: .875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, transform .1s;
+}
+.btn-cf-cancel:hover { background: #475569; color: #fff; transform: translateY(-1px); }
+.btn-cf-cancel:active { transform: translateY(0); }
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .cf-label,
+:root[data-bs-theme="dark"] .cf-active-label,
+:root[data-bs-theme="dark"] .cf-input { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .cf-icon,
+:root[data-bs-theme="dark"] .cf-check-row label { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .cf-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .cf-input { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .cf-active-section { border-top-color:var(--border); }
+</style>
+
+<div class="cf-wrap">
+<div class="cf-card">
+
+    <!-- Header -->
+    <div class="cf-header">
+        <i class="bi bi-{% if object %}pencil-square{% else %}person-plus{% endif %}"></i>
+        {% if object %}Editar Cliente{% else %}Nuevo Cliente{% endif %}
+    </div>
+
+    <!-- Form body -->
+    <div class="cf-body">
+        <form method="post" id="cfForm" novalidate autocomplete="off">
+            {% csrf_token %}
+
+            <div class="cf-grid">
+
+                <!-- Cédula / RUC -->
+                <div class="cf-field">
+                    <div class="cf-label">
+                        <i class="bi bi-person-badge" style="color:#2563EB;font-size:.85rem"></i>
+                        Cédula / RUC <span class="cf-req">*</span>
+                    </div>
+                    <div class="cf-input-wrap">
+                        <i class="bi bi-person-badge cf-icon"></i>
+                        <input type="text" name="dni" id="id_dni"
+                               value="{{ form.dni.value|default:'' }}"
+                               placeholder="Ej: 1712345678"
+                               maxlength="13"
+                               inputmode="numeric"
+                               class="cf-input {% if form.dni.errors %}is-err{% endif %}"
+                               autocomplete="off">
+                    </div>
+                    <div class="num-warn" id="dni-num-warn">
+                        <i class="bi bi-exclamation-triangle"></i> Solo se permiten números
+                    </div>
+                    <div class="cf-err-msg" id="dni-err">
+                        {% if form.dni.errors %}<i class="bi bi-x-circle"></i> {{ form.dni.errors.0 }}{% endif %}
+                    </div>
+                </div>
+
+                <!-- Apellidos -->
+                <div class="cf-field">
+                    <div class="cf-label">
+                        <i class="bi bi-person" style="color:#2563EB;font-size:.85rem"></i>
+                        Apellidos <span class="cf-req">*</span>
+                    </div>
+                    <div class="cf-input-wrap">
+                        <i class="bi bi-person cf-icon"></i>
+                        <input type="text" name="last_name" id="id_last_name"
+                               value="{{ form.last_name.value|default:'' }}"
+                               placeholder="Apellidos del cliente"
+                               class="cf-input {% if form.last_name.errors %}is-err{% endif %}">
+                    </div>
+                    <div class="cf-err-msg" id="last-name-err">
+                        {% if form.last_name.errors %}<i class="bi bi-x-circle"></i> {{ form.last_name.errors.0 }}{% endif %}
+                    </div>
+                </div>
+
+                <!-- Nombres -->
+                <div class="cf-field">
+                    <div class="cf-label">
+                        <i class="bi bi-person" style="color:#2563EB;font-size:.85rem"></i>
+                        Nombres <span class="cf-req">*</span>
+                    </div>
+                    <div class="cf-input-wrap">
+                        <i class="bi bi-person cf-icon"></i>
+                        <input type="text" name="first_name" id="id_first_name"
+                               value="{{ form.first_name.value|default:'' }}"
+                               placeholder="Nombres del cliente"
+                               class="cf-input {% if form.first_name.errors %}is-err{% endif %}">
+                    </div>
+                    <div class="cf-err-msg" id="first-name-err">
+                        {% if form.first_name.errors %}<i class="bi bi-x-circle"></i> {{ form.first_name.errors.0 }}{% endif %}
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="cf-field">
+                    <div class="cf-label">
+                        <i class="bi bi-envelope" style="color:#2563EB;font-size:.85rem"></i>
+                        Email
+                    </div>
+                    <div class="cf-input-wrap">
+                        <i class="bi bi-envelope cf-icon"></i>
+                        <input type="email" name="email" id="id_email"
+                               value="{{ form.email.value|default:'' }}"
+                               placeholder="correo@ejemplo.com"
+                               class="cf-input {% if form.email.errors %}is-err{% endif %}">
+                    </div>
+                    <div class="cf-err-msg" id="email-err">
+                        {% if form.email.errors %}<i class="bi bi-x-circle"></i> {{ form.email.errors.0 }}{% endif %}
+                    </div>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="cf-field">
+                    <div class="cf-label">
+                        <i class="bi bi-telephone" style="color:#2563EB;font-size:.85rem"></i>
+                        Teléfono <span class="cf-req">*</span>
+                    </div>
+                    <div class="cf-input-wrap">
+                        <i class="bi bi-telephone cf-icon"></i>
+                        <input type="text" name="phone" id="id_phone"
+                               value="{{ form.phone.value|default:'' }}"
+                               placeholder="Ej: 0987654321"
+                               maxlength="15"
+                               inputmode="numeric"
+                               class="cf-input {% if form.phone.errors %}is-err{% endif %}"
+                               autocomplete="off">
+                    </div>
+                    <div class="num-warn" id="phone-num-warn">
+                        <i class="bi bi-exclamation-triangle"></i> Solo se permiten números
+                    </div>
+                    <div class="cf-err-msg" id="phone-err">
+                        {% if form.phone.errors %}<i class="bi bi-x-circle"></i> {{ form.phone.errors.0 }}{% endif %}
+                    </div>
+                </div>
+
+                <!-- Ciudad -->
+                <div class="cf-field">
+                    <div class="cf-label">
+                        <i class="bi bi-geo-alt" style="color:#2563EB;font-size:.85rem"></i>
+                        Ciudad
+                    </div>
+                    <div class="cf-input-wrap">
+                        <i class="bi bi-geo-alt cf-icon"></i>
+                        <input type="text" name="city" id="id_city"
+                               value="{{ form.city.value|default:'' }}"
+                               placeholder="Ej: Quito"
+                               class="cf-input {% if form.city.errors %}is-err{% endif %}">
+                    </div>
+                    <div class="cf-err-msg">
+                        {% if form.city.errors %}<i class="bi bi-x-circle"></i> {{ form.city.errors.0 }}{% endif %}
+                    </div>
+                </div>
+
+            </div><!-- /cf-grid -->
+
+            <!-- Dirección (ancho completo) -->
+            <div class="cf-field" style="margin-bottom:20px">
+                <div class="cf-label">
+                    <i class="bi bi-map" style="color:#2563EB;font-size:.85rem"></i>
+                    Dirección
+                </div>
+                <div class="cf-input-wrap">
+                    <i class="bi bi-map cf-icon top-align"></i>
+                    <textarea name="address" id="id_address"
+                              placeholder="Dirección del cliente..."
+                              class="cf-input cf-textarea {% if form.address.errors %}is-err{% endif %}">{{ form.address.value|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Activo -->
+            <div class="cf-active-section">
+                <div class="cf-active-label">Activo</div>
+                <label class="cf-check-row">
+                    <input type="checkbox" name="is_active" id="id_is_active"
+                           {% if form.is_active.value %}checked{% endif %}>
+                    <span>El cliente estará activo en el sistema</span>
+                </label>
+            </div>
+
+            <!-- Buttons -->
+            <div class="cf-actions">
+                <button type="submit" class="btn-cf-save" id="cfSaveBtn">
+                    <i class="bi bi-floppy"></i> Guardar
+                </button>
+                <a href="{% url 'billing:customer_list' %}" class="btn-cf-cancel">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div><!-- /cf-body -->
+</div><!-- /cf-card -->
+</div><!-- /cf-wrap -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    /* ── Ecuadorian cedula algorithm (mirrors shared/validators.py) ── */
+    function isValidCedula(v) {
+        v = v.trim();
+        if (!/^\d{10}$/.test(v)) return false;
+        var coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+        var total = 0;
+        for (var i = 0; i < 9; i++) {
+            var d = parseInt(v[i]) * coef[i];
+            if (d >= 10) d -= 9;
+            total += d;
+        }
+        return (10 - (total % 10)) % 10 === parseInt(v[9]);
+    }
+
+    /* ── Show / clear error ── */
+    function showErr(msgEl, inputEl, msg) {
+        msgEl.innerHTML = msg ? '<i class="bi bi-x-circle"></i> ' + msg : '';
+        inputEl.classList.toggle('is-err', !!msg);
+    }
+
+    /* ── Numeric-only keydown handler ── */
+    function makeNumericOnly(inputEl, warnEl) {
+        var warnTimer = null;
+
+        function flashWarn() {
+            clearTimeout(warnTimer);
+            warnEl.classList.add('show');
+            warnTimer = setTimeout(function () { warnEl.classList.remove('show'); }, 2200);
+        }
+
+        inputEl.addEventListener('keydown', function (e) {
+            var allowed = ['Backspace','Delete','Tab','Escape','Enter',
+                           'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+            if (allowed.includes(e.key)) return;
+            if (e.ctrlKey || e.metaKey) return; // allow Ctrl+C / Ctrl+V etc.
+            if (!/^\d$/.test(e.key)) {
+                e.preventDefault();
+                flashWarn();
+            }
+        });
+
+        inputEl.addEventListener('paste', function (e) {
+            e.preventDefault();
+            var raw = (e.clipboardData || window.clipboardData).getData('text');
+            var digits = raw.replace(/\D/g, '');
+            if (digits !== raw) flashWarn();
+            var start = this.selectionStart, end = this.selectionEnd;
+            var cur = this.value;
+            var next = cur.slice(0, start) + digits + cur.slice(end);
+            if (this.maxLength > 0) next = next.slice(0, this.maxLength);
+            this.value = next;
+            var pos = start + digits.length;
+            this.setSelectionRange(pos, pos);
+            this.dispatchEvent(new Event('input'));
+        });
+    }
+
+    /* ── Wire up DNI ── */
+    var dniInput  = document.getElementById('id_dni');
+    var dniErr    = document.getElementById('dni-err');
+    var dniWarn   = document.getElementById('dni-num-warn');
+
+    if (dniInput) {
+        makeNumericOnly(dniInput, dniWarn);
+
+        dniInput.addEventListener('blur', function () {
+            var v = this.value.trim();
+            if (v === '') {
+                showErr(dniErr, dniInput, 'Este campo es obligatorio.');
+            } else if (!isValidCedula(v)) {
+                showErr(dniErr, dniInput, 'Ingrese una cédula ecuatoriana válida de 10 dígitos.');
+            } else {
+                showErr(dniErr, dniInput, '');
+            }
+        });
+
+        dniInput.addEventListener('input', function () {
+            if (this.classList.contains('is-err') && isValidCedula(this.value.trim())) {
+                showErr(dniErr, dniInput, '');
+            }
+        });
+    }
+
+    /* ── Wire up Phone ── */
+    var phoneInput = document.getElementById('id_phone');
+    var phoneErr   = document.getElementById('phone-err');
+    var phoneWarn  = document.getElementById('phone-num-warn');
+
+    if (phoneInput) {
+        makeNumericOnly(phoneInput, phoneWarn);
+
+        phoneInput.addEventListener('blur', function () {
+            if (this.value.trim() === '') {
+                showErr(phoneErr, phoneInput, 'El teléfono es obligatorio.');
+            } else {
+                showErr(phoneErr, phoneInput, '');
+            }
+        });
+        phoneInput.addEventListener('input', function () {
+            if (this.classList.contains('is-err') && this.value.trim() !== '') {
+                showErr(phoneErr, phoneInput, '');
+            }
+        });
+    }
+
+    /* ── Wire up required text fields (first_name, last_name) ── */
+    [
+        { id: 'id_first_name', errId: 'first-name-err', label: 'Los nombres son obligatorios.' },
+        { id: 'id_last_name',  errId: 'last-name-err',  label: 'Los apellidos son obligatorios.' }
+    ].forEach(function (cfg) {
+        var inp = document.getElementById(cfg.id);
+        var err = document.getElementById(cfg.errId);
+        if (!inp) return;
+        inp.addEventListener('blur', function () {
+            if (this.value.trim() === '') showErr(err, inp, cfg.label);
+            else showErr(err, inp, '');
+        });
+        inp.addEventListener('input', function () {
+            if (this.classList.contains('is-err') && this.value.trim() !== '') showErr(err, inp, '');
+        });
+    });
+
+    /* ── Form submit validation ── */
+    var form = document.getElementById('cfForm');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            var ok = true;
+
+            /* DNI */
+            var dniVal = dniInput ? dniInput.value.trim() : '';
+            if (!dniVal) {
+                showErr(dniErr, dniInput, 'Este campo es obligatorio.');
+                ok = false;
+            } else if (!isValidCedula(dniVal)) {
+                showErr(dniErr, dniInput, 'Ingrese una cédula ecuatoriana válida de 10 dígitos.');
+                ok = false;
+            }
+
+            /* Phone */
+            var phoneVal = phoneInput ? phoneInput.value.trim() : '';
+            if (!phoneVal) {
+                showErr(phoneErr, phoneInput, 'El teléfono es obligatorio.');
+                ok = false;
+            }
+
+            /* first_name, last_name */
+            var fn = document.getElementById('id_first_name');
+            var ln = document.getElementById('id_last_name');
+            var fnErr = document.getElementById('first-name-err');
+            var lnErr = document.getElementById('last-name-err');
+
+            if (fn && fn.value.trim() === '') {
+                showErr(fnErr, fn, 'Los nombres son obligatorios.');
+                ok = false;
+            }
+            if (ln && ln.value.trim() === '') {
+                showErr(lnErr, ln, 'Los apellidos son obligatorios.');
+                ok = false;
+            }
+
+            if (!ok) {
+                e.preventDefault();
+                /* Scroll to first error */
+                var firstErr = form.querySelector('.is-err');
+                if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+
+})();
+</script>
+{% endblock %}

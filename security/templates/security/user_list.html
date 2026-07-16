@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+{% block title %}Gestión de Usuarios — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.su-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.su-header-left{display:flex;align-items:center;gap:16px}
+.su-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#16A34A;box-shadow:0 2px 8px rgba(22,163,74,.14);flex-shrink:0}
+.su-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.su-subtitle{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.btn-new-user{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:#16A34A;color:#fff;border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(22,163,74,.28);white-space:nowrap}
+.btn-new-user:hover{background:#15803D;color:#fff;transform:translateY(-1px)}
+
+.su-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:900px){.su-kpi-row{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.su-kpi-row{grid-template-columns:1fr}}
+.su-kpi-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:18px 20px;display:flex;align-items:center;gap:14px}
+.su-kpi-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.kpi-green .su-kpi-icon{background:#DCFCE7;color:#16A34A}
+.kpi-blue  .su-kpi-icon{background:#EFF6FF;color:#2563EB}
+.kpi-red   .su-kpi-icon{background:#FEF2F2;color:#DC2626}
+.kpi-purple.su-kpi-icon-wrap .su-kpi-icon{background:#F5F3FF;color:#7C3AED}
+.su-kpi-label{font-size:.76rem;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.su-kpi-value{font-size:1.8rem;font-weight:800;color:#0F172A;line-height:1.1;margin-bottom:3px}
+.su-kpi-sub{font-size:.775rem;font-weight:600}
+.kpi-green .su-kpi-sub{color:#16A34A}
+.kpi-blue  .su-kpi-sub{color:#2563EB}
+.kpi-red   .su-kpi-sub{color:#DC2626}
+
+.su-filter-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:20px 22px 18px;margin-bottom:16px}
+.su-filter-title{font-size:.95rem;font-weight:700;color:#0F172A;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.su-filter-title i{color:#16A34A;font-size:1rem}
+.su-fi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+@media(max-width:700px){.su-fi-grid{grid-template-columns:1fr}}
+.su-fi-label{font-size:.775rem;font-weight:600;color:#374151;margin-bottom:6px;display:block}
+.su-fi-wrap{position:relative}
+.su-fi-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.85rem;pointer-events:none;z-index:1}
+.su-fi-input,.su-fi-select{width:100%;padding:9px 12px 9px 34px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s;font-family:inherit;background:#fff}
+.su-fi-input:focus,.su-fi-select:focus{border-color:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,.1)}
+.su-fi-btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-su-search{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;background:#16A34A;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-su-search:hover{background:#15803D}
+.btn-su-clear{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s}
+.btn-su-clear:hover{background:#F8FAFC;color:#0F172A}
+
+.su-table-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+.su-table-heading{padding:16px 20px 14px;font-size:.95rem;font-weight:700;color:#0F172A;border-bottom:1.5px solid #F1F5F9;display:flex;align-items:center;gap:10px}
+.su-table{width:100%;border-collapse:collapse}
+.su-table thead th{padding:11px 16px;font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;white-space:nowrap;text-align:left}
+.su-table th:first-child,.su-table td:first-child{padding-left:20px}
+.su-table tbody td{padding:13px 16px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.su-table tbody tr:last-child td{border-bottom:none}
+.su-table tbody tr:hover td{background:#F0FDF4}
+
+.su-name-cell{display:flex;align-items:center;gap:11px}
+.su-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.5px}
+.av-green{background:#16A34A}.av-blue{background:#2563EB}.av-purple{background:#7C3AED}
+.av-orange{background:#EA580C}.av-rose{background:#E11D48}.av-cyan{background:#0891B2}
+.su-uname{font-weight:700;color:#0F172A;font-size:.875rem;line-height:1.3}
+.su-fullname{font-size:.73rem;color:#94A3B8;margin-top:1px}
+
+.su-group-badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.badge-admin{background:#FEF2F2;color:#B91C1C}
+.badge-gerente{background:#EFF6FF;color:#1D4ED8}
+.badge-compras{background:#FFF7ED;color:#C2410C}
+.badge-ventas{background:#DCFCE7;color:#15803D}
+.badge-default{background:#F1F5F9;color:#475569}
+
+.su-status{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600}
+.su-active{background:#DCFCE7;color:#15803D}
+.su-inactive{background:#FEE2E2;color:#B91C1C}
+.su-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.su-active .su-sdot{background:#22C55E}
+.su-inactive .su-sdot{background:#EF4444}
+
+.su-badge-super{display:inline-flex;align-items:center;gap:4px;background:#FEF3C7;color:#92400E;border-radius:5px;padding:2px 7px;font-size:.68rem;font-weight:700}
+.su-badge-staff{display:inline-flex;align-items:center;gap:4px;background:#EDE9FE;color:#5B21B6;border-radius:5px;padding:2px 7px;font-size:.68rem;font-weight:700}
+
+.su-act-group{display:flex;align-items:center;gap:5px}
+.su-act-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s;flex-shrink:0;background:#fff}
+.act-edit{border-color:#BBF7D0;color:#16A34A}
+.act-edit:hover{background:#F0FDF4;color:#15803D}
+.act-on{border-color:#BBF7D0;color:#16A34A}
+.act-on:hover{background:#F0FDF4}
+.act-off{border-color:#FECACA;color:#EF4444}
+.act-off:hover{background:#FEF2F2;color:#DC2626}
+
+.su-empty{text-align:center;padding:52px 24px;color:#94A3B8}
+.su-empty i{font-size:2.5rem;display:block;margin-bottom:10px;color:#CBD5E1}
+
+.su-table-footer{display:flex;justify-content:space-between;align-items:center;padding:13px 20px;border-top:1px solid #F1F5F9;flex-wrap:wrap;gap:10px}
+.su-count{font-size:.8rem;color:#64748B}
+.su-pagination{display:flex;align-items:center;gap:5px}
+.su-page-btn{width:32px;height:32px;border:1.5px solid #E2E8F0;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:#64748B;cursor:pointer;text-decoration:none;transition:background .15s;font-family:inherit;background:#fff}
+.su-page-btn:hover{background:#F8FAFC;color:#0F172A}
+.su-page-btn.pg-active{background:#16A34A;border-color:#16A34A;color:#fff}
+.su-page-btn.pg-disabled{opacity:.35;pointer-events:none}
+.su-page-btn.pg-ellipsis{border-color:transparent;background:transparent;pointer-events:none}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .su-title,
+:root[data-bs-theme="dark"] .su-kpi-value,
+:root[data-bs-theme="dark"] .su-filter-title,
+:root[data-bs-theme="dark"] .su-fi-label,
+:root[data-bs-theme="dark"] .su-fi-input,
+:root[data-bs-theme="dark"] .su-fi-select,
+:root[data-bs-theme="dark"] .su-table-heading,
+:root[data-bs-theme="dark"] .su-table tbody td,
+:root[data-bs-theme="dark"] .su-uname { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .su-subtitle,
+:root[data-bs-theme="dark"] .su-kpi-label,
+:root[data-bs-theme="dark"] .su-fi-icon,
+:root[data-bs-theme="dark"] .btn-su-clear,
+:root[data-bs-theme="dark"] .su-table thead th,
+:root[data-bs-theme="dark"] .su-fullname,
+:root[data-bs-theme="dark"] .su-empty,
+:root[data-bs-theme="dark"] .su-count,
+:root[data-bs-theme="dark"] .su-page-btn { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .su-kpi-card,
+:root[data-bs-theme="dark"] .su-filter-card,
+:root[data-bs-theme="dark"] .su-table-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .su-fi-input,
+:root[data-bs-theme="dark"] .su-fi-select { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .btn-su-clear,
+:root[data-bs-theme="dark"] .su-page-btn { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .btn-su-clear:hover,
+:root[data-bs-theme="dark"] .su-page-btn:hover { background:var(--main-bg); color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .su-table-heading,
+:root[data-bs-theme="dark"] .su-table thead th { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .su-table tbody td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .su-table-footer { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .su-act-btn { background:var(--surface); }
+</style>
+
+{# ── HEADER ── #}
+<div class="su-header">
+    <div class="su-header-left">
+        <div class="su-hdr-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <div>
+            <h2 class="su-title">Gestión de Usuarios</h2>
+            <p class="su-subtitle">Administra usuarios, roles y accesos del sistema</p>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a href="{% url 'security:group_list' %}" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text-primary);border:1.5px solid var(--border);border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none">
+            <i class="bi bi-people-fill"></i> Ver Grupos
+        </a>
+        <a href="{% url 'security:user_create' %}" class="btn-new-user">
+            <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+        </a>
+    </div>
+</div>
+
+{# ── KPIs ── #}
+<div class="su-kpi-row">
+    <div class="su-kpi-card kpi-blue">
+        <div class="su-kpi-icon"><i class="bi bi-people-fill"></i></div>
+        <div>
+            <div class="su-kpi-label">Total Usuarios</div>
+            <div class="su-kpi-value">{{ total }}</div>
+            <div class="su-kpi-sub" style="color:#2563EB">En el sistema</div>
+        </div>
+    </div>
+    <div class="su-kpi-card kpi-green">
+        <div class="su-kpi-icon"><i class="bi bi-person-check-fill"></i></div>
+        <div>
+            <div class="su-kpi-label">Activos</div>
+            <div class="su-kpi-value">{{ total_active }}</div>
+            <div class="su-kpi-sub">Con acceso habilitado</div>
+        </div>
+    </div>
+    <div class="su-kpi-card kpi-red">
+        <div class="su-kpi-icon"><i class="bi bi-person-dash-fill"></i></div>
+        <div>
+            <div class="su-kpi-label">Inactivos</div>
+            <div class="su-kpi-value">{{ total_inactive }}</div>
+            <div class="su-kpi-sub" style="color:#DC2626">Sin acceso</div>
+        </div>
+    </div>
+    <div class="su-kpi-card" style="background:var(--surface)">
+        <div class="su-kpi-icon" style="background:#F5F3FF;color:#7C3AED"><i class="bi bi-diagram-3-fill"></i></div>
+        <div>
+            <div class="su-kpi-label">Grupos</div>
+            <div class="su-kpi-value">{{ all_groups|length }}</div>
+            <div class="su-kpi-sub" style="color:#7C3AED">Roles configurados</div>
+        </div>
+    </div>
+</div>
+
+{# ── FILTROS ── #}
+<div class="su-filter-card">
+    <div class="su-filter-title"><i class="bi bi-funnel-fill"></i> Búsqueda y Filtros</div>
+    <form method="get">
+        <div class="su-fi-grid">
+            <div>
+                <label class="su-fi-label">Buscar</label>
+                <div class="su-fi-wrap">
+                    <i class="bi bi-search su-fi-icon"></i>
+                    <input type="text" name="q" class="su-fi-input" placeholder="Usuario, nombre o email..." value="{{ params.q|default:'' }}">
+                </div>
+            </div>
+            <div>
+                <label class="su-fi-label">Grupo / Rol</label>
+                <div class="su-fi-wrap">
+                    <i class="bi bi-people su-fi-icon"></i>
+                    <select name="group" class="su-fi-select">
+                        <option value="">Todos los grupos</option>
+                        {% for g in all_groups %}
+                        <option value="{{ g.pk }}" {% if params.group == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.name }} ({{ g.user_count }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="su-fi-label">Estado</label>
+                <div class="su-fi-wrap">
+                    <i class="bi bi-toggle-on su-fi-icon"></i>
+                    <select name="status" class="su-fi-select">
+                        <option value="">Todos</option>
+                        <option value="1" {% if params.status == '1' %}selected{% endif %}>Activos</option>
+                        <option value="0" {% if params.status == '0' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="su-fi-btn-row">
+            <button type="submit" class="btn-su-search"><i class="bi bi-search"></i> Buscar</button>
+            <a href="{% url 'security:user_list' %}" class="btn-su-clear"><i class="bi bi-arrow-counterclockwise"></i> Limpiar</a>
+        </div>
+    </form>
+</div>
+
+{# ── TABLA ── #}
+<div class="su-table-card">
+    <div class="su-table-heading">
+        <i class="bi bi-person-lines-fill" style="color:#16A34A"></i> Usuarios del Sistema
+    </div>
+    <table class="su-table">
+        <thead>
+            <tr>
+                <th style="width:36px">#</th>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Grupo / Rol</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td style="color:#94A3B8;font-size:.8rem">
+                    {% if is_paginated %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                </td>
+                <td>
+                    <div class="su-name-cell">
+                        {% with colors="av-green av-blue av-purple av-orange av-rose av-cyan" %}
+                        <div class="su-av
+                            {% if forloop.counter|divisibleby:6 %}av-cyan
+                            {% elif forloop.counter|divisibleby:5 %}av-rose
+                            {% elif forloop.counter|divisibleby:4 %}av-orange
+                            {% elif forloop.counter|divisibleby:3 %}av-purple
+                            {% elif forloop.counter|divisibleby:2 %}av-blue
+                            {% else %}av-green{% endif %}">
+                            {{ u.username|first|upper }}
+                        </div>
+                        {% endwith %}
+                        <div>
+                            <div class="su-uname">{{ u.username }}</div>
+                            <div class="su-fullname">{{ u.get_full_name|default:"Sin nombre" }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="color:var(--text-muted);font-size:.845rem">{{ u.email|default:"—" }}</td>
+                <td>
+                    {% with g=u.groups.first %}
+                    {% if g %}
+                        <span class="su-group-badge
+                            {% if g.name == 'Administrador' %}badge-admin
+                            {% elif g.name == 'Gerente' %}badge-gerente
+                            {% elif g.name == 'Compras' %}badge-compras
+                            {% elif g.name == 'Ventas' %}badge-ventas
+                            {% else %}badge-default{% endif %}">
+                            <i class="bi bi-person-badge"></i> {{ g.name }}
+                        </span>
+                    {% else %}
+                        <span style="color:#CBD5E1;font-size:.82rem">Sin grupo</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    {% if u.is_superuser %}
+                        <span class="su-badge-super"><i class="bi bi-star-fill"></i> Superusuario</span>
+                    {% elif u.is_staff %}
+                        <span class="su-badge-staff"><i class="bi bi-shield-check"></i> Staff</span>
+                    {% else %}
+                        <span style="color:#94A3B8;font-size:.82rem">Usuario</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if u.is_active %}
+                    <span class="su-status su-active"><span class="su-sdot"></span> Activo</span>
+                    {% else %}
+                    <span class="su-status su-inactive"><span class="su-sdot"></span> Inactivo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="su-act-group">
+                        {% if u.is_superuser and not request.user.is_superuser %}
+                        <span class="su-act-btn" style="color:#94A3B8;border-color:#E2E8F0;cursor:default" title="Cuenta de superusuario protegida"><i class="bi bi-lock-fill"></i></span>
+                        {% else %}
+                        <a href="{% url 'security:user_edit' u.pk %}" class="su-act-btn act-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                        {% if u != request.user %}
+                        <form method="post" action="{% url 'security:user_toggle' u.pk %}" style="margin:0">
+                            {% csrf_token %}
+                            {% if u.is_active %}
+                            <button type="submit" class="su-act-btn act-off" title="Desactivar" onclick="return confirm('¿Desactivar a {{ u.username }}?')"><i class="bi bi-person-x"></i></button>
+                            {% else %}
+                            <button type="submit" class="su-act-btn act-on" title="Activar"><i class="bi bi-person-check"></i></button>
+                            {% endif %}
+                        </form>
+                        <a href="{% url 'security:user_delete' u.pk %}" class="su-act-btn act-off" title="Eliminar"><i class="bi bi-trash3"></i></a>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7">
+                <div class="su-empty">
+                    <i class="bi bi-people"></i>
+                    <p>No se encontraron usuarios con los filtros aplicados.</p>
+                </div>
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="su-table-footer">
+        <div class="su-count">
+            {% if is_paginated %}
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} usuario{{ paginator.count|pluralize }}
+            {% else %}
+                {{ users|length }} usuario{{ users|length|pluralize }}
+            {% endif %}
+        </div>
+        {% if is_paginated %}
+        <div class="su-pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.previous_page_number }}" class="su-page-btn"><i class="bi bi-chevron-left"></i></a>
+            {% else %}<span class="su-page-btn pg-disabled"><i class="bi bi-chevron-left"></i></span>{% endif %}
+            {% for num in elided_page_range %}
+                {% if num == paginator.ELLIPSIS %}<span class="su-page-btn pg-ellipsis">…</span>
+                {% elif num == page_obj.number %}<span class="su-page-btn pg-active">{{ num }}</span>
+                {% else %}<a href="?{{ filter_qs_pfx }}page={{ num }}" class="su-page-btn">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.next_page_number }}" class="su-page-btn"><i class="bi bi-chevron-right"></i></a>
+            {% else %}<span class="su-page-btn pg-disabled"><i class="bi bi-chevron-right"></i></span>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

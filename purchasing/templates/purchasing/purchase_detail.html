@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% block title %}Compra #{{ purchase.number }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.id-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.id-hdr-left{display:flex;align-items:center;gap:14px}
+.id-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.id-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.id-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.id-hdr-btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.id-btn-pdf{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border:none;border-radius:10px;background:#2563EB;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.id-btn-pdf:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+.id-btn-del{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border:1.5px solid #FECACA;border-radius:10px;background:#fff;color:#DC2626;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.id-btn-del:hover{background:#FEF2F2;color:#B91C1C}
+.id-btn-back{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#64748B;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.id-btn-back:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+
+.id-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.id-card-hdr{background:#1E293B;padding:14px 22px;display:flex;align-items:center;gap:12px}
+.id-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.id-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.id-card-body{padding:24px}
+
+.id-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:700px){.id-info-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:440px){.id-info-grid{grid-template-columns:1fr}}
+.id-info-item{}
+.id-info-label{font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.id-info-val{font-size:.9rem;color:#0F172A;font-weight:600}
+
+.id-table{width:100%;border-collapse:collapse}
+.id-table thead th{padding:10px 14px;font-size:.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;text-align:left;white-space:nowrap;background:#FAFBFF}
+.id-table thead th:not(:first-child){text-align:right}
+.id-table thead th:nth-child(2){text-align:center}
+.id-table thead th:first-child{padding-left:20px}
+.id-table tbody td{padding:12px 14px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.id-table tbody td:first-child{padding-left:20px}
+.id-table tbody td:not(:first-child){text-align:right}
+.id-table tbody td:nth-child(2){text-align:center}
+.id-table tbody tr:last-child td{border-bottom:none}
+.id-table tbody tr:hover td{background:#FAFBFF}
+.id-prod-name{font-weight:600;color:#0F172A}
+.id-prod-group{font-size:.72rem;color:#94A3B8;margin-top:1px}
+
+.id-totals-wrap{display:flex;justify-content:flex-end;padding:16px 20px;border-top:1.5px solid #F1F5F9;background:#FAFBFF}
+.id-totals{width:260px}
+.id-total-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:.845rem}
+.id-total-row:last-child{border-bottom:none}
+.id-total-lbl{color:#64748B}
+.id-total-val{font-weight:600;color:#0F172A}
+.id-total-grand{margin-top:8px;background:#EFF6FF;border-radius:10px;padding:12px 16px;border:1.5px solid #BFDBFE}
+.id-total-grand .id-total-lbl{color:#1D4ED8;font-weight:700;text-transform:uppercase;font-size:.8rem;letter-spacing:.5px}
+.id-total-grand .id-total-val{color:#1D4ED8;font-size:1.05rem;font-weight:800}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .id-title,
+:root[data-bs-theme="dark"] .id-info-val,
+:root[data-bs-theme="dark"] .id-table tbody td,
+:root[data-bs-theme="dark"] .id-prod-name,
+:root[data-bs-theme="dark"] .id-total-val { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .id-sub,
+:root[data-bs-theme="dark"] .id-btn-back,
+:root[data-bs-theme="dark"] .id-info-label,
+:root[data-bs-theme="dark"] .id-table thead th,
+:root[data-bs-theme="dark"] .id-prod-group,
+:root[data-bs-theme="dark"] .id-total-lbl { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .id-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .id-btn-del,
+:root[data-bs-theme="dark"] .id-btn-back { background:var(--surface); }
+
+:root[data-bs-theme="dark"] .id-btn-back { border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-table thead th,
+:root[data-bs-theme="dark"] .id-totals-wrap { background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .id-table thead th,
+:root[data-bs-theme="dark"] .id-table tbody td,
+:root[data-bs-theme="dark"] .id-total-row { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-totals-wrap { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-table tbody tr:hover td,
+:root[data-bs-theme="dark"] .id-btn-back:hover { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .id-total-grand { background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.35); }
+:root[data-bs-theme="dark"] .id-total-grand .id-total-lbl { color:#60A5FA; }
+:root[data-bs-theme="dark"] .id-total-grand .id-total-val { color:#93C5FD; }
+
+:root[data-bs-theme="dark"] .id-btn-back:hover { color:var(--text-primary); }
+</style>
+
+<!-- Page header -->
+<div class="id-hdr">
+    <div class="id-hdr-left">
+        <div class="id-hdr-icon"><i class="bi bi-cart-check-fill"></i></div>
+        <div>
+            <h2 class="id-title">Compra #{{ purchase.number }}</h2>
+            <p class="id-sub">{{ purchase.purchase_date|date:"d \d\e F \d\e Y, H:i" }}</p>
+        </div>
+    </div>
+    <div class="id-hdr-btns">
+        <a href="{% url 'purchasing:purchase_pdf' purchase.pk %}" target="_blank" class="id-btn-pdf">
+            <i class="bi bi-printer"></i> Imprimir PDF
+        </a>
+        <a href="{% url 'purchasing:purchase_delete' purchase.pk %}" class="id-btn-del">
+            <i class="bi bi-trash3"></i> Anular
+        </a>
+        {% if purchase.tipo_pago == 'credito' %}
+        <a href="{% url 'pagos:pago_historial' purchase.pk %}" class="id-btn-back">
+            <i class="bi bi-cash-coin"></i> Pagos
+        </a>
+        {% endif %}
+        <a href="{% url 'purchasing:purchase_list' %}" class="id-btn-back">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+{% if purchase.tipo_pago == 'credito' %}
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-cash-coin"></i>
+        <span>Estado de Pago</span>
+    </div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div class="id-info-item">
+                <div class="id-info-label">Tipo de Pago</div>
+                <div class="id-info-val">Crédito</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Saldo Pendiente</div>
+                <div class="id-info-val">$ {{ purchase.saldo }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Estado</div>
+                <div class="id-info-val">{% if purchase.estado == 'pagada' %}Pagada{% else %}Pendiente{% endif %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Supplier info card -->
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-building"></i>
+        <span>Datos del Proveedor</span>
+    </div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div class="id-info-item">
+                <div class="id-info-label">Nombre</div>
+                <div class="id-info-val">{{ purchase.supplier.name }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">RUC</div>
+                <div class="id-info-val" style="font-family:monospace">{{ purchase.supplier.ruc|default:"—" }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">N° Factura Prov.</div>
+                <div class="id-info-val">{{ purchase.document_number }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Teléfono</div>
+                <div class="id-info-val">{{ purchase.supplier.phone|default:"—" }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Email</div>
+                <div class="id-info-val" style="font-size:.84rem">{{ purchase.supplier.email|default:"—" }}</div>
+            </div>
+            <div class="id-info-item">
+                <div class="id-info-label">Dirección</div>
+                <div class="id-info-val" style="font-size:.84rem">{{ purchase.supplier.address|default:"—" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products card -->
+<div class="id-card">
+    <div class="id-card-hdr">
+        <i class="bi bi-box"></i>
+        <span>Detalle de Productos</span>
+    </div>
+
+    <table class="id-table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th style="width:80px">Cant.</th>
+                <th style="width:130px">Costo Unit.</th>
+                <th style="width:130px">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in purchase.details.all %}
+            <tr>
+                <td>
+                    <div class="id-prod-name">{{ d.product.name }}</div>
+                    {% if d.product.group %}<div class="id-prod-group">{{ d.product.group.name }}</div>{% endif %}
+                </td>
+                <td>{{ d.quantity }}</td>
+                <td>$ {{ d.unit_cost }}</td>
+                <td><strong>$ {{ d.subtotal }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="id-totals-wrap">
+        <div class="id-totals">
+            <div class="id-total-row">
+                <span class="id-total-lbl">Subtotal</span>
+                <span class="id-total-val">$ {{ purchase.subtotal }}</span>
+            </div>
+            <div class="id-total-row">
+                <span class="id-total-lbl">IVA (15%)</span>
+                <span class="id-total-val">$ {{ purchase.tax }}</span>
+            </div>
+            <div class="id-total-row id-total-grand">
+                <span class="id-total-lbl">Total</span>
+                <span class="id-total-val">$ {{ purchase.total }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

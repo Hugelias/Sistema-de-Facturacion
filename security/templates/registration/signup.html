@@ -1,0 +1,375 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear Cuenta — TecnoStock S.A.</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    font-family:'Inter','Segoe UI',sans-serif;
+    min-height:100vh;
+    background:linear-gradient(150deg,#EEF0FF 0%,#DDE2FF 35%,#CDD5FF 65%,#BCC8FE 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;position:relative;overflow-x:hidden;overflow-y:auto;
+}
+
+/* ── Background shapes ── */
+.blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.blob-tl{width:80px;height:80px;top:7%;left:3%;background:#3B82F6;opacity:.75}
+.blob-tr{width:300px;height:300px;top:-9%;right:-6%;
+    background:radial-gradient(circle,#818CF8 0%,#6366F1 55%,transparent 80%);opacity:.6}
+.blob-bl{width:520px;height:520px;bottom:-22%;left:-13%;
+    background:radial-gradient(circle at 42% 42%,#2563EB 0%,#1D4ED8 48%,transparent 75%);opacity:.88}
+.blob-br{width:440px;height:440px;bottom:-20%;right:-11%;
+    background:radial-gradient(circle,#7C3AED 0%,#5B21B6 48%,transparent 75%);opacity:.78}
+
+.dots{position:fixed;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle,rgba(71,85,105,.28) 1.5px,transparent 1.5px);
+    background-size:22px 22px}
+.dots-l{width:130px;height:290px;top:12%;left:1.5%}
+.dots-r{width:130px;height:290px;top:12%;right:1.5%}
+
+/* ── Card wrapper ── */
+.auth-outer{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px}
+
+/* ── Card ── */
+.auth-card{
+    background:#fff;border-radius:24px;
+    box-shadow:0 24px 60px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.08);
+    padding:36px 36px 28px;width:100%;
+}
+
+/* ── Brand ── */
+.brand{text-align:center;margin-bottom:20px}
+.brand-hex{
+    width:58px;height:58px;margin:0 auto 11px;
+    background:linear-gradient(135deg,#3B82F6,#2563EB);
+    clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:1.4rem;
+}
+.brand-name{font-size:1.15rem;font-weight:800;color:#0F172A;letter-spacing:-.3px}
+.brand-sub{font-size:.77rem;color:#64748B;margin-top:3px}
+
+/* ── Heading ── */
+.card-heading{text-align:center;margin-bottom:22px}
+.card-title{font-size:1.25rem;font-weight:700;color:#0F172A}
+.card-desc{font-size:.825rem;color:#64748B;margin-top:4px}
+
+/* ── Alert global ── */
+.global-alert{
+    display:flex;align-items:center;gap:9px;
+    border-radius:10px;padding:10px 14px;
+    font-size:.8rem;margin-bottom:14px;
+}
+.global-alert.err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
+.global-alert.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8}
+
+/* ── Fields ── */
+.fields-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:400px){.fields-row{grid-template-columns:1fr}}
+
+.field-group{margin-bottom:13px}
+.field-label{margin-bottom:6px}
+.field-label span{font-size:.79rem;font-weight:600;color:#374151}
+
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.95rem;pointer-events:none;z-index:1}
+.input-wrap input{
+    width:100%;padding:11px 14px 11px 38px;
+    border:1.5px solid #E2E8F0;border-radius:12px;
+    font-size:.855rem;color:#0F172A;outline:none;
+    transition:border-color .15s,box-shadow .15s;
+    font-family:'Inter',sans-serif;background:#fff;
+}
+.input-wrap input::placeholder{color:#CBD5E1}
+.input-wrap input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.input-wrap input.is-err{border-color:#EF4444}
+.input-wrap input.is-err:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)}
+
+/* Password with eye toggle: extra right padding */
+.input-wrap.has-eye input{padding-right:40px}
+.eye-btn{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:#94A3B8;cursor:pointer;
+    padding:4px;font-size:.95rem;line-height:1;display:flex;align-items:center;
+    transition:color .15s;
+}
+.eye-btn:hover{color:#64748B}
+
+.field-err{font-size:.73rem;color:#EF4444;margin-top:4px;display:flex;align-items:center;gap:4px}
+
+/* ── Password strength badge ── */
+.pwd-badge{
+    display:none;align-items:center;gap:8px;
+    border-radius:10px;padding:9px 13px;
+    font-size:.775rem;font-weight:500;
+    margin-bottom:14px;
+    transition:background .2s,border-color .2s,color .2s;
+}
+.pwd-badge.visible{display:flex}
+.pwd-badge.strong{background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8}
+.pwd-badge.weak  {background:#FFF7ED;border:1px solid #FED7AA;color:#C2410C}
+.pwd-badge i{font-size:1rem;flex-shrink:0}
+.pwd-badge .pwd-hint{font-size:.71rem;color:inherit;opacity:.8;margin-top:1px}
+
+/* ── Submit ── */
+.btn-submit{
+    width:100%;padding:13px;border:none;border-radius:12px;
+    background:linear-gradient(135deg,#4F46E5 0%,#2563EB 55%,#1D4ED8 100%);
+    color:#fff;font-size:.9rem;font-weight:600;cursor:pointer;
+    font-family:'Inter',sans-serif;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:opacity .15s,transform .1s;
+    box-shadow:0 4px 14px rgba(37,99,235,.35);letter-spacing:.2px;
+    margin-top:4px;
+}
+.btn-submit:hover{opacity:.92;transform:translateY(-1px)}
+.btn-submit:active{transform:translateY(0)}
+
+/* ── Back to role selection ── */
+.role-back-wrap{text-align:center;margin-bottom:16px}
+.role-back-link{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:.78rem;color:#64748B;text-decoration:none;
+}
+.role-back-link:hover{color:#2563EB}
+
+/* ── Footer link ── */
+.card-foot{text-align:center;margin-top:18px}
+.card-foot p{font-size:.82rem;color:#64748B;margin-bottom:9px}
+.foot-link{
+    display:inline-flex;align-items:center;gap:6px;
+    color:#2563EB;text-decoration:none;font-size:.82rem;font-weight:600;
+    padding:7px 18px;border-radius:10px;
+    border:1.5px solid rgba(37,99,235,.22);
+    background:rgba(37,99,235,.05);transition:background .15s;
+}
+.foot-link:hover{background:rgba(37,99,235,.1)}
+
+/* ── Copyright ── */
+.copyright{margin-top:18px;font-size:.72rem;color:rgba(255,255,255,.65);text-align:center;letter-spacing:.3px}
+
+@media(max-width:480px){
+    .auth-card{padding:28px 18px 22px}
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="blob blob-tl"></div>
+<div class="blob blob-tr"></div>
+<div class="blob blob-bl"></div>
+<div class="blob blob-br"></div>
+<div class="dots dots-l"></div>
+<div class="dots dots-r"></div>
+
+<div class="auth-outer">
+<div class="auth-card">
+
+    <!-- Brand -->
+    <div class="brand">
+        <div class="brand-hex"><i class="bi bi-box-seam"></i></div>
+        <div class="brand-name">TecnoStock S.A.</div>
+        <div class="brand-sub">Sistema de Ventas y Facturación</div>
+    </div>
+
+    <!-- Back to role selection -->
+    <div class="role-back-wrap">
+        <a href="{% url 'security:role_select' %}" class="role-back-link">
+            <i class="bi bi-arrow-left"></i> Volver a selección de perfil
+        </a>
+    </div>
+
+    <!-- Heading -->
+    <div class="card-heading">
+        <div class="card-title">Crea tu cuenta <i class="bi bi-person-plus" style="font-size:1.1rem;vertical-align:middle"></i></div>
+        <div class="card-desc">Completa la información para registrarte</div>
+    </div>
+
+    <!-- Django messages -->
+    {% if messages %}
+        {% for msg in messages %}
+        <div class="global-alert info"><i class="bi bi-info-circle"></i> {{ msg }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="global-alert err">
+            <i class="bi bi-exclamation-circle"></i> {{ form.non_field_errors.0 }}
+        </div>
+        {% endif %}
+
+        <!-- First name + Last name -->
+        <div class="fields-row">
+            <div class="field-group">
+                <div class="field-label"><span>Nombre(s)</span></div>
+                <div class="input-wrap">
+                    <i class="bi bi-person input-icon"></i>
+                    <input type="text" name="first_name" id="id_first_name"
+                           placeholder="Tu nombre"
+                           value="{{ form.first_name.value|default:'' }}"
+                           class="{% if form.first_name.errors %}is-err{% endif %}"
+                           autocomplete="given-name">
+                </div>
+                {% for e in form.first_name.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+            </div>
+            <div class="field-group">
+                <div class="field-label"><span>Apellido(s)</span></div>
+                <div class="input-wrap">
+                    <i class="bi bi-person input-icon"></i>
+                    <input type="text" name="last_name" id="id_last_name"
+                           placeholder="Tu apellido"
+                           value="{{ form.last_name.value|default:'' }}"
+                           class="{% if form.last_name.errors %}is-err{% endif %}"
+                           autocomplete="family-name">
+                </div>
+                {% for e in form.last_name.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <!-- Username -->
+        <div class="field-group">
+            <div class="field-label"><span>Nombre de usuario</span></div>
+            <div class="input-wrap">
+                <i class="bi bi-at input-icon"></i>
+                <input type="text" name="username" id="id_username"
+                       placeholder="Crea un nombre de usuario"
+                       value="{{ form.username.value|default:'' }}"
+                       class="{% if form.username.errors %}is-err{% endif %}"
+                       autocomplete="username">
+            </div>
+            {% for e in form.username.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Email -->
+        <div class="field-group">
+            <div class="field-label"><span>Correo electrónico</span></div>
+            <div class="input-wrap">
+                <i class="bi bi-envelope input-icon"></i>
+                <input type="email" name="email" id="id_email"
+                       placeholder="Ingresa tu correo electrónico"
+                       value="{{ form.email.value|default:'' }}"
+                       class="{% if form.email.errors %}is-err{% endif %}"
+                       autocomplete="email">
+            </div>
+            {% for e in form.email.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Password 1 -->
+        <div class="field-group">
+            <div class="field-label"><span>Contraseña</span></div>
+            <div class="input-wrap has-eye">
+                <i class="bi bi-lock input-icon"></i>
+                <input type="password" name="password1" id="id_password1"
+                       placeholder="Crea una contraseña"
+                       class="{% if form.password1.errors %}is-err{% endif %}"
+                       autocomplete="new-password">
+                <button type="button" class="eye-btn" data-target="id_password1" aria-label="Mostrar/ocultar contraseña">
+                    <i class="bi bi-eye" id="eye1-icon"></i>
+                </button>
+            </div>
+            {% for e in form.password1.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Password 2 -->
+        <div class="field-group">
+            <div class="field-label"><span>Confirmar contraseña</span></div>
+            <div class="input-wrap has-eye">
+                <i class="bi bi-lock input-icon"></i>
+                <input type="password" name="password2" id="id_password2"
+                       placeholder="Confirma tu contraseña"
+                       class="{% if form.password2.errors %}is-err{% endif %}"
+                       autocomplete="new-password">
+                <button type="button" class="eye-btn" data-target="id_password2" aria-label="Mostrar/ocultar contraseña">
+                    <i class="bi bi-eye" id="eye2-icon"></i>
+                </button>
+            </div>
+            {% for e in form.password2.errors %}<div class="field-err"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Password strength badge (shown dynamically by JS) -->
+        <div class="pwd-badge" id="pwdBadge">
+            <i class="bi bi-shield-check" id="pwdBadgeIcon"></i>
+            <div>
+                <div id="pwdBadgeTitle">Contraseña segura</div>
+                <div class="pwd-hint">Usa al menos 8 caracteres con letras, números y símbolos.</div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">
+            <i class="bi bi-person-check"></i> Registrarme
+        </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="card-foot">
+        <p>¿Ya tienes cuenta?</p>
+        <a href="{% url 'login' %}" class="foot-link">
+            <i class="bi bi-box-arrow-in-right"></i> Inicia sesión aquí
+        </a>
+    </div>
+
+</div><!-- /auth-card -->
+<p class="copyright">© 2026 TecnoStock S.A. - Todos los derechos reservados.</p>
+</div><!-- /auth-outer -->
+
+<script>
+(function () {
+    /* ── Eye toggles ── */
+    document.querySelectorAll('.eye-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var inp = document.getElementById(this.dataset.target);
+            var icon = this.querySelector('i');
+            if (!inp) return;
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                inp.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        });
+    });
+
+    /* ── Password strength ── */
+    var pwd1 = document.getElementById('id_password1');
+    var badge = document.getElementById('pwdBadge');
+    var badgeTitle = document.getElementById('pwdBadgeTitle');
+    var badgeIcon  = document.getElementById('pwdBadgeIcon');
+
+    if (pwd1 && badge) {
+        pwd1.addEventListener('input', function () {
+            var v = this.value;
+            if (v.length === 0) {
+                badge.classList.remove('visible', 'strong', 'weak');
+                return;
+            }
+            var hasLen  = v.length >= 8;
+            var hasLtr  = /[a-zA-Z]/.test(v);
+            var hasNum  = /\d/.test(v);
+            var hasSym  = /[^a-zA-Z0-9]/.test(v);
+            var strong  = hasLen && hasLtr && hasNum && hasSym;
+
+            badge.classList.add('visible');
+            badge.classList.toggle('strong', strong);
+            badge.classList.toggle('weak',  !strong);
+            badgeIcon.className  = strong ? 'bi bi-shield-check' : 'bi bi-shield-exclamation';
+            badgeTitle.textContent = strong ? 'Contraseña segura' : 'Contraseña débil';
+        });
+    }
+})();
+</script>
+</body>
+</html>

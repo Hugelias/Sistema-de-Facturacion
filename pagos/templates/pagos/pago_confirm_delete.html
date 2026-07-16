@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar Pago{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white"><h5 class="mb-0">Eliminar Pago</h5></div>
+            <div class="card-body text-center">
+                <p class="fs-5">¿Eliminar el pago de <strong>$ {{ object.valor }}</strong> del {{ object.fecha|date:"d/m/Y" }} sobre la compra #{{ compra.number|default:compra.id }}?</p>
+                <p class="text-muted small">El saldo pendiente de la compra se recalculará automáticamente.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger me-2">Sí, eliminar</button>
+                    <a href="{% url 'pagos:pago_historial' compra.pk %}" class="btn btn-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

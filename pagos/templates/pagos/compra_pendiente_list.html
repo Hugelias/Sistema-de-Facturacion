@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Compras Pendientes de Pago — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.mod-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.mod-header-left{display:flex;align-items:center;gap:16px}
+.mod-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.mod-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.mod-subtitle{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.mod-filter-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);padding:20px 22px 18px;margin-bottom:16px}
+.mod-fi-grid{display:grid;gap:14px;margin-bottom:14px;grid-template-columns:1fr}
+.mod-fi-label{font-size:.775rem;font-weight:600;color:#374151;margin-bottom:6px;display:block}
+.mod-fi-wrap{position:relative}
+.mod-fi-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.85rem;pointer-events:none;z-index:1}
+.mod-fi-input{width:100%;padding:9px 12px 9px 34px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.845rem;color:#0F172A;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff}
+.mod-fi-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.mod-fi-btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-mod-search{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;background:#2563EB;color:#fff;font-size:.855rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-mod-search:hover{background:#1D4ED8}
+.btn-mod-clear{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s}
+.btn-mod-clear:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.mod-table-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+.mod-table{width:100%;border-collapse:collapse}
+.mod-table thead th{padding:11px 16px;font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;white-space:nowrap;background:#fff;text-align:left}
+.mod-table thead th:first-child,.mod-table tbody td:first-child{padding-left:20px}
+.mod-table tbody td{padding:13px 16px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.mod-table tbody tr:last-child td{border-bottom:none}
+.mod-table tbody tr:hover td{background:#FAFBFF}
+.mod-status{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.mod-st-amber{background:#FEF3C7;color:#B45309}
+.mod-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.mod-st-amber .mod-sdot{background:#F59E0B}
+.mod-act-group{display:flex;align-items:center;gap:5px}
+.mod-act-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:7px;font-size:.79rem;font-weight:600;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s;white-space:nowrap}
+.act-hist{border-color:#E2E8F0;color:#475569;background:#fff}
+.act-hist:hover{background:#F8FAFC;color:#0F172A}
+.act-pay{border-color:#BBF7D0;color:#15803D;background:#fff}
+.act-pay:hover{background:#F0FDF4;color:#166534}
+.mod-empty{text-align:center;padding:52px 24px;color:#94A3B8}
+.mod-empty i{font-size:2.5rem;display:block;margin-bottom:10px;color:#CBD5E1}
+.mod-empty p{font-size:.9rem;margin:0}
+.mod-table-footer{display:flex;justify-content:space-between;align-items:center;padding:13px 20px;border-top:1px solid #F1F5F9;flex-wrap:wrap;gap:10px}
+.mod-count{font-size:.8rem;color:#64748B}
+.mod-pagination{display:flex;align-items:center;gap:5px}
+.mod-page-btn{width:32px;height:32px;border:1.5px solid #E2E8F0;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:#64748B;text-decoration:none;transition:background .15s;font-family:inherit;background:#fff}
+.mod-page-btn:hover{background:#F8FAFC;border-color:#CBD5E1;color:#0F172A}
+.mod-page-btn.pg-active{background:#2563EB;border-color:#2563EB;color:#fff}
+.mod-page-btn.pg-disabled{opacity:.35;pointer-events:none}
+.mod-page-btn.pg-ellipsis{border-color:transparent;background:transparent;pointer-events:none}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .mod-title,
+:root[data-bs-theme="dark"] .mod-fi-label,
+:root[data-bs-theme="dark"] .mod-fi-input,
+:root[data-bs-theme="dark"] .mod-table tbody td { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .mod-subtitle,
+:root[data-bs-theme="dark"] .mod-fi-icon,
+:root[data-bs-theme="dark"] .btn-mod-clear,
+:root[data-bs-theme="dark"] .mod-table thead th,
+:root[data-bs-theme="dark"] .mod-empty,
+:root[data-bs-theme="dark"] .mod-count,
+:root[data-bs-theme="dark"] .mod-page-btn,
+:root[data-bs-theme="dark"] .act-hist { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .mod-filter-card,
+:root[data-bs-theme="dark"] .mod-table-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .mod-fi-input { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .btn-mod-clear,
+:root[data-bs-theme="dark"] .mod-page-btn { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .btn-mod-clear:hover,
+:root[data-bs-theme="dark"] .mod-page-btn:hover { background:var(--main-bg); color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .mod-table thead th { border-bottom-color:var(--border); background:var(--surface); }
+:root[data-bs-theme="dark"] .mod-table tbody td { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .mod-table tbody tr:hover td { background:rgba(255,255,255,.03); }
+:root[data-bs-theme="dark"] .mod-table-footer { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .act-hist,
+:root[data-bs-theme="dark"] .act-pay { background:var(--surface); }
+:root[data-bs-theme="dark"] .act-hist:hover { background:var(--main-bg); color:var(--text-primary); }
+</style>
+
+<div class="mod-header">
+    <div class="mod-header-left">
+        <div class="mod-hdr-icon"><i class="bi bi-cash-coin"></i></div>
+        <div>
+            <h2 class="mod-title">Pago de Compras a Crédito</h2>
+            <p class="mod-subtitle">Compras a proveedores a crédito pendientes de pago</p>
+        </div>
+    </div>
+</div>
+
+<div class="mod-filter-card">
+    <form method="get">
+        <div class="mod-fi-grid">
+            <div>
+                <label class="mod-fi-label">Proveedor</label>
+                <div class="mod-fi-wrap">
+                    <i class="bi bi-building mod-fi-icon"></i>
+                    <input type="text" name="supplier" class="mod-fi-input" placeholder="Buscar por proveedor..."
+                           value="{{ params.supplier|default:'' }}">
+                </div>
+            </div>
+        </div>
+        <div class="mod-fi-btn-row">
+            <button type="submit" class="btn-mod-search"><i class="bi bi-search"></i> Buscar</button>
+            <a href="{% url 'pagos:compra_pendiente_list' %}" class="btn-mod-clear">
+                <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="mod-table-card">
+    <table class="mod-table">
+        <thead>
+            <tr>
+                <th style="width:36px">#</th>
+                <th>N° Compra</th>
+                <th>Proveedor</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Saldo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for compra in compras %}
+            <tr>
+                <td class="mod-row-num">
+                    {% if is_paginated %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                </td>
+                <td style="font-weight:600;color:var(--text-primary)">#{{ compra.number|default:compra.id }}</td>
+                <td>{{ compra.supplier.name }}</td>
+                <td>{{ compra.purchase_date|date:"d/m/Y" }}</td>
+                <td>$ {{ compra.total }}</td>
+                <td style="font-weight:700;color:var(--text-warning)">$ {{ compra.saldo }}</td>
+                <td><span class="mod-status mod-st-amber"><span class="mod-sdot"></span> Pendiente</span></td>
+                <td>
+                    <div class="mod-act-group">
+                        <a href="{% url 'pagos:pago_historial' compra.pk %}" class="mod-act-btn act-hist"><i class="bi bi-clock-history"></i> Historial</a>
+                        <a href="{% url 'pagos:pago_create' compra.pk %}" class="mod-act-btn act-pay"><i class="bi bi-plus-circle"></i> Registrar Pago</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8"><div class="mod-empty"><i class="bi bi-check2-circle"></i><p>No hay compras pendientes de pago.</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mod-table-footer">
+        <div class="mod-count">
+            {% if is_paginated %}
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} compra{{ paginator.count|pluralize }}
+            {% else %}
+                {{ compras|length }} compra{{ compras|length|pluralize }}
+            {% endif %}
+        </div>
+        {% if is_paginated %}
+        <div class="mod-pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.previous_page_number }}" class="mod-page-btn"><i class="bi bi-chevron-left"></i></a>
+            {% else %}
+            <span class="mod-page-btn pg-disabled"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+            {% for num in elided_page_range %}
+                {% if num == paginator.ELLIPSIS %}<span class="mod-page-btn pg-ellipsis">…</span>
+                {% elif num == page_obj.number %}<span class="mod-page-btn pg-active">{{ num }}</span>
+                {% else %}<a href="?{{ filter_qs_pfx }}page={{ num }}" class="mod-page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?{{ filter_qs_pfx }}page={{ page_obj.next_page_number }}" class="mod-page-btn"><i class="bi bi-chevron-right"></i></a>
+            {% else %}
+            <span class="mod-page-btn pg-disabled"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.gf-wrap{max-width:920px;margin:0 auto}
+.gf-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(15,23,42,.09),0 1px 4px rgba(15,23,42,.06);overflow:hidden}
+.gf-card-header{background:linear-gradient(135deg,#1E293B,#0F172A);padding:28px 32px;display:flex;align-items:center;gap:16px}
+.gf-hdr-icon{width:48px;height:48px;background:rgba(255,255,255,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;flex-shrink:0}
+.gf-hdr-title{color:#fff;font-size:1.25rem;font-weight:800;margin:0;line-height:1.2}
+.gf-hdr-sub{color:#94A3B8;font-size:.82rem;margin:4px 0 0}
+.gf-card-body{padding:32px}
+
+.gf-field{margin-bottom:22px}
+.gf-label{font-size:.8rem;font-weight:600;color:#374151;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.gf-label .req{color:#EF4444;font-size:.85rem;margin-left:2px}
+.gf-input-wrap{position:relative;max-width:360px}
+.gf-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.9rem;pointer-events:none}
+.gf-input-wrap input{width:100%;padding:10px 12px 10px 38px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:.875rem;color:#0F172A;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff}
+.gf-input-wrap input:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+
+.gf-section{font-size:.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 14px;padding-bottom:8px;border-bottom:1.5px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between}
+.gf-hint{font-size:.78rem;color:#94A3B8;font-weight:500;text-transform:none;letter-spacing:normal}
+
+.gf-app-block{border:1px solid #F1F5F9;border-radius:12px;overflow:hidden;margin-bottom:18px}
+.gf-app-title{background:#FAFBFF;padding:11px 16px;font-size:.82rem;font-weight:700;color:#374151;display:flex;align-items:center;gap:8px}
+
+.gf-matrix{width:100%;border-collapse:collapse}
+.gf-matrix th,.gf-matrix td{padding:10px 14px;text-align:center;border-top:1px solid #F1F5F9;font-size:.83rem}
+.gf-matrix thead th{background:#fff;color:#64748B;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;border-top:none;cursor:pointer;user-select:none}
+.gf-matrix thead th:hover{color:#7C3AED}
+.gf-matrix td:first-child,.gf-matrix th:first-child{text-align:left;font-weight:600;color:#0F172A;white-space:nowrap}
+.gf-matrix tbody tr:hover{background:#FAFBFF}
+.gf-matrix input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:#7C3AED}
+.gf-row-label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.gf-row-label i{color:#94A3B8;font-size:.85rem}
+
+.gf-export-row{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;transition:background .15s}
+.gf-export-row:hover{background:#FAFBFF}
+.gf-export-row input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:#7C3AED;flex-shrink:0}
+.gf-export-icon{width:38px;height:38px;border-radius:10px;background:#F5F3FF;color:#7C3AED;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.gf-export-text{display:flex;flex-direction:column;gap:2px}
+.gf-export-title{font-size:.85rem;font-weight:700;color:#0F172A}
+.gf-export-desc{font-size:.76rem;color:#64748B}
+
+.gf-footer{display:flex;justify-content:flex-end;gap:10px;padding-top:24px;border-top:1.5px solid #F1F5F9;margin-top:8px}
+.btn-gf-save{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;background:#7C3AED;color:#fff;border:none;border-radius:10px;font-size:.875rem;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s}
+.btn-gf-save:hover{background:#6D28D9}
+.btn-gf-cancel{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;background:#fff;color:#64748B;border:1.5px solid #E2E8F0;border-radius:10px;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s}
+.btn-gf-cancel:hover{background:#F8FAFC;color:#0F172A}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .gf-label,
+:root[data-bs-theme="dark"] .gf-input-wrap input,
+:root[data-bs-theme="dark"] .gf-matrix td:first-child,
+:root[data-bs-theme="dark"] .gf-matrix th:first-child { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .gf-section,
+:root[data-bs-theme="dark"] .gf-icon,
+:root[data-bs-theme="dark"] .gf-hint,
+:root[data-bs-theme="dark"] .gf-matrix thead th,
+:root[data-bs-theme="dark"] .gf-row-label i,
+:root[data-bs-theme="dark"] .btn-gf-cancel { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .gf-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .gf-input-wrap input { background:var(--main-bg); border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .gf-section { border-bottom-color:var(--border); }
+:root[data-bs-theme="dark"] .gf-app-block { border-color:var(--border); }
+:root[data-bs-theme="dark"] .gf-matrix th,
+:root[data-bs-theme="dark"] .gf-matrix td { border-top-color:var(--border); }
+:root[data-bs-theme="dark"] .gf-footer { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .gf-app-title { background:var(--main-bg); color:var(--text-primary); }
+:root[data-bs-theme="dark"] .gf-matrix thead th { background:var(--surface); }
+:root[data-bs-theme="dark"] .gf-matrix tbody tr:hover { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .btn-gf-cancel { background:var(--surface); border-color:var(--border); }
+:root[data-bs-theme="dark"] .btn-gf-cancel:hover { background:var(--main-bg); color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .gf-export-title { color:var(--text-primary); }
+:root[data-bs-theme="dark"] .gf-export-desc { color:var(--text-muted); }
+:root[data-bs-theme="dark"] .gf-export-row:hover { background:rgba(255,255,255,.03); }
+</style>
+
+<div class="gf-wrap">
+    <div class="gf-card">
+        <div class="gf-card-header">
+            <div class="gf-hdr-icon">
+                <i class="bi bi-{% if is_create %}diagram-3-fill{% else %}shield-lock{% endif %}"></i>
+            </div>
+            <div>
+                <h2 class="gf-hdr-title">{{ title }}</h2>
+                <p class="gf-hdr-sub">{% if is_create %}Define el nombre del grupo y marca los permisos que tendrá{% else %}Marca o desmarca los permisos que tendrá este grupo{% endif %}</p>
+            </div>
+        </div>
+
+        <div class="gf-card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="gf-field">
+                    <label class="gf-label"><i class="bi bi-tag"></i> Nombre del grupo <span class="req">*</span></label>
+                    <div class="gf-input-wrap">
+                        <i class="bi bi-diagram-3 gf-icon"></i>
+                        <input type="text" name="name" value="{{ group.name|default:'' }}" placeholder="Ej. Compras" required>
+                    </div>
+                </div>
+
+                {% for section in perm_sections %}
+                <div class="gf-section">
+                    <span>{{ section.app_display }}</span>
+                    <span class="gf-hint">Clic en una columna marca/desmarca toda la acción</span>
+                </div>
+                <div class="gf-app-block">
+                    <table class="gf-matrix">
+                        <thead>
+                            <tr>
+                                <th>Módulo</th>
+                                {% for action_key, action_label in action_headers %}
+                                <th data-col="{{ forloop.counter0 }}">{{ action_label }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in section.rows %}
+                            <tr>
+                                <td>
+                                    <span class="gf-row-label" data-row-toggle>
+                                        <i class="bi bi-table"></i>{{ row.label }}
+                                    </span>
+                                </td>
+                                {% for perm in row.perms %}
+                                <td>
+                                    {% if perm %}
+                                    <input type="checkbox" name="perms" value="{{ perm.id }}" data-col="{{ forloop.counter0 }}"
+                                        {% if perm.id in current_ids %}checked{% endif %}>
+                                    {% else %}
+                                    <span style="color:#E2E8F0">—</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+
+                {% if export_perm %}
+                <div class="gf-section">
+                    <span>Otros permisos</span>
+                </div>
+                <div class="gf-app-block">
+                    <label class="gf-export-row" for="perm-export">
+                        <input type="checkbox" id="perm-export" name="perms" value="{{ export_perm.id }}"
+                            {% if export_perm.id in current_ids %}checked{% endif %}>
+                        <span class="gf-export-icon"><i class="bi bi-download"></i></span>
+                        <span class="gf-export-text">
+                            <span class="gf-export-title">Exportar reportes a PDF / Excel</span>
+                            <span class="gf-export-desc">Permite descargar los listados (facturas, productos, clientes, etc.) como PDF o Excel.</span>
+                        </span>
+                    </label>
+                </div>
+                {% endif %}
+
+                <div class="gf-footer">
+                    <a href="{% url 'security:group_list' %}" class="btn-gf-cancel">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn-gf-save">
+                        <i class="bi bi-{% if is_create %}diagram-3-fill{% else %}check-circle-fill{% endif %}"></i>
+                        {% if is_create %}Crear Grupo{% else %}Guardar Permisos{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.gf-matrix').forEach(function (table) {
+    // Clic en encabezado de columna => marca/desmarca toda la acción
+    table.querySelectorAll('thead th[data-col]').forEach(function (th) {
+        th.addEventListener('click', function () {
+            var col = th.dataset.col;
+            var boxes = table.querySelectorAll('tbody input[type="checkbox"][data-col="' + col + '"]');
+            var allChecked = Array.from(boxes).every(function (b) { return b.checked; });
+            boxes.forEach(function (b) { b.checked = !allChecked; });
+        });
+    });
+    // Clic en el nombre del módulo => marca/desmarca toda la fila
+    table.querySelectorAll('tbody [data-row-toggle]').forEach(function (label) {
+        label.addEventListener('click', function () {
+            var boxes = label.closest('tr').querySelectorAll('input[type="checkbox"]');
+            var allChecked = Array.from(boxes).every(function (b) { return b.checked; });
+            boxes.forEach(function (b) { b.checked = !allChecked; });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load l10n %}
+{% block title %}Cobros — Factura #{{ factura.number|default:factura.id }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+.id-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.id-hdr-left{display:flex;align-items:center;gap:14px}
+.id-hdr-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.id-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.id-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.id-hdr-btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.id-btn-pdf{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border:none;border-radius:10px;background:#2563EB;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:background .15s,transform .1s;box-shadow:0 4px 12px rgba(37,99,235,.28);white-space:nowrap}
+.id-btn-pdf:hover{background:#1D4ED8;color:#fff;transform:translateY(-1px)}
+.id-btn-back{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;color:#64748B;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.id-btn-back:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+.id-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.id-card-hdr{background:#1E293B;padding:14px 22px;display:flex;align-items:center;gap:12px}
+.id-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.id-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.id-card-body{padding:24px}
+.id-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:700px){.id-info-grid{grid-template-columns:1fr 1fr}}
+.id-info-label{font-size:.71rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.id-info-val{font-size:.9rem;color:#0F172A;font-weight:600}
+.id-table{width:100%;border-collapse:collapse}
+.id-table thead th{padding:10px 14px;font-size:.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #F1F5F9;text-align:left;white-space:nowrap;background:#FAFBFF}
+.id-table thead th:first-child{padding-left:20px}
+.id-table tbody td{padding:12px 14px;border-bottom:1px solid #F8FAFC;font-size:.845rem;color:#334155;vertical-align:middle}
+.id-table tbody td:first-child{padding-left:20px}
+.id-table tbody tr:last-child td{border-bottom:none}
+.id-table tbody tr:hover td{background:#FAFBFF}
+.mod-act-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;font-size:.85rem;text-decoration:none;border:1.5px solid;transition:background .15s,color .15s}
+.act-edit{border-color:#BFDBFE;color:#2563EB;background:#fff}
+.act-edit:hover{background:#EFF6FF;color:#1D4ED8}
+.act-del{border-color:#FECACA;color:#EF4444;background:#fff}
+.act-del:hover{background:#FEF2F2;color:#DC2626}
+.mod-act-group{display:flex;align-items:center;gap:5px}
+.mod-empty{text-align:center;padding:40px 24px;color:#94A3B8}
+.mod-empty i{font-size:2.2rem;display:block;margin-bottom:8px;color:#CBD5E1}
+.pp-panel{border:1.5px solid #BFDBFE;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#F8FBFF 0%,#fff 55%)}
+.pp-panel-top{background:linear-gradient(135deg,#003087 0%,#0070E0 100%);padding:16px 18px;color:#fff}
+.pp-panel-top .pp-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1rem;letter-spacing:.2px}
+.pp-panel-top .pp-brand i{font-size:1.25rem}
+.pp-panel-top p{margin:8px 0 0;font-size:.8rem;opacity:.9;line-height:1.4;font-weight:500}
+.pp-panel-body{padding:18px}
+.pp-amount{margin-bottom:14px;max-width:220px}
+.pp-amount label{font-size:.71rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;display:block}
+.pp-amount input{border:1.5px solid #E2E8F0;border-radius:10px;padding:11px 12px;font-size:1rem;font-weight:700;width:100%;background:#fff;color:#0F172A}
+.pp-amount input:focus{outline:none;border-color:#0070E0;box-shadow:0 0 0 3px rgba(0,112,224,.15)}
+.pp-buttons-wrap{max-width:360px}
+.pp-pay-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:360px;height:42px;padding:0 18px;margin-bottom:10px;border:none;border-radius:4px;background:#FFC439;color:#003087;font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,48,135,.14)}
+.pp-pay-btn:hover{filter:brightness(.97)}
+.pp-pay-btn:disabled{opacity:.65;cursor:wait}
+.pp-buttons-wrap > *{margin-bottom:8px}
+.pp-divider{display:flex;align-items:center;gap:10px;max-width:360px;margin:4px 0 10px;color:#94A3B8;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.pp-divider::before,.pp-divider::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.pp-hint{margin:12px 0 0;font-size:.75rem;color:#64748B;line-height:1.4}
+.pp-msg{margin-top:12px;font-size:.82rem}
+.pp-msg.error{color:#DC2626}
+.pp-msg.ok{color:#15803D}
+.metodo-badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.metodo-manual{background:#F1F5F9;color:#475569}
+.metodo-paypal{background:#EFF6FF;color:#1D4ED8}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .pp-amount input { background:var(--main-bg); border-color:var(--border); color:var(--text-primary); }
+:root[data-bs-theme="dark"] .pp-msg.ok { color:var(--text-success); }
+:root[data-bs-theme="dark"] .id-title,
+:root[data-bs-theme="dark"] .id-info-val,
+:root[data-bs-theme="dark"] .id-table tbody td { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .id-sub,
+:root[data-bs-theme="dark"] .id-btn-back,
+:root[data-bs-theme="dark"] .id-info-label,
+:root[data-bs-theme="dark"] .id-table thead th,
+:root[data-bs-theme="dark"] .mod-empty { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .id-card { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .id-btn-back,
+:root[data-bs-theme="dark"] .act-edit,
+:root[data-bs-theme="dark"] .act-del { background:var(--surface); }
+
+:root[data-bs-theme="dark"] .id-btn-back { border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-table thead th { background:var(--main-bg); border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-table tbody td { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .id-table tbody tr:hover td,
+:root[data-bs-theme="dark"] .id-btn-back:hover { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .id-btn-back:hover { color:var(--text-primary); }
+</style>
+
+<div class="id-hdr">
+    <div class="id-hdr-left">
+        <div class="id-hdr-icon"><i class="bi bi-receipt-cutoff"></i></div>
+        <div>
+            <h2 class="id-title">Factura #{{ factura.number|default:factura.id }}</h2>
+            <p class="id-sub">{{ factura.customer.full_name }}</p>
+        </div>
+    </div>
+    <div class="id-hdr-btns">
+        {% if factura.is_active and factura.estado != 'pagada' %}
+        <a href="{% url 'cobros:cobro_create' factura.pk %}" class="id-btn-pdf">
+            <i class="bi bi-plus-circle"></i> Registrar Pago
+        </a>
+        {% endif %}
+        <a href="{% url 'billing:invoice_detail' factura.pk %}" class="id-btn-back">
+            <i class="bi bi-receipt"></i> Ver Factura
+        </a>
+        <a href="{% url 'cobros:factura_pendiente_list' %}" class="id-btn-back">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="id-card">
+    <div class="id-card-hdr"><i class="bi bi-info-circle"></i><span>Resumen de Cobro</span></div>
+    <div class="id-card-body">
+        <div class="id-info-grid">
+            <div><div class="id-info-label">Total Factura</div><div class="id-info-val">$ {{ factura.total }}</div></div>
+            <div><div class="id-info-label">Saldo Pendiente</div><div class="id-info-val">$ {{ factura.saldo }}</div></div>
+            <div><div class="id-info-label">Estado</div><div class="id-info-val">{% if factura.estado == 'pagada' %}Pagada{% else %}Pendiente{% endif %}</div></div>
+            <div><div class="id-info-label">Tipo de Pago</div><div class="id-info-val">{% if factura.tipo_pago == 'credito' %}Crédito{% else %}Contado{% endif %}</div></div>
+        </div>
+    </div>
+</div>
+
+{% if factura.is_active and factura.estado != 'pagada' %}
+<div class="id-card">
+    <div class="id-card-hdr"><i class="bi bi-paypal"></i><span>Pagar con PayPal</span></div>
+    <div class="id-card-body">
+        <div class="pp-panel">
+            <div class="pp-panel-top">
+                <div class="pp-brand"><i class="bi bi-paypal"></i> PayPal Sandbox</div>
+                <p><strong>PayPal</strong> te lleva al sitio sandbox. <strong>Tarjeta</strong> deja ingresar los datos aquí mismo.</p>
+            </div>
+            <div class="pp-panel-body">
+                <div class="pp-amount">
+                    <label for="pp-amount-input">Monto a pagar (USD)</label>
+                    <input type="number" id="pp-amount-input" step="0.01" min="0.01" max="{{ factura.saldo|unlocalize }}" value="{{ factura.saldo|unlocalize }}">
+                </div>
+                <button type="button" id="pp-pay-btn" class="pp-pay-btn">
+                    <i class="bi bi-paypal"></i> Pagar con PayPal
+                </button>
+                <div class="pp-divider">o</div>
+                <div id="paypal-card-container" class="pp-buttons-wrap"></div>
+                <p class="pp-hint">Tarjeta de prueba: Visa <code>4012888888881881</code> · Vence <code>12/2030</code> · CVV <code>123</code></p>
+                <div id="pp-message" class="pp-msg"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% csrf_token %}
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture&components=buttons&enable-funding=card&disable-funding=venmo,paylater,credit"></script>
+<script>
+(function(){
+    var amountInput = document.getElementById('pp-amount-input');
+    var messageBox = document.getElementById('pp-message');
+    var payBtn = document.getElementById('pp-pay-btn');
+    var createUrl = '{% url "cobros:cobro_paypal_create_order" factura.pk %}';
+    var captureTpl = '{% url "cobros:cobro_paypal_capture_order" factura.pk "ORDER_ID" %}';
+    function csrfToken(){ return document.querySelector('[name=csrfmiddlewaretoken]').value; }
+    function showMessage(text, ok){
+        messageBox.textContent = text;
+        messageBox.className = 'pp-msg ' + (ok ? 'ok' : 'error');
+    }
+    function montoNormalizado(){
+        return String(amountInput.value || '').trim().replace(',', '.');
+    }
+    // PayPal cuenta → redirección a sandbox (sin popup/iframe en blanco)
+    payBtn.addEventListener('click', function(){
+        payBtn.disabled = true;
+        showMessage('Redirigiendo a PayPal Sandbox…', true);
+        fetch(createUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+            body: JSON.stringify({amount: montoNormalizado(), flow: 'redirect'}),
+        }).then(function(r){ return r.json().then(function(data){ return {ok: r.ok, data: data}; }); })
+        .then(function(res){
+            if (!res.ok || res.data.error || !res.data.approve_url) {
+                showMessage(res.data.error || 'No se pudo iniciar el pago.', false);
+                payBtn.disabled = false;
+                return;
+            }
+            window.location.href = res.data.approve_url;
+        }).catch(function(){
+            showMessage('No se pudo conectar con el servidor de pagos.', false);
+            payBtn.disabled = false;
+        });
+    });
+    // Solo botón de tarjeta (formulario embebido)
+    if (typeof paypal === 'undefined') {
+        showMessage('No se pudo cargar el botón de tarjeta PayPal.', false);
+        return;
+    }
+    paypal.Buttons({
+        fundingSource: paypal.FUNDING.CARD,
+        style: { layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 42 },
+        createOrder: function(){
+            showMessage('Creando orden…', true);
+            return fetch(createUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+                body: JSON.stringify({amount: montoNormalizado()}),
+            }).then(function(r){ return r.json().then(function(data){ return {ok: r.ok, data: data}; }); })
+            .then(function(res){
+                if (!res.ok || res.data.error || !res.data.id) {
+                    throw new Error(res.data.error || 'No se pudo crear la orden.');
+                }
+                return res.data.id;
+            });
+        },
+        onApprove: function(data){
+            showMessage('Confirmando pago…', true);
+            var url = captureTpl.replace('ORDER_ID', encodeURIComponent(data.orderID));
+            return fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+            }).then(function(r){ return r.json().then(function(body){ return {ok: r.ok, body: body}; }); })
+            .then(function(res){
+                if (!res.ok || res.body.error) {
+                    throw new Error(res.body.error || 'No se pudo capturar el pago.');
+                }
+                showMessage('Pago registrado: $ ' + res.body.valor + '. Saldo: $ ' + res.body.saldo, true);
+                window.setTimeout(function(){ window.location.reload(); }, 1200);
+            });
+        },
+        onCancel: function(){ showMessage('Pago cancelado.', false); },
+        onError: function(err){ showMessage((err && err.message) ? err.message : 'Error en el pago con tarjeta.', false); }
+    }).render('#paypal-card-container');
+})();
+</script>
+{% endif %}
+
+<div class="id-card">
+    <div class="id-card-hdr"><i class="bi bi-clock-history"></i><span>Historial de Pagos</span></div>
+    <table class="id-table">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Valor</th>
+                <th>Método</th>
+                <th>Observación</th>
+                <th style="width:90px">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cobro in cobros %}
+            <tr>
+                <td>{{ cobro.fecha|date:"d/m/Y" }}</td>
+                <td style="font-weight:700;color:var(--text-success)">$ {{ cobro.valor }}</td>
+                <td>
+                    {% if cobro.metodo_pago == 'paypal' %}
+                    <span class="metodo-badge metodo-paypal"><i class="bi bi-paypal"></i> PayPal</span>
+                    {% else %}
+                    <span class="metodo-badge metodo-manual">Manual</span>
+                    {% endif %}
+                </td>
+                <td>{{ cobro.observacion|default:"—" }}</td>
+                <td>
+                    <div class="mod-act-group">
+                        <a href="{% url 'cobros:cobro_update' cobro.pk %}" class="mod-act-btn act-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                        {% if factura.estado != 'pagada' %}
+                        <a href="{% url 'cobros:cobro_delete' cobro.pk %}" class="mod-act-btn act-del" title="Eliminar"><i class="bi bi-trash3"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5"><div class="mod-empty"><i class="bi bi-inbox"></i><p>Aún no se han registrado pagos para esta factura.</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

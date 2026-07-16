@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura #{{ invoice.number }}</title>
+</head>
+<body style="margin:0;padding:0;background:#F1F5F9;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5F9;padding:24px 0;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;">
+
+    <!-- Header -->
+    <tr>
+        <td style="background:#0B1120;padding:28px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td valign="top">
+                        <span style="color:#ffffff;font-size:19px;font-weight:bold;">TecnoStock S.A.</span><br>
+                        <span style="color:#94A3B8;font-size:12px;">Sistema de Ventas y Facturación</span><br>
+                        <span style="color:#94A3B8;font-size:12px;">RUC: 1790000000001</span>
+                    </td>
+                    <td valign="top" align="right">
+                        <span style="display:inline-block;background:rgba(255,255,255,.08);color:#94A3B8;font-size:10px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;padding:4px 10px;border-radius:20px;">Comprobante de Venta</span><br>
+                        <span style="display:block;margin-top:8px;color:#ffffff;font-size:17px;font-weight:bold;">Factura {{ invoice.numero_completo }}</span>
+                        <span style="display:block;margin-top:2px;color:#64748B;font-size:11px;">Emitida: {{ invoice.invoice_date|date:"d/m/Y" }}</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Greeting -->
+    <tr>
+        <td style="padding:28px 32px 0;">
+            <p style="margin:0 0 4px;font-size:15px;color:#0F172A;">Hola <strong>{{ invoice.customer.full_name }}</strong>,</p>
+            <p style="margin:0 0 20px;font-size:14px;color:#64748B;">
+                Gracias por tu compra. Adjuntamos el detalle de tu factura <strong>{{ invoice.numero_completo }}</strong>
+                emitida el {{ invoice.invoice_date|date:"d \d\e F \d\e Y" }}.
+            </p>
+        </td>
+    </tr>
+
+    <!-- Facturar a / Forma de pago -->
+    <tr>
+        <td style="padding:0 32px 20px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E2E8F0;border-radius:10px;">
+                <tr>
+                    <td width="50%" valign="top" style="padding:14px 16px;border-right:1px solid #E2E8F0;">
+                        <span style="font-size:10px;font-weight:bold;letter-spacing:.5px;color:#94A3B8;text-transform:uppercase;">Facturar a</span><br>
+                        <span style="font-size:13px;color:#0F172A;font-weight:bold;">{{ invoice.customer.full_name }}</span><br>
+                        <span style="font-size:12px;color:#334155;"><strong>RUC:</strong> {{ invoice.customer.dni }}</span><br>
+                        {% if invoice.customer.email %}<span style="font-size:12px;color:#64748B;">{{ invoice.customer.email }}</span>{% endif %}
+                    </td>
+                    <td width="50%" valign="top" style="padding:14px 16px;">
+                        <span style="font-size:10px;font-weight:bold;letter-spacing:.5px;color:#94A3B8;text-transform:uppercase;">Forma de pago</span><br>
+                        {% if invoice.tipo_pago == 'credito' %}
+                        <span style="display:inline-block;margin-top:4px;background:#FEF3C7;color:#B45309;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;">Crédito</span><br>
+                        <span style="display:block;margin-top:6px;font-size:12px;color:#334155;">Plazo: 1 mes</span>
+                        <span style="display:block;font-size:12px;color:#334155;">Vence: <strong>{{ due_date|date:"d/m/Y" }}</strong></span>
+                        {% else %}
+                        <span style="display:inline-block;margin-top:4px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;">Contado</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Products table -->
+    <tr>
+        <td style="padding:0 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <td style="background:#0B1120;color:#ffffff;font-size:12px;padding:8px 10px;border-radius:6px 0 0 0;">Producto</td>
+                        <td style="background:#0B1120;color:#ffffff;font-size:12px;padding:8px 10px;text-align:center;">Cant.</td>
+                        <td style="background:#0B1120;color:#ffffff;font-size:12px;padding:8px 10px;text-align:right;">P. Unit.</td>
+                        <td style="background:#0B1120;color:#ffffff;font-size:12px;padding:8px 10px;text-align:right;border-radius:0 6px 0 0;">Subtotal</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in invoice.details.all %}
+                    <tr>
+                        <td style="padding:8px 10px;font-size:13px;color:#334155;border-bottom:1px solid #F1F5F9;">{{ d.product.name }}</td>
+                        <td style="padding:8px 10px;font-size:13px;color:#334155;border-bottom:1px solid #F1F5F9;text-align:center;">{{ d.quantity }}</td>
+                        <td style="padding:8px 10px;font-size:13px;color:#334155;border-bottom:1px solid #F1F5F9;text-align:right;">$ {{ d.unit_price }}</td>
+                        <td style="padding:8px 10px;font-size:13px;color:#334155;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:bold;">$ {{ d.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Totals -->
+    <tr>
+        <td style="padding:16px 32px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:220px;margin-left:auto;">
+                <tr>
+                    <td style="font-size:13px;color:#64748B;padding:3px 0;">Subtotal</td>
+                    <td style="font-size:13px;color:#0F172A;padding:3px 0;text-align:right;">$ {{ invoice.subtotal }}</td>
+                </tr>
+                <tr>
+                    <td style="font-size:13px;color:#64748B;padding:3px 0;">IVA (15%)</td>
+                    <td style="font-size:13px;color:#0F172A;padding:3px 0;text-align:right;">$ {{ invoice.tax }}</td>
+                </tr>
+                <tr>
+                    <td style="font-size:14px;color:#1D4ED8;font-weight:bold;padding:8px 0 0;">Total</td>
+                    <td style="font-size:15px;color:#1D4ED8;font-weight:bold;padding:8px 0 0;text-align:right;">$ {{ invoice.total }}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Credit status -->
+    {% if invoice.tipo_pago == 'credito' %}
+    <tr>
+        <td style="padding:20px 32px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;">
+                <tr>
+                    <td style="padding:12px 16px;">
+                        <span style="font-size:10px;font-weight:bold;letter-spacing:.5px;color:#92400E;text-transform:uppercase;">Saldo pendiente</span><br>
+                        <span style="font-size:13px;color:#78350F;">
+                            {% if invoice.estado == 'pagada' %}
+                                Esta factura a crédito ya se encuentra <strong>totalmente pagada</strong>.
+                            {% else %}
+                                Esta factura fue emitida a <strong>crédito</strong>. Saldo actual: <strong>$ {{ invoice.saldo }}</strong>
+                                · Fecha límite: <strong>{{ due_date|date:"d/m/Y" }}</strong>.
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    {% endif %}
+
+    <!-- Electronic authorization (simulated SRI) -->
+    {% if invoice.clave_acceso %}
+    <tr>
+        <td style="padding:20px 32px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;">
+                <tr>
+                    <td style="padding:12px 16px;">
+                        <span style="font-size:10px;font-weight:bold;letter-spacing:.5px;color:#15803D;text-transform:uppercase;">Autorizada electrónicamente — {% if invoice.ambiente == '1' %}Ambiente de Pruebas{% else %}Producción{% endif %}</span><br>
+                        <span style="font-size:12px;color:#166534;">N° Autorización: <strong>{{ invoice.numero_autorizacion }}</strong></span><br>
+                        <span style="font-size:11px;color:#166534;word-break:break-all;">Clave de acceso: {{ invoice.clave_acceso }}</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    {% endif %}
+
+    <!-- CTA button -->
+    <tr>
+        <td style="padding:24px 32px 0;" align="center">
+            <a href="{{ view_url }}" style="display:inline-block;background:#0B1120;color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;">Ver factura{% if invoice.tipo_pago == 'credito' and invoice.estado != 'pagada' %} y pagar{% endif %}</a>
+        </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+        <td style="padding:28px 32px 8px;">
+            <p style="margin:0;font-size:12px;color:#94A3B8;text-align:center;">
+                Este correo fue generado automáticamente por <strong>TecnoStock S.A.</strong> (RUC 1790000000001).
+                Si tienes alguna duda sobre tu factura, responde a este mensaje y te contactaremos.
+            </p>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:0 32px 28px;">
+            <p style="margin:0;font-size:11px;color:#CBD5E1;text-align:center;">
+                Av. 6 de Diciembre N34-123, Quito · (02) 123-4567
+            </p>
+        </td>
+    </tr>
+
+</table>
+<p style="margin:16px 0 0;font-size:11px;color:#94A3B8;text-align:center;">© {{ invoice.invoice_date|date:"Y" }} TecnoStock S.A. — Todos los derechos reservados.</p>
+</td></tr>
+</table>
+</body>
+</html>

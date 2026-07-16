@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Producto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-box"></i> {% if form.instance.pk %}Editar Producto{% else %}Nuevo Producto{% endif %}</h3>
+    <a href="{% url 'billing:product_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="product-form">
+    {% csrf_token %}
+    <div class="row g-3">
+
+        {# ── Columna izquierda: imagen, balance, descripción ── #}
+        <div class="col-md-4">
+
+            {# Preview de imagen #}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body text-center p-3">
+                    <div id="img-wrapper" class="mb-3"
+                         style="height:220px; display:flex; align-items:center; justify-content:center;
+                                border:2px dashed #dee2e6; border-radius:.5rem; overflow:hidden; background:#f8f9fa;">
+                        {% if form.instance.image %}
+                        <img id="img-preview" src="{{ form.instance.image.url }}"
+                             style="max-height:100%; max-width:100%; object-fit:contain;">
+                        {% else %}
+                        <div id="img-placeholder" class="text-muted text-center">
+                            <i class="bi bi-image" style="font-size:4rem; color:#dee2e6;"></i>
+                            <p class="small mb-0 mt-1">Sin imagen</p>
+                        </div>
+                        <img id="img-preview" src="" class="d-none"
+                             style="max-height:100%; max-width:100%; object-fit:contain;">
+                        {% endif %}
+                    </div>
+
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-camera"></i> Foto
+                    </label>
+                    {{ form.image }}
+                    {% for error in form.image.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Tarjeta de balance #}
+            <div class="card mb-3" style="background:#e0f7fa; border:none;">
+                <div class="card-body py-3 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">Balance:</span>
+                    <span class="fw-bold fs-5 text-primary" id="balance-display">$0.00</span>
+                </div>
+            </div>
+
+            {# Descripción #}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <label class="form-label fw-semibold">
+                        {{ form.description.label }}
+                    </label>
+                    {{ form.description }}
+                    {% for error in form.description.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        {# ── Columna derecha: campos principales ── #}
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-box"></i> Product</h5>
+                </div>
+                <div class="card-body">
+
+                    {# Product Name #}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% for error in form.name.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {# Brand + Group #}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ form.brand.label }}</label>
+                            {{ form.brand }}
+                            {% for error in form.brand.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ form.group.label }}</label>
+                            {{ form.group }}
+                            {% for error in form.group.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {# Unit Price + Stock #}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ form.unit_price.label }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.unit_price }}
+                            </div>
+                            {% for error in form.unit_price.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ form.stock.label }}</label>
+                            {{ form.stock }}
+                            {% for error in form.stock.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {# Suppliers #}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.suppliers.label }}</label>
+                        {{ form.suppliers }}
+                        <div class="form-text">Hold Ctrl (Cmd) to select multiple suppliers.</div>
+                        {% for error in form.suppliers.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {# Is Active #}
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.is_active }}
+                            <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                                {{ form.is_active.label }}
+                            </label>
+                        </div>
+                        {% for error in form.is_active.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {# Buttons #}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-floppy"></i> Guardar
+                        </button>
+                        <a href="{% url 'billing:product_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    // ── Preview de imagen al seleccionar archivo ──────────────────────────
+    const fileInput    = document.getElementById('id_image');
+    const imgPreview   = document.getElementById('img-preview');
+    const placeholder  = document.getElementById('img-placeholder');
+
+    fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            imgPreview.src = e.target.result;
+            imgPreview.classList.remove('d-none');
+            if (placeholder) placeholder.classList.add('d-none');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ── Balance = unit_price × stock ──────────────────────────────────────
+    const priceInput   = document.getElementById('id_unit_price');
+    const stockInput   = document.getElementById('id_stock');
+    const balanceEl    = document.getElementById('balance-display');
+
+    function updateBalance() {
+        const price = parseFloat(priceInput.value) || 0;
+        const stock = parseInt(stockInput.value)   || 0;
+        balanceEl.textContent = '$' + (price * stock).toFixed(2);
+    }
+
+    priceInput.addEventListener('input', updateBalance);
+    stockInput.addEventListener('input', updateBalance);
+
+    // Calcular balance inicial (al editar un producto existente)
+    updateBalance();
+})();
+</script>
+{% endblock %}

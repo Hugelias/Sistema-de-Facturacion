@@ -1,0 +1,693 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TecnoStock{% endblock %}
+
+{% block content %}
+<style>
+/* ── Page header ── */
+.frm-page-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.frm-page-left{display:flex;align-items:center;gap:14px}
+.frm-page-icon{width:52px;height:52px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,.14);flex-shrink:0}
+.frm-page-title{font-size:1.45rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.frm-page-sub{font-size:.825rem;color:#64748B;margin:3px 0 0}
+.frm-back-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#64748B;font-size:.855rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-back-btn:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+
+/* ── Card ── */
+.frm-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);overflow:hidden;margin-bottom:16px}
+.frm-card-hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.frm-card-hdr-left{display:flex;align-items:center;gap:12px}
+.frm-card-hdr i{color:rgba(255,255,255,.55);font-size:1.05rem}
+.frm-card-hdr span{color:#fff;font-size:.925rem;font-weight:700}
+.frm-card-body{padding:22px 24px}
+
+/* ── Fields (icon-prefixed) ── */
+.frm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.frm-grid-2{grid-template-columns:1fr}}
+.frm-field{margin-bottom:18px}
+.frm-field:last-child{margin-bottom:0}
+.frm-label{font-size:.8rem;font-weight:600;color:#374151;display:flex;align-items:center;gap:4px;margin-bottom:7px}
+.frm-req{color:#EF4444;font-size:.85rem}
+.frm-iw{display:flex;align-items:stretch}
+.frm-icon{
+    width:40px;min-width:40px;background:#F8FAFC;border:1.5px solid #E2E8F0;
+    border-right:none;border-radius:9px 0 0 9px;
+    display:flex;align-items:center;justify-content:center;
+    color:#94A3B8;font-size:.95rem;flex-shrink:0;
+    transition:border-color .15s,color .15s,background .15s;
+}
+.frm-iw:focus-within .frm-icon{border-color:#2563EB;color:#2563EB;background:#EFF6FF}
+.frm-iw input,.frm-iw select{
+    flex:1;min-width:0;
+    border:1.5px solid #E2E8F0;border-left:none;border-radius:0 9px 9px 0;
+    padding:10px 12px;font-size:.875rem;color:#0F172A;
+    outline:none;background:#fff;font-family:inherit;
+    transition:border-color .15s,box-shadow .15s;
+}
+.frm-iw input:focus,.frm-iw select:focus{
+    border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.frm-iw input::placeholder{color:#CBD5E1}
+.frm-error{font-size:.74rem;color:#EF4444;margin-top:5px;display:flex;align-items:center;gap:4px}
+.frm-global-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:.82rem;color:#B91C1C;display:flex;align-items:flex-start;gap:8px;margin-bottom:16px}
+
+/* ── Formset table ── */
+.pf-table-wrap{overflow-x:auto;margin:0 -1px}
+.pf-table{width:100%;border-collapse:collapse;min-width:560px}
+.pf-table thead th{
+    padding:9px 12px;font-size:.71rem;font-weight:700;color:#94A3B8;
+    text-transform:uppercase;letter-spacing:.6px;
+    border-bottom:1.5px solid #F1F5F9;text-align:left;white-space:nowrap;
+    background:#FAFBFF;
+}
+.pf-table thead th:first-child{padding-left:20px}
+.pf-table thead th.th-center{text-align:center}
+.pf-table tbody td{
+    padding:10px 12px;border-bottom:1px solid #F8FAFC;
+    vertical-align:middle;font-size:.845rem;color:#334155;
+}
+.pf-table tbody td:first-child{padding-left:20px}
+.pf-table tbody tr.formset-row:hover td{background:#FAFBFF}
+.pf-table tbody tr.pf-deleted td{opacity:.4}
+
+/* ── Table inputs ── */
+.pf-table select.form-select,.pf-table select{
+    width:100%;border:1.5px solid #E2E8F0;border-radius:8px;
+    padding:7px 10px;font-size:.83rem;color:#0F172A;
+    outline:none;background:#fff;font-family:inherit;
+    transition:border-color .15s;
+}
+.pf-table select:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.pf-table input.form-control,.pf-table input{
+    width:100%;border:1.5px solid #E2E8F0;border-radius:8px;
+    padding:7px 10px;font-size:.83rem;color:#0F172A;
+    outline:none;background:#fff;font-family:inherit;text-align:center;
+    transition:border-color .15s;
+}
+.pf-table input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* ── Row subtotal ── */
+.row-subtotal{
+    font-weight:700;color:#2563EB;font-size:.875rem;
+    display:block;text-align:right;white-space:nowrap;
+}
+
+/* ── Delete cell ── */
+.pf-del-cell{width:52px;text-align:center}
+.pf-del-label{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border-radius:7px;cursor:pointer;
+    border:1.5px solid #FECACA;background:#fff;color:#EF4444;
+    transition:background .12s;
+}
+.pf-del-label:hover{background:#FEF2F2}
+.pf-del-label input[type="checkbox"]{display:none}
+.pf-del-label:has(input:checked){background:#FEF2F2;border-color:#EF4444}
+
+/* ── Table footer (subtotal row) ── */
+.pf-table tfoot td{padding:10px 12px;border-top:1.5px solid #F1F5F9;background:#F8FAFC;font-size:.83rem}
+.pf-table tfoot td:first-child{padding-left:20px}
+.pf-tfoot-label{font-weight:700;color:#64748B;text-align:right}
+.pf-tfoot-val{font-weight:700;color:#2563EB;text-align:right;white-space:nowrap}
+
+/* ── Add row button ── */
+.pf-add-row-wrap{padding:12px 20px;border-top:1px solid #F1F5F9}
+.pf-add-row-btn{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:7px 16px;border:1.5px solid #E2E8F0;border-radius:8px;
+    background:#fff;color:#64748B;font-size:.83rem;font-weight:600;
+    cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s,color .15s;
+}
+.pf-add-row-btn:hover{background:#F8FAFC;border-color:#2563EB;color:#2563EB}
+
+/* ── Totals row ── */
+.pf-totals{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;padding:16px 20px;background:#F8FAFC;border-top:1.5px solid #F1F5F9}
+@media(max-width:640px){.pf-totals{grid-template-columns:1fr 1fr}}
+.pf-total-item{}
+.pf-total-label{font-size:.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.pf-total-val{
+    display:flex;align-items:center;
+    border:1.5px solid #E2E8F0;border-radius:9px;
+    background:#fff;padding:8px 12px;
+    font-size:.875rem;font-weight:600;color:#64748B;
+    min-height:38px;
+}
+.pf-total-val.pf-tv-blue{color:#2563EB;font-size:1rem;font-weight:800;background:#EFF6FF;border-color:#BFDBFE}
+.pf-total-val.pf-tv-editable{padding:0}
+.pf-total-val.pf-tv-editable input{
+    width:100%;border:none;outline:none;background:transparent;
+    padding:8px 12px;font-size:.875rem;font-weight:600;color:#0F172A;
+    font-family:inherit;text-align:center;
+}
+.pf-dollar{color:#94A3B8;font-size:.8rem;margin-right:3px;font-weight:400}
+
+/* ── Info banner ── */
+.pf-info{
+    display:flex;align-items:center;gap:10px;
+    background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;
+    padding:11px 16px;margin-bottom:16px;
+    font-size:.82rem;color:#1D4ED8;
+}
+.pf-info i{font-size:1rem;flex-shrink:0;color:#2563EB}
+
+/* ── Actions ── */
+.frm-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.frm-btn-save{display:inline-flex;align-items:center;gap:7px;padding:11px 26px;border:none;border-radius:10px;background:#1E293B;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s;box-shadow:0 2px 8px rgba(15,23,42,.2)}
+.frm-btn-save:hover{background:#0F172A;transform:translateY(-1px)}
+.frm-btn-cancel{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border:1.5px solid #94A3B8;border-radius:10px;background:#64748B;color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s;white-space:nowrap}
+.frm-btn-cancel:hover{background:#475569}
+
+/* ── Validation banner ── */
+#pf-val-err{display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 16px;font-size:.82rem;color:#B91C1C;margin-bottom:16px;display:none;align-items:center;gap:8px}
+
+/* ── Per-row loss warning ── */
+.pf-cost-cell{position:relative}
+.pf-cost-cell input{padding-right:30px!important}
+.pf-cost-warn{
+    display:none;position:absolute;right:9px;top:50%;transform:translateY(-50%);
+    color:#D97706;font-size:.85rem;pointer-events:none;line-height:1;
+}
+.pf-row-loss>td:first-child{box-shadow:inset 3px 0 0 #F59E0B}
+
+/* ── Loss warning modal ── */
+.pf-modal-bd{
+    display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);
+    z-index:9999;align-items:center;justify-content:center;
+    backdrop-filter:blur(3px);
+}
+.pf-modal-bd.open{display:flex}
+.pf-modal{
+    background:#fff;border-radius:16px;max-width:460px;width:calc(100% - 32px);
+    box-shadow:0 20px 60px rgba(15,23,42,.3);overflow:hidden;
+    animation:pf-mIn .18s ease;
+}
+@keyframes pf-mIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:none}}
+.pf-mhdr{background:#FFFBEB;border-bottom:1.5px solid #FDE68A;padding:18px 22px;display:flex;align-items:flex-start;gap:14px}
+.pf-mhdr-ico{width:46px;height:46px;background:#F59E0B;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;color:#fff;flex-shrink:0}
+.pf-mhdr-txt h3{font-size:.975rem;font-weight:800;color:#92400E;margin:0 0 3px}
+.pf-mhdr-txt p{font-size:.815rem;color:#B45309;margin:0}
+.pf-mbody{padding:18px 22px}
+.pf-mbody>p{font-size:.865rem;color:#334155;margin:0 0 12px}
+.pf-mlist{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:10px 14px;list-style:none;margin:0 0 12px;max-height:180px;overflow-y:auto}
+.pf-mlist li{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:.815rem;color:#374151;border-bottom:1px solid rgba(253,186,116,.4)}
+.pf-mlist li:last-child{border-bottom:none}
+.pf-mli-name{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
+.pf-mli-prices{font-size:.775rem;white-space:nowrap;color:#EA580C;font-weight:700}
+.pf-mli-prices span{color:#94A3B8;font-weight:400}
+.pf-mfoot{padding:14px 22px;border-top:1px solid #F1F5F9;display:flex;justify-content:flex-end;gap:8px;background:#FAFAFA}
+.pf-mbtn-no{padding:9px 20px;border:1.5px solid #E2E8F0;border-radius:9px;background:#fff;color:#475569;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.pf-mbtn-no:hover{background:#F8FAFC;border-color:#CBD5E1}
+.pf-mbtn-yes{padding:9px 22px;border:none;border-radius:9px;background:#D97706;color:#fff;font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;display:inline-flex;align-items:center;gap:6px}
+.pf-mbtn-yes:hover{background:#B45309}
+
+/* ── Dark mode ── */
+:root[data-bs-theme="dark"] .frm-page-title,
+:root[data-bs-theme="dark"] .frm-label,
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .pf-table tbody td,
+:root[data-bs-theme="dark"] .pf-table select,
+:root[data-bs-theme="dark"] .pf-table input,
+:root[data-bs-theme="dark"] .pf-tv-editable input,
+:root[data-bs-theme="dark"] .pf-mbody>p { color:var(--text-primary); }
+
+:root[data-bs-theme="dark"] .frm-page-sub,
+:root[data-bs-theme="dark"] .frm-back-btn,
+:root[data-bs-theme="dark"] .frm-icon,
+:root[data-bs-theme="dark"] .pf-table thead th,
+:root[data-bs-theme="dark"] .pf-tfoot-label,
+:root[data-bs-theme="dark"] .pf-add-row-btn,
+:root[data-bs-theme="dark"] .pf-total-label,
+:root[data-bs-theme="dark"] .pf-total-val,
+:root[data-bs-theme="dark"] .pf-dollar,
+:root[data-bs-theme="dark"] .pf-mli-prices span,
+:root[data-bs-theme="dark"] .pf-mbtn-no { color:var(--text-muted); }
+
+:root[data-bs-theme="dark"] .frm-card,
+:root[data-bs-theme="dark"] .pf-modal { background:var(--surface); box-shadow:none; border:1px solid var(--border); }
+
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .pf-table select,
+:root[data-bs-theme="dark"] .pf-table input,
+:root[data-bs-theme="dark"] .frm-icon,
+:root[data-bs-theme="dark"] .pf-total-val,
+:root[data-bs-theme="dark"] .frm-back-btn,
+:root[data-bs-theme="dark"] .pf-add-row-btn,
+:root[data-bs-theme="dark"] .pf-mbtn-no { border-color:var(--border); }
+
+:root[data-bs-theme="dark"] .frm-iw input,
+:root[data-bs-theme="dark"] .frm-iw select,
+:root[data-bs-theme="dark"] .pf-table select,
+:root[data-bs-theme="dark"] .pf-table input,
+:root[data-bs-theme="dark"] .pf-total-val { background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .frm-icon,
+:root[data-bs-theme="dark"] .pf-table thead th,
+:root[data-bs-theme="dark"] .pf-table tfoot td,
+:root[data-bs-theme="dark"] .pf-totals,
+:root[data-bs-theme="dark"] .pf-mfoot { background:var(--main-bg); }
+
+:root[data-bs-theme="dark"] .frm-back-btn,
+:root[data-bs-theme="dark"] .pf-add-row-btn,
+:root[data-bs-theme="dark"] .pf-del-label,
+:root[data-bs-theme="dark"] .pf-mbtn-no { background:var(--surface); }
+
+:root[data-bs-theme="dark"] .pf-table thead th { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .pf-table tbody td,
+:root[data-bs-theme="dark"] .pf-add-row-wrap { border-bottom-color:var(--border); }
+
+:root[data-bs-theme="dark"] .pf-table tfoot td,
+:root[data-bs-theme="dark"] .pf-totals,
+:root[data-bs-theme="dark"] .pf-mfoot { border-top-color:var(--border); }
+
+:root[data-bs-theme="dark"] .pf-table tbody tr.formset-row:hover td,
+:root[data-bs-theme="dark"] .frm-back-btn:hover,
+:root[data-bs-theme="dark"] .pf-add-row-btn:hover,
+:root[data-bs-theme="dark"] .pf-mbtn-no:hover { background:rgba(255,255,255,.03); }
+
+:root[data-bs-theme="dark"] .frm-back-btn:hover,
+:root[data-bs-theme="dark"] .pf-mbtn-no:hover { color:var(--text-primary); }
+</style>
+
+<!-- Page header -->
+<div class="frm-page-hdr">
+    <div class="frm-page-left">
+        <div class="frm-page-icon"><i class="bi bi-cart3-fill"></i></div>
+        <div>
+            <h2 class="frm-page-title">{{ title }}</h2>
+            <p class="frm-page-sub">Registra los productos comprados al proveedor con sus costos.</p>
+        </div>
+    </div>
+    <a href="{% url 'purchasing:purchase_list' %}" class="frm-back-btn">
+        <i class="bi bi-arrow-left"></i> Volver a Compras
+    </a>
+</div>
+
+<form method="post" id="purchase-form" novalidate>
+{% csrf_token %}
+
+<!-- Validation banner -->
+<div id="pf-val-err" style="display:none">
+    <i class="bi bi-exclamation-circle-fill"></i>
+    <span id="pf-val-msg">Completa los campos requeridos antes de guardar.</span>
+</div>
+
+<!-- Global errors -->
+{% if form.non_field_errors or formset.non_form_errors %}
+<div class="frm-global-err">
+    <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
+    <div>
+        {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+        {% for e in formset.non_form_errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Card 1: Datos del Proveedor ── -->
+<div class="frm-card">
+    <div class="frm-card-hdr">
+        <div class="frm-card-hdr-left">
+            <i class="bi bi-person-fill"></i>
+            <span>Datos del Proveedor</span>
+        </div>
+    </div>
+    <div class="frm-card-body">
+        <div class="frm-grid-2">
+            <!-- Proveedor -->
+            <div class="frm-field" style="margin-bottom:0">
+                <label class="frm-label" for="{{ form.supplier.id_for_label }}">
+                    Proveedor <span class="frm-req">*</span>
+                </label>
+                <div class="frm-iw">
+                    <div class="frm-icon"><i class="bi bi-building"></i></div>
+                    {{ form.supplier }}
+                </div>
+                {% for e in form.supplier.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+            </div>
+            <!-- N° Factura Proveedor -->
+            <div class="frm-field" style="margin-bottom:0">
+                <label class="frm-label" for="{{ form.document_number.id_for_label }}">
+                    N° Factura Proveedor <span class="frm-req">*</span>
+                </label>
+                <div class="frm-iw">
+                    <div class="frm-icon"><i class="bi bi-hash"></i></div>
+                    {{ form.document_number }}
+                </div>
+                {% for e in form.document_number.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+            </div>
+            <!-- Tipo de Pago -->
+            <div class="frm-field" style="margin-bottom:0">
+                <label class="frm-label" for="{{ form.tipo_pago.id_for_label }}">
+                    Tipo de Pago <span class="frm-req">*</span>
+                </label>
+                <div class="frm-iw">
+                    <div class="frm-icon"><i class="bi bi-credit-card"></i></div>
+                    {{ form.tipo_pago }}
+                </div>
+                {% for e in form.tipo_pago.errors %}<div class="frm-error"><i class="bi bi-exclamation-circle-fill"></i> {{ e }}</div>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Card 2: Detalle de Productos ── -->
+<div class="frm-card">
+    <div class="frm-card-hdr">
+        <div class="frm-card-hdr-left">
+            <i class="bi bi-cart3"></i>
+            <span>Detalle de Productos</span>
+        </div>
+        <button type="button" id="add-row" style="
+            display:inline-flex;align-items:center;gap:6px;
+            padding:6px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:7px;
+            background:transparent;color:rgba(255,255,255,.85);
+            font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;
+            transition:background .15s;
+        " onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='transparent'">
+            <i class="bi bi-plus-lg"></i> Agregar Línea
+        </button>
+    </div>
+
+    {{ formset.management_form }}
+
+    <div class="pf-table-wrap">
+        <table class="pf-table" id="formset-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th style="width:100px" class="th-center">Cantidad</th>
+                    <th style="width:140px" class="th-center">Costo Unit.</th>
+                    <th style="width:110px" class="th-center">Subtotal</th>
+                    <th style="width:52px" class="pf-del-cell">✕</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail_form in formset %}
+                <tr class="formset-row">
+                    <td>
+                        {{ detail_form.product }}
+                        {{ detail_form.id }}
+                        {% for e in detail_form.product.errors %}<div class="frm-error">{{ e }}</div>{% endfor %}
+                    </td>
+                    <td>{{ detail_form.quantity }}{% for e in detail_form.quantity.errors %}<div class="frm-error">{{ e }}</div>{% endfor %}</td>
+                    <td class="pf-cost-cell">
+                        {{ detail_form.unit_cost }}
+                        <span class="pf-cost-warn" title="Costo supera el precio de venta"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                        {% for e in detail_form.unit_cost.errors %}<div class="frm-error">{{ e }}</div>{% endfor %}
+                    </td>
+                    <td style="text-align:right;padding-right:16px">
+                        <span class="row-subtotal">$0.00</span>
+                    </td>
+                    <td class="pf-del-cell">
+                        <label class="pf-del-label">
+                            {{ detail_form.DELETE }}
+                            <i class="bi bi-x-lg" style="font-size:.8rem"></i>
+                        </label>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="pf-tfoot-label">Subtotal de productos:</td>
+                    <td style="text-align:right;padding-right:16px">
+                        <span class="pf-tfoot-val" id="purchase-subtotal">$0.00</span>
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Totals calculator -->
+    <div class="pf-totals">
+        <div class="pf-total-item">
+            <div class="pf-total-label">Subtotal</div>
+            <div class="pf-total-val">
+                <span class="pf-dollar">$</span>
+                <span id="pf-sub-display">0.00</span>
+            </div>
+        </div>
+        <div class="pf-total-item">
+            <div class="pf-total-label">IVA (%)</div>
+            <div class="pf-total-val pf-tv-editable">
+                <input type="number" id="pf-iva-rate" value="15" min="0" max="100" step="1"
+                       title="Porcentaje de IVA (referencial — el backend aplica 15%)">
+            </div>
+        </div>
+        <div class="pf-total-item">
+            <div class="pf-total-label">IVA</div>
+            <div class="pf-total-val">
+                <span class="pf-dollar">$</span>
+                <span id="pf-iva-display">0.00</span>
+            </div>
+        </div>
+        <div class="pf-total-item">
+            <div class="pf-total-label">Total</div>
+            <div class="pf-total-val pf-tv-blue">
+                <span style="font-size:.85rem;font-weight:400;margin-right:3px">$</span>
+                <span id="pf-total-display">0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info banner -->
+<div class="pf-info">
+    <i class="bi bi-info-circle-fill"></i>
+    <span>Al guardar la compra, el stock de cada producto se incrementará automáticamente con la cantidad comprada.</span>
+</div>
+
+<!-- Action buttons -->
+<div class="frm-actions">
+    <button type="submit" class="frm-btn-save" id="pf-submit-btn">
+        <i class="bi bi-floppy2"></i> Guardar Compra
+    </button>
+    <a href="{% url 'purchasing:purchase_list' %}" class="frm-btn-cancel">
+        <i class="bi bi-x-lg"></i> Cancelar
+    </a>
+</div>
+
+</form>
+
+<!-- Loss-price warning modal -->
+<div id="pf-loss-modal" class="pf-modal-bd" role="dialog" aria-modal="true" aria-labelledby="pf-mtitle">
+    <div class="pf-modal">
+        <div class="pf-mhdr">
+            <div class="pf-mhdr-ico"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="pf-mhdr-txt">
+                <h3 id="pf-mtitle">¡Advertencia de pérdida!</h3>
+                <p>El costo de compra supera el precio de venta</p>
+            </div>
+        </div>
+        <div class="pf-mbody">
+            <p>Los siguientes productos se están comprando a un precio <strong>mayor al de venta</strong>, lo que generará <strong>pérdidas</strong>:</p>
+            <ul class="pf-mlist" id="pf-loss-list"></ul>
+            <p style="font-size:.815rem;color:var(--text-muted);margin:0">¿Deseas continuar con la compra de todos modos?</p>
+        </div>
+        <div class="pf-mfoot">
+            <button type="button" class="pf-mbtn-no" id="pf-loss-no">
+                <i class="bi bi-x-lg"></i> Cancelar
+            </button>
+            <button type="button" class="pf-mbtn-yes" id="pf-loss-yes">
+                <i class="bi bi-check-lg"></i> Sí, comprar de todos modos
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const PRODUCTS = {{ products_json|safe }};
+    let lossConfirmed = false;
+
+    function updateRowSubtotal(row) {
+        const qty  = parseFloat(row.querySelector('input[name$="-quantity"]').value)  || 0;
+        const cost = parseFloat(row.querySelector('input[name$="-unit_cost"]').value) || 0;
+        row.querySelector('.row-subtotal').textContent = '$' + (qty * cost).toFixed(2);
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('.formset-row').forEach(function (row) {
+            const del = row.querySelector('input[name$="-DELETE"]');
+            if (del && del.checked) return;
+            subtotal += parseFloat((row.querySelector('.row-subtotal').textContent || '').replace('$', '')) || 0;
+        });
+        const rate = parseFloat(document.getElementById('pf-iva-rate').value) || 0;
+        const iva = subtotal * (rate / 100);
+        const total = subtotal + iva;
+        document.getElementById('purchase-subtotal').textContent = '$' + subtotal.toFixed(2);
+        document.getElementById('pf-sub-display').textContent   = subtotal.toFixed(2);
+        document.getElementById('pf-iva-display').textContent   = iva.toFixed(2);
+        document.getElementById('pf-total-display').textContent = total.toFixed(2);
+    }
+
+    function checkRowLoss(row) {
+        const sel       = row.querySelector('select[name$="-product"]');
+        const costInput = row.querySelector('input[name$="-unit_cost"]');
+        const warn      = row.querySelector('.pf-cost-warn');
+        if (!sel || !sel.value || !warn) return;
+        const data  = PRODUCTS[sel.value];
+        if (!data) return;
+        const cost  = parseFloat(costInput.value) || 0;
+        const price = parseFloat(data.price)      || 0;
+        const isLoss = cost > 0 && price > 0 && cost > price;
+        warn.style.display = isLoss ? 'inline' : 'none';
+        row.classList.toggle('pf-row-loss', isLoss);
+    }
+
+    function initRow(row) {
+        const sel       = row.querySelector('select[name$="-product"]');
+        const costInput = row.querySelector('input[name$="-unit_cost"]');
+        const qtyInput  = row.querySelector('input[name$="-quantity"]');
+        const delChk    = row.querySelector('input[name$="-DELETE"]');
+        if (!sel) return;
+
+        sel.addEventListener('change', function () {
+            const data = PRODUCTS[this.value];
+            costInput.value = data ? data.price : '';
+            updateRowSubtotal(row);
+            checkRowLoss(row);
+        });
+        costInput.addEventListener('input', function () {
+            updateRowSubtotal(row);
+            checkRowLoss(row);
+        });
+        qtyInput.addEventListener('input', function () { updateRowSubtotal(row); });
+        if (delChk) delChk.addEventListener('change', function () {
+            row.classList.toggle('pf-deleted', this.checked);
+            if (this.checked) {
+                row.classList.remove('pf-row-loss');
+                const w = row.querySelector('.pf-cost-warn');
+                if (w) w.style.display = 'none';
+            } else {
+                checkRowLoss(row);
+            }
+            updateTotals();
+        });
+        updateRowSubtotal(row);
+        checkRowLoss(row);
+    }
+
+    document.querySelectorAll('.formset-row').forEach(initRow);
+    document.getElementById('pf-iva-rate').addEventListener('input', updateTotals);
+
+    /* ── Add row ── */
+    document.getElementById('add-row').addEventListener('click', function () {
+        const tbody      = document.querySelector('#formset-table tbody');
+        const totalForms = document.getElementById('id_details-TOTAL_FORMS');
+        const formCount  = parseInt(totalForms.value);
+        const firstRow   = tbody.querySelector('.formset-row');
+        const newRow     = firstRow.cloneNode(true);
+
+        newRow.querySelectorAll('input, select').forEach(function (el) {
+            el.name = el.name.replace(/-\d+-/, '-' + formCount + '-');
+            el.id   = el.id.replace(/-\d+-/,   '-' + formCount + '-');
+            if (el.type !== 'checkbox') el.value = el.type === 'number' && el.name.endsWith('-quantity') ? '1' : '';
+            else el.checked = false;
+        });
+        newRow.querySelector('.row-subtotal').textContent = '$0.00';
+        newRow.classList.remove('pf-deleted', 'pf-row-loss');
+        const clonedWarn = newRow.querySelector('.pf-cost-warn');
+        if (clonedWarn) clonedWarn.style.display = 'none';
+        tbody.appendChild(newRow);
+        initRow(newRow);
+        totalForms.value = formCount + 1;
+    });
+
+    /* ── Loss lines helper ── */
+    function getLossLines() {
+        const lines = [];
+        document.querySelectorAll('.formset-row').forEach(function (row) {
+            const del = row.querySelector('input[name$="-DELETE"]');
+            if (del && del.checked) return;
+            const sel       = row.querySelector('select[name$="-product"]');
+            const costInput = row.querySelector('input[name$="-unit_cost"]');
+            if (!sel || !sel.value) return;
+            const data  = PRODUCTS[sel.value];
+            if (!data) return;
+            const cost  = parseFloat(costInput.value) || 0;
+            const price = parseFloat(data.price)      || 0;
+            if (cost > 0 && price > 0 && cost > price) {
+                lines.push({ name: data.name, cost: cost, price: price });
+            }
+        });
+        return lines;
+    }
+
+    /* ── Client-side validation + loss check ── */
+    document.getElementById('purchase-form').addEventListener('submit', function (e) {
+        const supplier = document.querySelector('select[name="supplier"]');
+        const banner   = document.getElementById('pf-val-err');
+        const msg      = document.getElementById('pf-val-msg');
+
+        if (!supplier || !supplier.value) {
+            e.preventDefault();
+            msg.textContent = 'Debes seleccionar un proveedor antes de guardar.';
+            banner.style.display = 'flex';
+            banner.scrollIntoView({behavior:'smooth', block:'center'});
+            return;
+        }
+
+        let hasLine = false;
+        document.querySelectorAll('.formset-row').forEach(function (row) {
+            const del = row.querySelector('input[name$="-DELETE"]');
+            if (del && del.checked) return;
+            const prod = row.querySelector('select[name$="-product"]');
+            const qty  = row.querySelector('input[name$="-quantity"]');
+            if (prod && prod.value && qty && parseFloat(qty.value) > 0) hasLine = true;
+        });
+
+        if (!hasLine) {
+            e.preventDefault();
+            msg.textContent = 'Agrega al menos un producto con cantidad mayor a 0.';
+            banner.style.display = 'flex';
+            banner.scrollIntoView({behavior:'smooth', block:'center'});
+            return;
+        }
+
+        banner.style.display = 'none';
+
+        /* Loss price check — show modal unless already confirmed */
+        if (!lossConfirmed) {
+            const lossLines = getLossLines();
+            if (lossLines.length > 0) {
+                e.preventDefault();
+                const ul = document.getElementById('pf-loss-list');
+                ul.innerHTML = '';
+                lossLines.forEach(function (l) {
+                    const li = document.createElement('li');
+                    li.innerHTML =
+                        '<span class="pf-mli-name">' + l.name + '</span>' +
+                        '<span class="pf-mli-prices">Compra: $' + l.cost.toFixed(2) +
+                        ' <span>| Venta: $' + l.price.toFixed(2) + '</span></span>';
+                    ul.appendChild(li);
+                });
+                document.getElementById('pf-loss-modal').classList.add('open');
+            }
+        }
+    });
+
+    /* ── Modal buttons ── */
+    document.getElementById('pf-loss-no').addEventListener('click', function () {
+        document.getElementById('pf-loss-modal').classList.remove('open');
+    });
+    document.getElementById('pf-loss-yes').addEventListener('click', function () {
+        lossConfirmed = true;
+        document.getElementById('pf-loss-modal').classList.remove('open');
+        document.getElementById('pf-submit-btn').click();
+    });
+    document.getElementById('pf-loss-modal').addEventListener('click', function (e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+
+    updateTotals();
+})();
+</script>
+{% endblock %}

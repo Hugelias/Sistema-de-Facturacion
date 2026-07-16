@@ -1,0 +1,604 @@
+{% load i18n log %}
+{% get_admin_log 10 as admin_log for_user user %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administración — TecnoStock S.A.</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+    --sb-w:260px;
+    --sb-bg:#0B1120;
+    --topbar-h:64px;
+    --main-bg:#F1F5F9;
+    --border:#E2E8F0;
+    --text-primary:#0F172A;
+    --text-muted:#64748B;
+    --radius:14px;
+    --shadow:0 1px 3px 0 rgb(0 0 0/.08),0 1px 2px -1px rgb(0 0 0/.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--main-bg);color:var(--text-primary);min-height:100vh}
+
+/* ── PAGE LOADER ── */
+#top-progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:10001;opacity:0;border-radius:0 2px 2px 0;background:linear-gradient(90deg,#0d6efd,#6610f2,#d63384,#ff6b35,#0d6efd);background-size:300% 100%;transition:opacity .2s}
+#top-progress.active{opacity:1;animation:progressFill .9s cubic-bezier(.4,0,.2,1) forwards,progressShimmer 1.2s linear infinite}
+@keyframes progressFill{from{width:0%}to{width:88%}}
+@keyframes progressShimmer{from{background-position:0%}to{background-position:100%}}
+#page-loader{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,14,26,.88);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
+#page-loader.active{opacity:1;visibility:visible}
+#page-loader:not(.active){pointer-events:none}
+.loader-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.18;animation:orbFloat 4s ease-in-out infinite alternate}
+.loader-orb-1{width:260px;height:260px;background:#0d6efd;top:10%;left:5%;animation-delay:0s}
+.loader-orb-2{width:200px;height:200px;background:#6610f2;bottom:10%;right:8%;animation-delay:1.5s}
+.loader-orb-3{width:150px;height:150px;background:#d63384;top:55%;left:60%;animation-delay:.8s}
+@keyframes orbFloat{from{transform:translate(0,0) scale(1)}to{transform:translate(20px,-30px) scale(1.12)}}
+.loader-body{position:relative;display:flex;flex-direction:column;align-items:center;gap:20px}
+.rings-wrap{position:relative;width:90px;height:90px;display:flex;align-items:center;justify-content:center}
+.ring{position:absolute;border-radius:50%;border:3px solid transparent}
+.ring-a{inset:0;border-top-color:#0d6efd;box-shadow:0 0 12px #0d6efd88;animation:spin 1s linear infinite}
+.ring-b{inset:12px;border-right-color:#6610f2;box-shadow:0 0 10px #6610f288;animation:spin .75s linear infinite reverse}
+.ring-c{inset:24px;border-bottom-color:#d63384;box-shadow:0 0 8px #d6338488;animation:spin 1.3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-icon{position:relative;z-index:1;font-size:1.5rem;color:#fff;animation:iconPulse .9s ease-in-out infinite alternate}
+@keyframes iconPulse{from{transform:scale(.85);opacity:.6}to{transform:scale(1.1);opacity:1}}
+.loader-brand{color:#fff;font-weight:800;font-size:1.05rem;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 20px rgba(13,110,253,.6)}
+.loader-sub{color:rgba(255,255,255,.45);font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;margin-top:-14px}
+.loader-dots{display:flex;gap:8px;margin-top:4px}
+.loader-dots span{width:8px;height:8px;border-radius:50%;animation:dotBounce .7s ease-in-out infinite alternate}
+.loader-dots span:nth-child(1){background:#0d6efd;animation-delay:0s}
+.loader-dots span:nth-child(2){background:#6610f2;animation-delay:.15s}
+.loader-dots span:nth-child(3){background:#d63384;animation-delay:.3s}
+.loader-dots span:nth-child(4){background:#ff6b35;animation-delay:.45s}
+@keyframes dotBounce{from{transform:translateY(0);opacity:.4}to{transform:translateY(-9px);opacity:1}}
+
+/* ── SIDEBAR ── */
+#sidebar{
+    position:fixed;top:0;left:0;width:var(--sb-w);height:100vh;
+    background:var(--sb-bg);display:flex;flex-direction:column;
+    z-index:1040;transition:transform .28s cubic-bezier(.4,0,.2,1);
+    overflow-y:auto;overflow-x:hidden;scrollbar-width:none
+}
+#sidebar::-webkit-scrollbar{display:none}
+#sidebar.sb-hidden{transform:translateX(calc(-1 * var(--sb-w)))}
+
+.sb-brand{display:flex;align-items:center;gap:12px;padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-brand-icon{width:38px;height:38px;background:linear-gradient(135deg,#2563EB,#4F46E5);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.05rem;flex-shrink:0;box-shadow:0 4px 12px rgba(37,99,235,.4)}
+.sb-brand-name{color:#fff;font-weight:700;font-size:.9rem;line-height:1.2}
+.sb-brand-sub{color:#475569;font-size:.68rem;margin-top:1px}
+
+.sb-nav{flex:1;padding:12px 10px}
+.sb-section{color:#334155;font-size:.6rem;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:14px 10px 5px}
+.sb-link{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#94A3B8;text-decoration:none;font-size:.825rem;font-weight:500;transition:background .15s,color .15s;white-space:nowrap}
+.sb-link i{font-size:.95rem;width:17px;flex-shrink:0;text-align:center}
+.sb-link:hover{background:rgba(255,255,255,.06);color:#CBD5E1}
+.sb-link.active{background:#2563EB;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+
+.sb-footer{padding:14px 10px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-plan-card{background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.25);border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:10px}
+.sb-plan-icon{font-size:1.1rem;color:#FBBF24}
+.sb-plan-name{color:#E2E8F0;font-size:.8rem;font-weight:600}
+.sb-plan-label{color:#475569;font-size:.67rem}
+
+/* ── MAIN WRAPPER ── */
+#main-wrap{margin-left:var(--sb-w);min-height:100vh;display:flex;flex-direction:column;transition:margin-left .28s cubic-bezier(.4,0,.2,1)}
+#main-wrap.no-sidebar{margin-left:0}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;z-index:999;box-shadow:var(--shadow)}
+.sb-toggle{background:none;border:none;color:var(--text-muted);font-size:1.25rem;cursor:pointer;padding:6px 8px;border-radius:7px;transition:background .15s;display:flex;align-items:center;line-height:1}
+.sb-toggle:hover{background:var(--main-bg)}
+
+.topbar-search{flex:1;max-width:360px;position:relative}
+.topbar-search input{width:100%;background:var(--main-bg);border:1.5px solid var(--border);border-radius:9px;padding:7px 70px 7px 34px;font-size:.825rem;color:var(--text-primary);outline:none;transition:border-color .15s;font-family:inherit}
+.topbar-search input:focus{border-color:#2563EB;background:#fff}
+.topbar-search .ts-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:.85rem;pointer-events:none}
+.topbar-search .ts-kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:var(--border);color:var(--text-muted);font-size:.62rem;padding:2px 6px;border-radius:5px;font-family:monospace;white-space:nowrap}
+
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-divider{width:1px;height:22px;background:var(--border)}
+.notif-btn{background:none;border:none;color:var(--text-muted);font-size:1.1rem;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;transition:background .15s}
+.notif-btn:hover{background:var(--main-bg)}
+.user-chip{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 8px;border-radius:9px;transition:background .15s}
+.user-chip:hover{background:var(--main-bg)}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;flex-shrink:0}
+.user-name{font-size:.82rem;font-weight:600;color:var(--text-primary);line-height:1.2}
+.user-role{font-size:.67rem;color:var(--text-muted)}
+.logout-btn{background:none;border:none;color:var(--text-muted);font-size:.82rem;cursor:pointer;padding:6px 10px;border-radius:7px;display:flex;align-items:center;gap:6px;transition:background .15s,color .15s;font-family:inherit;white-space:nowrap}
+.logout-btn:hover{background:#FEE2E2;color:#DC2626}
+
+/* ── CONTENT ── */
+.content-area{flex:1;padding:24px}
+.content-area>main{animation:cFadeIn .35s ease both}
+@keyframes cFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.site-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:.72rem;color:var(--text-muted);background:#fff}
+
+/* ── ADMIN INDEX STYLES ── */
+.ai-page-header{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:24px;gap:16px;flex-wrap:wrap;
+}
+.ai-page-title{font-size:1.5rem;font-weight:800;color:#0F172A;margin:0;line-height:1.2}
+.ai-page-subtitle{font-size:.845rem;color:#64748B;margin:5px 0 0}
+.ai-page-header-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ai-btn-site{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 16px;border-radius:9px;
+    border:1.5px solid #E2E8F0;background:#fff;
+    color:#64748B;font-size:.83rem;font-weight:600;
+    text-decoration:none;white-space:nowrap;
+    transition:background .15s,color .15s,border-color .15s;
+}
+.ai-btn-site:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
+.ai-btn-djadmin{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 16px;border-radius:9px;
+    background:#0B1120;color:#94A3B8;
+    font-size:.83rem;font-weight:600;
+    text-decoration:none;white-space:nowrap;
+    border:1.5px solid rgba(255,255,255,.08);
+    transition:color .15s,border-color .15s;
+}
+.ai-btn-djadmin:hover{color:#CBD5E1;border-color:rgba(255,255,255,.18)}
+
+/* Two-column layout */
+.ai-grid{
+    display:grid;
+    grid-template-columns:1fr 290px;
+    gap:20px;
+    align-items:start;
+}
+@media(max-width:960px){.ai-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.ai-page-header{flex-direction:column}}
+
+/* App cards */
+.ai-app-card{
+    background:#fff;border-radius:14px;
+    box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);
+    margin-bottom:16px;overflow:hidden;
+}
+.ai-app-card:last-child{margin-bottom:0}
+
+.ai-app-header{
+    display:flex;align-items:center;gap:13px;
+    padding:14px 18px;
+    border-bottom:1.5px solid #F1F5F9;
+}
+.ai-app-icon{
+    width:42px;height:42px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.15rem;flex-shrink:0;
+}
+
+/* Per-app icon theming */
+.ai-app-auth    .ai-app-icon{background:#EDE9FE;color:#7C3AED}
+.ai-app-billing .ai-app-icon{background:#EFF6FF;color:#2563EB}
+.ai-app-purchasing .ai-app-icon{background:#ECFDF5;color:#059669}
+
+.ai-app-header-text{flex:1;min-width:0}
+.ai-app-label{
+    font-size:.7rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.8px;
+    margin-bottom:1px;
+}
+.ai-app-auth    .ai-app-label{color:#7C3AED}
+.ai-app-billing .ai-app-label{color:#2563EB}
+.ai-app-purchasing .ai-app-label{color:#059669}
+
+.ai-app-name{font-size:.875rem;font-weight:700;color:#0F172A}
+.ai-app-viewall{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:.75rem;font-weight:600;color:#2563EB;
+    text-decoration:none;padding:5px 11px;
+    border-radius:7px;border:1.5px solid rgba(37,99,235,.2);
+    background:rgba(37,99,235,.04);
+    transition:background .15s;white-space:nowrap;
+    flex-shrink:0;
+}
+.ai-app-viewall:hover{background:rgba(37,99,235,.1)}
+
+/* Model rows */
+.ai-model-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 18px;
+    border-bottom:1px solid #F8FAFC;
+    gap:12px;transition:background .12s;
+}
+.ai-model-row:last-child{border-bottom:none}
+.ai-model-row:hover{background:#FAFBFF}
+
+.ai-model-left{display:flex;align-items:center;gap:9px;min-width:0}
+.ai-model-icon-wrap{
+    width:28px;height:28px;border-radius:7px;background:#F1F5F9;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.8rem;color:#94A3B8;flex-shrink:0;
+}
+.ai-model-name{
+    font-size:.855rem;font-weight:600;color:#334155;
+    text-decoration:none;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+a.ai-model-name:hover{color:#2563EB}
+
+.ai-model-actions{display:flex;gap:6px;flex-shrink:0}
+.ai-btn-action{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:5px 12px;border-radius:7px;
+    font-size:.775rem;font-weight:600;
+    text-decoration:none;white-space:nowrap;
+    font-family:inherit;border:none;cursor:pointer;
+    transition:opacity .12s,transform .1s;
+}
+.ai-btn-action:hover{opacity:.85;transform:translateY(-1px)}
+.ai-btn-add{background:#DCFCE7;color:#15803D}
+.ai-btn-add:hover{background:#BBF7D0;color:#15803D}
+.ai-btn-change{background:#EFF6FF;color:#2563EB}
+.ai-btn-change:hover{background:#DBEAFE;color:#1D4ED8}
+
+/* Empty state */
+.ai-empty{
+    background:#fff;border-radius:14px;
+    padding:52px;text-align:center;color:#94A3B8;
+    box-shadow:0 2px 12px rgba(15,23,42,.07);
+}
+.ai-empty i{font-size:2.5rem;display:block;margin-bottom:12px;color:#CBD5E1}
+.ai-empty p{font-size:.9rem;margin:0}
+
+/* Recent actions card */
+.ai-recent-card{
+    background:#fff;border-radius:14px;
+    box-shadow:0 2px 12px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);
+    overflow:hidden;
+    position:sticky;top:calc(var(--topbar-h) + 24px);
+}
+.ai-recent-hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;border-bottom:1.5px solid #F1F5F9;
+}
+.ai-recent-title{
+    display:flex;align-items:center;gap:9px;
+    font-size:.875rem;font-weight:700;color:#0F172A;
+}
+.ai-recent-title i{color:#2563EB;font-size:1rem}
+.ai-recent-count{
+    font-size:.72rem;font-weight:600;
+    background:#EFF6FF;color:#2563EB;
+    padding:2px 8px;border-radius:20px;
+}
+
+.ai-log-empty{padding:32px 18px;text-align:center;color:#94A3B8}
+.ai-log-empty i{font-size:2rem;display:block;margin-bottom:8px;color:#CBD5E1}
+.ai-log-empty p{font-size:.82rem;margin:0}
+
+.ai-log-list{list-style:none;padding:0;margin:0}
+.ai-log-item{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:11px 18px;border-bottom:1px solid #F8FAFC;
+    transition:background .12s;
+}
+.ai-log-item:last-child{border-bottom:none}
+.ai-log-item:hover{background:#FAFBFF}
+
+.ai-log-dot-wrap{
+    width:24px;height:24px;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.7rem;flex-shrink:0;margin-top:1px;
+}
+.ai-log-add   .ai-log-dot-wrap{background:#DCFCE7;color:#15803D}
+.ai-log-change .ai-log-dot-wrap{background:#DBEAFE;color:#2563EB}
+.ai-log-del   .ai-log-dot-wrap{background:#FEE2E2;color:#DC2626}
+
+.ai-log-body{flex:1;min-width:0}
+a.ai-log-obj,.ai-log-obj{
+    font-size:.82rem;font-weight:600;color:#334155;
+    text-decoration:none;display:block;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+a.ai-log-obj:hover{color:#2563EB}
+.ai-log-meta{
+    display:flex;justify-content:space-between;
+    margin-top:2px;gap:6px;
+}
+.ai-log-type{font-size:.7rem;color:#94A3B8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-log-time{font-size:.7rem;color:#CBD5E1;flex-shrink:0}
+
+/* Breadcrumb bar */
+.ai-breadcrumb{
+    display:flex;align-items:center;gap:7px;
+    font-size:.78rem;color:#94A3B8;margin-bottom:18px;
+}
+.ai-breadcrumb a{color:#2563EB;text-decoration:none;font-weight:500}
+.ai-breadcrumb a:hover{text-decoration:underline}
+.ai-breadcrumb i{font-size:.6rem}
+
+/* Generic app card for unknown apps */
+.ai-app-card:not(.ai-app-auth):not(.ai-app-billing):not(.ai-app-purchasing) .ai-app-icon{
+    background:#F1F5F9;color:#475569;
+}
+.ai-app-card:not(.ai-app-auth):not(.ai-app-billing):not(.ai-app-purchasing) .ai-app-label{
+    color:#475569;
+}
+</style>
+</head>
+<body>
+
+<div id="top-progress"></div>
+<div id="page-loader" aria-hidden="true">
+    <div class="loader-orb loader-orb-1"></div>
+    <div class="loader-orb loader-orb-2"></div>
+    <div class="loader-orb loader-orb-3"></div>
+    <div class="loader-body">
+        <div class="rings-wrap">
+            <div class="ring ring-a"></div><div class="ring ring-b"></div><div class="ring ring-c"></div>
+            <i class="bi bi-box-seam loader-icon"></i>
+        </div>
+        <div><div class="loader-brand">TecnoStock S.A.</div><div class="loader-sub">Cargando...</div></div>
+        <div class="loader-dots"><span></span><span></span><span></span><span></span></div>
+    </div>
+</div>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+    <div class="sb-brand">
+        <div class="sb-brand-icon"><i class="bi bi-box-seam"></i></div>
+        <div><div class="sb-brand-name">TecnoStock S.A.</div><div class="sb-brand-sub">Sistema de Gestión</div></div>
+    </div>
+    <nav class="sb-nav">
+        <a href="{% url 'billing:home' %}" class="sb-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        <div class="sb-section">Operaciones</div>
+        <a href="{% url 'billing:product_list' %}" class="sb-link"><i class="bi bi-box"></i> Productos</a>
+        <a href="{% url 'billing:customer_list' %}" class="sb-link"><i class="bi bi-people"></i> Clientes</a>
+        <a href="{% url 'billing:invoice_list' %}" class="sb-link"><i class="bi bi-receipt"></i> Facturación</a>
+        <a href="{% url 'purchasing:purchase_list' %}" class="sb-link"><i class="bi bi-cart"></i> Compras</a>
+        <div class="sb-section">Catálogos</div>
+        <a href="{% url 'billing:brand_list' %}" class="sb-link"><i class="bi bi-bookmark"></i> Marcas</a>
+        <a href="{% url 'billing:productgroup_list' %}" class="sb-link"><i class="bi bi-collection"></i> Grupos</a>
+        <a href="{% url 'billing:supplier_list' %}" class="sb-link"><i class="bi bi-building"></i> Proveedores</a>
+        <div class="sb-section">Configuración</div>
+        <a href="/admin/" class="sb-link active"><i class="bi bi-gear"></i> Administración</a>
+    </nav>
+    <div class="sb-footer">
+        <div class="sb-plan-card">
+            <i class="bi bi-trophy-fill sb-plan-icon"></i>
+            <div style="flex:1;min-width:0"><div class="sb-plan-name">TecnoStock S.A.</div><div class="sb-plan-label">Plan Empresa</div></div>
+            <i class="bi bi-chevron-right" style="color:#475569;font-size:.75rem"></i>
+        </div>
+    </div>
+</aside>
+
+<!-- Main wrapper -->
+<div id="main-wrap">
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <button class="sb-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+        <div class="topbar-search">
+            <i class="bi bi-search ts-icon"></i>
+            <input type="text" id="globalSearch" placeholder="Buscar productos..." data-url="{% url 'billing:product_list' %}">
+            <span class="ts-kbd">Ctrl+/</span>
+        </div>
+        <div class="topbar-right">
+            <button class="notif-btn" title="Notificaciones"><i class="bi bi-bell"></i></button>
+            <div class="topbar-divider"></div>
+            <div class="user-chip">
+                <div class="user-avatar">{{ user.username|first|upper }}</div>
+                <div>
+                    <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                    <div class="user-role">{% if user.is_superuser %}Administrador{% elif user.is_staff %}Staff{% else %}Usuario{% endif %}</div>
+                </div>
+                <i class="bi bi-chevron-down" style="color:#94A3B8;font-size:.8rem;margin-left:2px"></i>
+            </div>
+            <div class="topbar-divider"></div>
+            <form method="post" action="{% url 'admin:logout' %}" style="margin:0">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn"><i class="bi bi-box-arrow-right"></i> Salir</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content-area">
+        <main>
+
+            <!-- Breadcrumb -->
+            <div class="ai-breadcrumb">
+                <a href="{% url 'billing:home' %}"><i class="bi bi-house-fill"></i> Inicio</a>
+                <i class="bi bi-chevron-right"></i>
+                <span>Administración</span>
+            </div>
+
+            <!-- Page header -->
+            <div class="ai-page-header">
+                <div>
+                    <h1 class="ai-page-title">⚙️ Administración del Sistema</h1>
+                    <p class="ai-page-subtitle">Gestiona los modelos internos de la base de datos y permisos globales.</p>
+                </div>
+                <div class="ai-page-header-right">
+                    <a href="/" class="ai-btn-site"><i class="bi bi-house"></i> Ver sitio</a>
+                    <a href="/admin/auth/user/" class="ai-btn-djadmin"><i class="bi bi-person-gear"></i> Usuarios</a>
+                </div>
+            </div>
+
+            <!-- Two-column grid -->
+            <div class="ai-grid">
+
+                <!-- ── Apps column ── -->
+                <div class="ai-apps-col">
+                    {% if app_list %}
+                        {% for app in app_list %}
+                        <div class="ai-app-card ai-app-{{ app.app_label }}">
+
+                            <!-- Card header -->
+                            <div class="ai-app-header">
+                                <div class="ai-app-icon">
+                                    {% if app.app_label == 'auth' %}
+                                        <i class="bi bi-shield-person-fill"></i>
+                                    {% elif app.app_label == 'billing' %}
+                                        <i class="bi bi-receipt-cutoff"></i>
+                                    {% elif app.app_label == 'purchasing' %}
+                                        <i class="bi bi-cart3-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-database-fill"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="ai-app-header-text">
+                                    <div class="ai-app-label">
+                                        {% if app.app_label == 'auth' %}Autenticación y Autorización
+                                        {% elif app.app_label == 'billing' %}Facturación
+                                        {% elif app.app_label == 'purchasing' %}Compras
+                                        {% else %}{{ app.name }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="ai-app-name">{{ app.models|length }} modelo{{ app.models|length|pluralize }} registrado{{ app.models|length|pluralize }}</div>
+                                </div>
+                                <a href="{{ app.app_url }}" class="ai-app-viewall">
+                                    <i class="bi bi-arrow-up-right-square"></i> Ver todos
+                                </a>
+                            </div>
+
+                            <!-- Models list -->
+                            {% for model in app.models %}
+                            <div class="ai-model-row">
+                                <div class="ai-model-left">
+                                    <div class="ai-model-icon-wrap">
+                                        {% if model.object_name == 'User' %}<i class="bi bi-person-fill"></i>
+                                        {% elif model.object_name == 'Group' %}<i class="bi bi-people-fill"></i>
+                                        {% elif model.object_name == 'Invoice' %}<i class="bi bi-receipt"></i>
+                                        {% elif model.object_name == 'InvoiceDetail' %}<i class="bi bi-list-ul"></i>
+                                        {% elif model.object_name == 'Customer' %}<i class="bi bi-person-vcard"></i>
+                                        {% elif model.object_name == 'Product' %}<i class="bi bi-box-seam"></i>
+                                        {% elif model.object_name == 'Brand' %}<i class="bi bi-bookmark-fill"></i>
+                                        {% elif model.object_name == 'ProductGroup' %}<i class="bi bi-collection-fill"></i>
+                                        {% elif model.object_name == 'Supplier' %}<i class="bi bi-building-fill"></i>
+                                        {% elif model.object_name == 'Purchase' %}<i class="bi bi-cart-fill"></i>
+                                        {% elif model.object_name == 'PurchaseDetail' %}<i class="bi bi-card-list"></i>
+                                        {% else %}<i class="bi bi-table"></i>{% endif %}
+                                    </div>
+                                    {% if model.admin_url %}
+                                        <a href="{{ model.admin_url }}" class="ai-model-name">{{ model.name }}</a>
+                                    {% else %}
+                                        <span class="ai-model-name" style="color:#94A3B8">{{ model.name }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="ai-model-actions">
+                                    {% if model.add_url %}
+                                    <a href="{{ model.add_url }}" class="ai-btn-action ai-btn-add">
+                                        <i class="bi bi-plus-lg"></i> Añadir
+                                    </a>
+                                    {% endif %}
+                                    {% if model.admin_url %}
+                                    <a href="{{ model.admin_url }}" class="ai-btn-action ai-btn-change">
+                                        <i class="bi bi-pencil"></i> Modificar
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                        </div>{# /ai-app-card #}
+                        {% endfor %}
+                    {% else %}
+                        <div class="ai-empty">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <p>No tienes permisos para ver o editar ningún elemento.</p>
+                        </div>
+                    {% endif %}
+                </div>{# /ai-apps-col #}
+
+                <!-- ── Recent actions column ── -->
+                <div class="ai-recent-col">
+                    <div class="ai-recent-card">
+                        <div class="ai-recent-hdr">
+                            <div class="ai-recent-title">
+                                <i class="bi bi-clock-history"></i> Acciones Recientes
+                            </div>
+                            {% if admin_log %}
+                            <span class="ai-recent-count">{{ admin_log|length }}</span>
+                            {% endif %}
+                        </div>
+
+                        {% if not admin_log %}
+                        <div class="ai-log-empty">
+                            <i class="bi bi-inbox"></i>
+                            <p>Ninguna disponible</p>
+                        </div>
+                        {% else %}
+                        <ul class="ai-log-list">
+                            {% for entry in admin_log %}
+                            <li class="ai-log-item ai-log-{% if entry.is_addition %}add{% elif entry.is_change %}change{% elif entry.is_deletion %}del{% endif %}">
+                                <div class="ai-log-dot-wrap">
+                                    {% if entry.is_addition %}<i class="bi bi-plus-lg"></i>
+                                    {% elif entry.is_change %}<i class="bi bi-pencil"></i>
+                                    {% elif entry.is_deletion %}<i class="bi bi-trash3"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="ai-log-body">
+                                    {% if entry.is_deletion or not entry.get_admin_url %}
+                                        <span class="ai-log-obj" style="text-decoration:line-through;color:#94A3B8">{{ entry.object_repr }}</span>
+                                    {% else %}
+                                        <a href="{{ entry.get_admin_url }}" class="ai-log-obj">{{ entry.object_repr }}</a>
+                                    {% endif %}
+                                    <div class="ai-log-meta">
+                                        <span class="ai-log-type">{{ entry.content_type }}</span>
+                                        <span class="ai-log-time">{{ entry.action_time|date:"d/m H:i" }}</span>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>{# /ai-recent-col #}
+
+            </div>{# /ai-grid #}
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <span>© 2026 TecnoStock S.A. — Todos los derechos reservados.</span>
+        <span>Versión 1.0.0</span>
+    </footer>
+
+</div>{# /main-wrap #}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+    var sidebar=document.getElementById('sidebar');
+    var mainWrap=document.getElementById('main-wrap');
+    var btn=document.getElementById('sidebarToggle');
+    if(btn&&sidebar){
+        btn.addEventListener('click',function(){
+            var h=sidebar.classList.toggle('sb-hidden');
+            mainWrap.classList.toggle('no-sidebar',h);
+            localStorage.setItem('sb_hidden',h?'1':'0');
+        });
+        if(localStorage.getItem('sb_hidden')==='1'){sidebar.classList.add('sb-hidden');mainWrap.classList.add('no-sidebar');}
+    }
+    var gs=document.getElementById('globalSearch');
+    if(gs){
+        document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='/'){e.preventDefault();gs.focus();gs.select();}});
+        gs.addEventListener('keydown',function(e){if(e.key==='Enter'&&this.value.trim())window.location.href=this.dataset.url+'?name='+encodeURIComponent(this.value.trim());});
+    }
+    var loader=document.getElementById('page-loader');
+    var topBar=document.getElementById('top-progress');
+    function show(){loader.classList.add('active');topBar.classList.add('active');}
+    document.querySelectorAll('a[href]').forEach(function(a){
+        var h=a.getAttribute('href');
+        if(!h||h.startsWith('#')||h.startsWith('javascript:'))return;
+        if(a.dataset.bsToggle||a.target==='_blank')return;
+        a.addEventListener('click',function(e){if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey)show();});
+    });
+    document.querySelectorAll('form').forEach(function(f){
+        f.addEventListener('submit',function(){show();});
+    });
+    window.addEventListener('pageshow',function(e){if(e.persisted){loader.classList.remove('active');topBar.classList.remove('active');}});
+})();
+</script>
+</body>
+</html>
