@@ -2,6 +2,8 @@
 
 Sistema web de gestión de ventas, facturación, compras e inventario desarrollado con Django 6 para la empresa TecnoStock S.A.
 
+Incluye **4 microservicios** auxiliares (PayPal, SRI RUC, facturación electrónica celcer, WhatsApp/2FA).
+
 ---
 
 ## Tecnologías
@@ -9,6 +11,7 @@ Sistema web de gestión de ventas, facturación, compras e inventario desarrolla
 | Capa | Tecnología |
 |------|-----------|
 | Backend | Python 3.14, Django 6.0.6 |
+| Microservicios | Flask (PayPal, SRI, Facturación) + Node/Baileys (WhatsApp) |
 | Base de datos | SQLite (desarrollo) |
 | Frontend | Bootstrap 5.3, Bootstrap Icons 1.11.3, Chart.js 4.x |
 | Fuente tipográfica | Inter (Google Fonts) |
@@ -19,14 +22,168 @@ Sistema web de gestión de ventas, facturación, compras e inventario desarrolla
 
 ```
 Sistema de Ventas y Facturación/
-├── config/          # Configuración del proyecto (settings, URLs raíz)
-├── billing/         # Módulo principal: ventas, facturación, catálogo y clientes
-├── purchasing/      # Módulo de compras a proveedores
-├── cobros/          # Cobro de facturas de venta a crédito (cuentas por cobrar)
-├── pagos/           # Pago de compras a crédito a proveedores (cuentas por pagar)
-├── shared/          # Utilidades reutilizables (mixins, decoradores, validadores)
-├── templates/       # Plantillas globales (base, auth, admin)
-└── manage.py
+├── config/                    # Settings, URLs raíz
+├── billing/                   # Ventas, facturación, catálogo, clientes
+├── purchasing/                # Compras a proveedores
+├── cobros/                    # Cuentas por cobrar
+├── pagos/                     # Cuentas por pagar
+├── security/                  # Usuarios, grupos, login, 2FA WhatsApp
+├── shared/                    # Mixins, decoradores, validadores
+├── templates/                 # Plantillas globales
+├── paypal_service/            # Microservicio PayPal          → :5001
+├── sri_service/               # Microservicio consulta RUC    → :5002
+├── sri_facturacion_service/   # Factura electrónica (pruebas) → :5003
+├── whatsapp_service/          # WhatsApp propio (Baileys)     → :5004
+├── manage.py
+└── requirements.txt           # Dependencias del proyecto Django
+```
+
+---
+
+## Instalación y ejecución (guía rápida)
+
+> En Windows, si el comando `python` no funciona, usa la ruta completa, por ejemplo:  
+> `C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\python.exe`
+
+### Requisitos previos
+
+- **Python 3.14** (o 3.12+)
+- **Node.js 18+** (solo para facturación SRI y WhatsApp)
+- Opcional: entorno virtual `venv/`
+
+---
+
+### 1) Proyecto principal (Django) — puerto **8000**
+
+**Instalación (una vez):**
+
+```powershell
+cd "C:\Users\user\Documents\Sistema de Ventas y Facturación"
+
+# Opcional: entorno virtual
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+**Ejecución (cada vez que trabajes en el sistema):**
+
+```powershell
+cd "C:\Users\user\Documents\Sistema de Ventas y Facturación"
+python manage.py runserver
+```
+
+Abrir: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)  
+Entrada: [http://127.0.0.1:8000/accounts/select-role/](http://127.0.0.1:8000/accounts/select-role/)
+
+---
+
+### 2) Microservicio PayPal — puerto **5001**
+
+Documentación: **[paypal_service/README.md](paypal_service/README.md)**
+
+```powershell
+# Instalación (una vez)
+cd paypal_service
+pip install -r requirements.txt
+
+# Ejecución
+python app.py
+```
+
+→ [http://localhost:5001](http://localhost:5001)
+
+---
+
+### 3) Microservicio SRI (consulta RUC) — puerto **5002**
+
+Documentación: **[sri_service/README.md](sri_service/README.md)**
+
+```powershell
+# Instalación (una vez)
+cd sri_service
+pip install -r requirements.txt
+
+# Ejecución
+python app.py
+```
+
+→ [http://localhost:5002](http://localhost:5002)
+
+---
+
+### 4) Microservicio facturación electrónica SRI (solo pruebas) — puerto **5003**
+
+Documentación: **[sri_facturacion_service/README.md](sri_facturacion_service/README.md)**
+
+Requiere **Node.js** (firma XAdES) + Python/Flask.
+
+```powershell
+# Instalación (una vez)
+cd sri_facturacion_service
+pip install -r requirements.txt
+npm install
+
+# Ejecución
+python app.py
+```
+
+→ [http://localhost:5003](http://localhost:5003)
+
+Solo ambiente **celcer** (pruebas). El `.p12` se pide en un modal y **no se guarda**.
+
+---
+
+### 5) Microservicio WhatsApp (Baileys, tu propio número) — puerto **5004**
+
+Documentación: **[whatsapp_service/README.md](whatsapp_service/README.md)**
+
+Requiere **Node.js**. Sin Meta Cloud API ni Green-API.
+
+```powershell
+# Instalación (una vez)
+cd whatsapp_service
+npm install
+
+# Ejecución
+node server.js
+```
+
+→ [http://localhost:5004](http://localhost:5004)  
+Vincular QR: [http://localhost:5004/vincular](http://localhost:5004/vincular)
+
+Usos en TecnoStock:
+
+- Botón **Enviar por WhatsApp** en el detalle de factura
+- **2FA al login**: código temporal al teléfono del usuario (`/security/users/`)
+
+---
+
+### Resumen de puertos
+
+| Qué | Puerto | Instalar | Correr | README |
+|-----|--------|----------|--------|--------|
+| Django (TecnoStock) | **8000** | `pip install -r requirements.txt` + `migrate` | `python manage.py runserver` | este archivo |
+| PayPal | **5001** | `pip install -r paypal_service/requirements.txt` | `python paypal_service/app.py` | [paypal_service/README.md](paypal_service/README.md) |
+| SRI RUC | **5002** | `pip install -r sri_service/requirements.txt` | `python sri_service/app.py` | [sri_service/README.md](sri_service/README.md) |
+| Facturación SRI | **5003** | `pip` + `npm install` en la carpeta | `python sri_facturacion_service/app.py` | [sri_facturacion_service/README.md](sri_facturacion_service/README.md) |
+| WhatsApp | **5004** | `npm install` en la carpeta | `node whatsapp_service/server.js` | [whatsapp_service/README.md](whatsapp_service/README.md) |
+
+Cada microservicio se abre en **su propia terminal**. Django puede arrancar solo; los demás solo cuando uses esa función.
+
+---
+
+### Orden sugerido al levantar todo
+
+```text
+Terminal 1 → Django          (:8000)
+Terminal 2 → PayPal          (:5001)   si vas a cobrar con PayPal
+Terminal 3 → SRI RUC         (:5002)   si vas a consultar RUC de proveedores
+Terminal 4 → Facturación SRI (:5003)   si vas a autorizar facturas en celcer
+Terminal 5 → WhatsApp        (:5004)   si vas a enviar facturas o usar 2FA
 ```
 
 ---
@@ -35,7 +192,7 @@ Sistema de Ventas y Facturación/
 
 ### `billing` — Ventas y Facturación
 
-Módulo central del sistema. Gestiona el catálogo de productos, clientes y el proceso de facturación.
+Módulo central del sistema. Gestiona el catálogo de productos, clientes y el ciclo de facturación.
 
 **Modelos:**
 
@@ -85,10 +242,11 @@ Módulo central del sistema. Gestiona el catálogo de productos, clientes y el p
 | `/invoices/<id>/delete/` | Anular factura |
 | `/accounts/select-role/` | Selección de perfil (pantalla de entrada al sistema) |
 | `/accounts/login/` | Login, consciente del rol elegido (ver sección "Autenticación") |
+| `/accounts/login/2fa/` | Código WhatsApp (2FA) tras usuario/contraseña |
 | `/accounts/signup/` | Solicitud de acceso (crea la cuenta inactiva, pendiente de aprobación) |
 | `/security/users/` | Listado de usuarios con KPIs, filtros por nombre, grupo y estado |
-| `/security/users/create/` | Nuevo usuario con asignación de grupo |
-| `/security/users/<id>/edit/` | Editar usuario (datos, grupo, nueva contraseña opcional) |
+| `/security/users/create/` | Nuevo usuario (teléfono WhatsApp + 2FA opcional) |
+| `/security/users/<id>/edit/` | Editar usuario (datos, grupo, teléfono, 2FA, contraseña) |
 | `/security/users/<id>/toggle/` | Activar / desactivar usuario |
 | `/security/groups/` | Listado de grupos con conteo de usuarios y permisos |
 
@@ -176,6 +334,19 @@ Módulo de cuentas por pagar: registra los pagos que la empresa hace a sus prove
 
 ---
 
+### `security` — Usuarios, grupos y 2FA
+
+| Pieza | Descripción |
+|-------|-------------|
+| Usuarios / grupos | Alta, edición, activación; asignación de roles |
+| `UserProfile` | Teléfono WhatsApp + flag 2FA |
+| `LoginOTPCode` | Código de 6 dígitos en BD (válido 10 min) enviado por WhatsApp al login |
+| Flujo 2FA | Usuario/contraseña → código WhatsApp → ingreso |
+
+Detalle del microservicio: [whatsapp_service/README.md](whatsapp_service/README.md)
+
+---
+
 ### `shared` — Utilidades
 
 | Componente | Descripción |
@@ -202,14 +373,20 @@ Módulo de cuentas por pagar: registra los pagos que la empresa hace a sus prove
 | `ProductForm` | `Product` | Toggle switch para `is_active`, `FileInput` para imagen, valida precio > 0 |
 | `InvoiceForm` | `Invoice` | Cliente vía `CustomerChoiceField`: en el desplegable muestra junto al nombre si es *Nuevo en crédito*, tiene *Historial de crédito bueno* o es el *Consumidor Final*, con su límite calculado. En `clean()` bloquea crédito para el Consumidor Final |
 | `InvoiceDetailForm` | `InvoiceDetail` | Valida stock disponible en `clean()`; usado dentro de `InvoiceDetailFormSet` |
-| `UserCreateForm` | `User` | Crea usuario con grupo y contraseña |
-| `UserEditForm` | `User` | Edita usuario; grupo y nueva contraseña opcionales |
 
 `ActiveSelect` es un widget `Select` personalizado con opciones `[('True', 'Activo'), ('False', 'Inactivo')]`, compatible con `BooleanField` de Django.
 
 `InvoiceDetailFormSet` se construye con `inlineformset_factory(Invoice, InvoiceDetail, formset=BaseInvoiceDetailFormSet, ...)`. `BaseInvoiceDetailFormSet.clean()` rechaza la factura si el mismo producto aparece en más de una línea no eliminada (reforzado también en el navegador, marcando el `<select>` duplicado en rojo).
 
-La validación del límite de crédito (`_check_credit_limit`, en `billing/views.py`) corre en `invoice_create`/`invoice_update` **antes** de guardar nada: calcula el total propuesto a partir del formset, lo suma a la deuda pendiente del cliente y lo compara contra `Customer.get_credit_limit()` — ver regla en la sección de `Customer` más abajo.
+La validación del límite de crédito (`_check_credit_limit`, en `billing/views.py`) corre en `invoice_create`/`invoice_update` **antes** de guardar nada: calcula el total propuesto a partir del formset, lo suma a la deuda pendiente del cliente y lo compara contra `Customer.get_credit_limit()`.
+
+### `security/forms.py`
+
+| Clase | Notas |
+|-------|-------|
+| `UserCreateForm` / `UserEditForm` | Usuario + grupo + **teléfono WhatsApp** + switch **2FA** |
+| `RoleAwareAuthenticationForm` | Login con mensajes por rol / cuenta inactiva |
+| `LoginOTPForm` | Código de 6 dígitos del 2FA |
 
 ### `purchasing/forms.py`
 
@@ -249,7 +426,7 @@ La validación del límite de crédito (`_check_credit_limit`, en `billing/views
 
 ## Autenticación y control de acceso
 
-Módulo de seguridad basado en el sistema de `auth` de Django (grupos + permisos), extendido con una pantalla de selección de perfil y aprobación manual de cuentas nuevas.
+Módulo de seguridad basado en el sistema de `auth` de Django (grupos + permisos), extendido con una pantalla de selección de perfil, aprobación manual de cuentas nuevas y **2FA por WhatsApp**.
 
 ### Grupos y permisos
 
@@ -266,101 +443,58 @@ Cada grupo tiene un usuario de ejemplo (`administrador`, `gerente`, `comprador`,
 
 ### Flujo de login
 
-1. **`/accounts/select-role/`** (`registration/role_select.html`) es el punto de entrada real: es tanto `LOGIN_URL` como `LOGOUT_REDIRECT_URL`, así que cualquier intento de acceder a una vista protegida sin sesión (o cualquier logout) cae aquí primero, con el destino original preservado en `?next=`.
-2. Cada tarjeta de perfil (Administrador/Gerente/Vendedor/Comprador) enlaza a `/accounts/login/?role=<perfil>`, que solo cambia el badge visual ("Accediendo como...") — **no** es en sí mismo un control de acceso.
-3. El control de acceso real ocurre en `RoleAwareAuthenticationForm` (`billing/views.py`), que sobreescribe `confirm_login_allowed()` para rechazar el login con un mensaje específico según el caso:
-   - Cuenta inactiva → pendiente de aprobación.
-   - Cuenta activa sin ningún grupo asignado.
-   - Rol elegido en la tarjeta que no coincide con el grupo real del usuario.
-   - Los **superusuarios quedan exentos** de las dos últimas comprobaciones (necesario porque `admin` no pertenece a ningún grupo).
-4. `RoleAwareLoginView` (registrada en `accounts/login/` en `config/urls.py`, sobrescribiendo la que trae `django.contrib.auth.urls`) simplemente usa ese form.
-5. `AUTHENTICATION_BACKENDS` se cambió a `AllowAllUsersModelBackend`: el backend por defecto de Django rechaza a los usuarios inactivos *antes* de llegar a `confirm_login_allowed` (mensaje genérico de "credenciales incorrectas"), así que hace falta este backend para poder mostrar el mensaje específico de "cuenta inactiva".
+1. **`/accounts/select-role/`** es el punto de entrada: `LOGIN_URL` y `LOGOUT_REDIRECT_URL`.
+2. Cada tarjeta de perfil enlaza a `/accounts/login/?role=<perfil>`.
+3. `RoleAwareAuthenticationForm` valida cuenta activa, grupo y rol elegido.
+4. Si el usuario tiene **2FA WhatsApp** activo (`UserProfile`): no entra aún → se genera `LoginOTPCode` en BD, se envía por `whatsapp_service` y se pide el código en `/accounts/login/2fa/`.
+5. Sin 2FA (o sin teléfono): login normal.
 
 ### Solicitud de acceso (signup)
 
-`/accounts/signup/` ya no inicia sesión automáticamente: `SignUpForm.save()` crea la cuenta con `is_active = False` y el usuario ve un mensaje de "un administrador debe activarla y asignarte un rol". Un administrador la aprueba desde `/security/users/` (activar + asignar grupo) — flujo elegido porque, dado que el login ahora exige pertenecer a un grupo, una cuenta autoregistrada sin rol no podría hacer nada de todas formas.
+`/accounts/signup/` crea la cuenta con `is_active = False`. Un administrador la aprueba desde `/security/users/` (activar + grupo + opcionalmente teléfono/2FA).
 
 ### Protección de cuentas de superusuario
 
-Un usuario `is_staff` no-superusuario (p. ej. `administrador`) puede editar/resetear la contraseña de cualquier usuario normal desde `/security/users/<id>/edit/` — es el comportamiento esperado del rol. Pero **no puede tocar una cuenta de superusuario**: `security_user_edit` y `security_user_toggle` rechazan la operación si el objetivo es superusuario y quien la pide no lo es, y `security_user_list.html` oculta los botones de editar/activar-desactivar para esas filas (candado en su lugar).
+Un `is_staff` no-superusuario no puede editar/toggle cuentas de superusuario.
 
 ---
 
 ## Funcionalidades destacadas
 
-- **Dashboard interactivo:** KPIs en tiempo real (productos activos, clientes, facturas, compras), gráfico de líneas Ventas vs Compras de los últimos 6 meses, gráfico de dona de distribución por grupo y resumen financiero mensual con variación porcentual respecto al mes anterior.
-- **Catálogo de productos:** filtros combinados (nombre, descripción, marca, grupo, proveedor, rango de precio y stock), tabla con badges de grupo, píldoras de estado y botones de acción. Exportación a PDF y Excel con selección de columnas. Paginación inteligente con elipsis.
-- **Gestión de clientes:** panel KPI en el listado (total, activos, inactivos, nuevos del mes con % de variación). Filtros por nombre, cédula, email, ciudad, estado y fecha de registro. Formulario con validación de cédula ecuatoriana (algoritmo SRI) en cliente y servidor.
-- **Facturación completa:** creación y edición de facturas, subtotal por línea, IVA 15% y total calculados automáticamente al guardar. Vista PDF imprimible con estado de cobro. Anulación lógica (no elimina el registro).
-- **Ventas a contado y a crédito:** cada factura define `tipo_pago`; el Consumidor Final (sembrado automáticamente) solo admite contado, bloqueado tanto en el navegador como en el servidor. El límite de crédito se calcula solo según el historial de pago del cliente (ver sección dedicada) y se valida antes de guardar la factura.
-- **Cobro de facturas a crédito (`cobros`):** listado de facturas pendientes, registro de abonos, historial de pagos y cálculo automático de saldo/estado — ver módulo `cobros` más arriba.
-- **Pago de compras a crédito (`pagos`):** cuentas por pagar a proveedores — listado de compras pendientes, registro de pagos, historial y cálculo automático de saldo/estado, con las mismas reglas de integridad que `cobros` — ver módulo `pagos` más arriba.
-- **Validación de productos duplicados:** una factura no puede tener el mismo producto en dos líneas distintas; se valida en el formset del servidor y se resalta en vivo en el formulario.
-- **Filtros avanzados en facturas:** por cliente, número de factura, rango de fechas, estado, tipo de pago y rango de total.
-- **Compras con formset dinámico:** tabla de productos con filas añadibles/eliminables, cálculo de subtotal por fila e IVA/Total en tiempo real en el navegador. Validación de N° de factura duplicado por proveedor.
-- **Control de stock:** las compras incrementan el inventario de productos al registrarse. Las facturas lo decrementan; la edición de facturas reconcilia el delta de stock automáticamente.
-- **Exportación PDF / Excel:** disponible en el listado de productos (y extensible a otros módulos vía `ExportMixin`), con selección dinámica de columnas.
-- **Auditoría:** cada acción crítica queda registrada en el log con usuario, ruta y tipo de operación.
-- **Autenticación con selección de perfil:** pantalla de selección de rol antes del login, mensajes de error específicos (cuenta inactiva / sin rol / rol equivocado), registro como solicitud de acceso pendiente de aprobación, y recuperación de contraseña vía Django `auth` — ver sección "Autenticación y control de acceso".
-- **Gestión de seguridad (usuarios y grupos):** listado de usuarios con KPIs (total, activos, inactivos), filtros por nombre, grupo y estado; alta, edición (con cambio opcional de contraseña) y activación/desactivación de usuarios; listado de grupos con conteo de usuarios y permisos. Restringido a personal `staff`, con las cuentas de superusuario protegidas frente a ediciones de otros administradores.
-- **Panel de administración integrado:** el index de Django Admin está sobrescrito con el diseño de TecnoStock (sidebar + topbar + tarjetas por aplicación con color temático y acciones recientes).
+- **Dashboard interactivo:** KPIs, gráficos Ventas vs Compras, distribución por grupo.
+- **Catálogo de productos:** filtros, exportación PDF/Excel, paginación.
+- **Clientes:** KPIs, cédula/RUC ecuatoriano, límite de crédito automático.
+- **Facturación:** IVA 15%, contado/crédito, PDF/XML, anulación lógica.
+- **Facturación electrónica SRI (pruebas):** modal `.p12` → microservicio `:5003` → celcer.
+- **PayPal:** cobro de saldos vía microservicio `:5001`.
+- **WhatsApp:** envío de enlace de factura + **2FA en login** vía `:5004`.
+- **Cobros / pagos** a crédito con saldo recalculado siempre desde la suma de abonos.
+- **Consulta RUC SRI** en proveedores (`:5002`).
+- **Autenticación por perfil** + gestión de usuarios/grupos + 2FA WhatsApp.
+- **Auditoría** de acciones críticas.
 
 ---
 
 ## Diseño de interfaz (UI/UX)
 
-- **Sidebar oscuro** (`#0B1120`, 260 px) colapsable con estado persistido en `localStorage`.
-- **Topbar sticky** (blanco, 64 px) con búsqueda global (`Ctrl + /`), chip de usuario y logout.
-- **Páginas de auth standalone** — login, signup y flujo completo de recuperación de contraseña (`password_reset_form`, `_done`, `_confirm`, `_complete`) con fondo degradado, formas blobs, logo hexagonal y tarjeta flotante.
-- **Formularios de creación/edición** con diseño corporativo: cabecera oscura (`#1E293B`), inputs con caja de icono lateral, borde azul en focus, selector de estado (`Activo / Inactivo`) y asterisco rojo en campos obligatorios.
-- **Admin index** sobrescrito con layout completo del sistema (sidebar, topbar, grid de apps con iconos y color por módulo, panel lateral de acciones recientes).
-- Bootstrap Icons 1.11.3 y fuente Inter en toda la interfaz.
-- Soporte de mensajes flash (Django `messages`) integrado en el layout base.
+- **Sidebar oscuro** colapsable con estado en `localStorage`.
+- **Topbar sticky** con búsqueda global (`Ctrl + /`).
+- **Páginas de auth standalone** (rol, login, signup, reset, 2FA WhatsApp).
+- Bootstrap Icons 1.11.3 y fuente Inter.
+- Mensajes flash (Django `messages`) en el layout base.
 
 ### Plantillas por módulo
 
 | Sección | Plantillas |
 |---------|-----------|
 | Global | `base.html` |
-| Auth standalone | `role_select.html`, `login.html`, `signup.html`, `password_reset_form.html`, `password_reset_done.html`, `password_reset_confirm.html`, `password_reset_complete.html` |
-| Admin | `admin/index.html` (override del admin de Django) |
-| Billing | `home.html`, `brand_*.html`, `productgroup_*.html`, `supplier_*.html`, `product_*.html`, `customer_*.html`, `invoice_*.html`, `security_user_list.html`, `security_user_form.html`, `security_group_list.html` |
+| Auth | `role_select.html`, `login.html`, `login_2fa.html`, `signup.html`, reset password |
+| Admin | `admin/index.html` |
+| Billing | `home.html`, `brand_*.html`, `productgroup_*.html`, `supplier_*.html`, `product_*.html`, `customer_*.html`, `invoice_*.html` |
+| Security | `user_*.html`, `group_*.html` |
 | Purchasing | `purchase_*.html` |
-| Cobros | `factura_pendiente_list.html`, `cobro_historial.html`, `cobro_form.html`, `cobro_confirm_delete.html` |
-| Pagos | `compra_pendiente_list.html`, `pago_historial.html`, `pago_form.html`, `pago_confirm_delete.html` |
-
----
-
-## Instalación y ejecución
-
-### Requisitos previos
-
-- Python 3.14
-- Entorno virtual disponible en `venv/`
-
-### Pasos
-
-```powershell
-# 1. Activar el entorno virtual
-.\venv\Scripts\Activate.ps1
-
-# 2. Instalar dependencias (si es necesario)
-pip install -r requirements.txt
-
-# 3. Aplicar migraciones
-python manage.py migrate
-
-# 4. Iniciar el servidor de desarrollo
-python manage.py runserver
-```
-
-Abrir en el navegador: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-
-### Crear superusuario
-
-```powershell
-python manage.py createsuperuser
-```
+| Cobros | `factura_pendiente_list.html`, `cobro_*.html` |
+| Pagos | `compra_pendiente_list.html`, `pago_*.html` |
 
 ---
 
@@ -378,6 +512,17 @@ Panel de administración: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/a
 
 ---
 
+## Documentación de microservicios
+
+| Servicio | README |
+|----------|--------|
+| PayPal | [paypal_service/README.md](paypal_service/README.md) |
+| SRI RUC | [sri_service/README.md](sri_service/README.md) |
+| Facturación electrónica | [sri_facturacion_service/README.md](sri_facturacion_service/README.md) |
+| WhatsApp / 2FA | [whatsapp_service/README.md](whatsapp_service/README.md) |
+
+---
+
 ## Contexto académico
 
-Proyecto desarrollado para la asignatura de Programación Orientada a Objetos (Tarea 2 — POO). El módulo `cobros` amplía el sistema original a partir del caso de estudio **"Integración de Pagos de Créditos"** (cobro de facturas de venta a crédito), y el módulo `pagos` a partir del caso de estudio **"Pago de Compras a Crédito"** (cuentas por pagar a proveedores) — ambos reutilizan los modelos de `billing` y `purchasing` ya existentes en el sistema. El módulo de seguridad (grupos, permisos, login por perfil) sigue la **"Guía Práctica 4 — Desarrollo del Módulo de Seguridad utilizando el Administrador de Django"**.
+Proyecto desarrollado para la asignatura de Programación Orientada a Objetos. El módulo `cobros` amplía el sistema con el caso **"Integración de Pagos de Créditos"**; el módulo `pagos` con **"Pago de Compras a Crédito"**. El módulo de seguridad sigue la **"Guía Práctica 4 — Desarrollo del Módulo de Seguridad utilizando el Administrador de Django"**. Los microservicios (PayPal, SRI, facturación electrónica, WhatsApp) demuestran arquitectura por servicios independientes que el sistema Django consume por HTTP.

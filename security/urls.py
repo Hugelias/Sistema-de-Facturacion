@@ -9,6 +9,7 @@ urlpatterns = [
     path('accounts/signup/', views.signup, name='signup'),
     path('accounts/password-reset/', views.password_reset_request, name='password_reset_request'),
     path('accounts/password-reset/verificar/', views.password_reset_verify, name='password_reset_verify'),
+    path('accounts/login/2fa/', views.login_2fa, name='login_2fa'),
 
     # Users
     path('security/users/', views.user_list, name='user_list'),

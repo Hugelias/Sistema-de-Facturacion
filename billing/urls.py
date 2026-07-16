@@ -50,6 +50,7 @@ urlpatterns = [
     path('invoices/<int:pk>/xml/', views.invoice_xml, name='invoice_xml'),
     path('invoices/<int:pk>/autorizar-sri/', views.invoice_autorizar_sri, name='invoice_autorizar_sri'),
     path('invoices/<int:pk>/enviar-correo/', views.invoice_send_email, name='invoice_send_email'),
+    path('invoices/<int:pk>/enviar-whatsapp/', views.invoice_send_whatsapp, name='invoice_send_whatsapp'),
     path('invoices/<int:pk>/delete/', views.invoice_delete, name='invoice_delete'),
 
     # Vista pública (sin login) para el enlace del correo

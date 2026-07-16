@@ -163,6 +163,32 @@
                     {% if form.email.errors %}<div class="uf-error">{{ form.email.errors|join:", " }}</div>{% endif %}
                 </div>
 
+                {# ── WhatsApp / 2FA ── #}
+                <div class="uf-section">Autenticación WhatsApp (2FA)</div>
+
+                <div class="uf-field">
+                    <label class="uf-label">
+                        <i class="bi bi-whatsapp"></i> Teléfono WhatsApp
+                        {% if is_create %}<span class="req">*</span>{% endif %}
+                    </label>
+                    <div class="uf-input-wrap">
+                        <i class="bi bi-phone uf-icon"></i>
+                        {{ form.phone }}
+                    </div>
+                    <div style="font-size:.75rem;color:#94A3B8;margin-top:4px">
+                        Al iniciar sesión se enviará un código temporal a este número.
+                    </div>
+                    {% if form.phone.errors %}<div class="uf-error">{{ form.phone.errors|join:", " }}</div>{% endif %}
+                </div>
+
+                <div class="uf-switch-row" style="margin-bottom:18px">
+                    <div class="uf-switch-label">
+                        <div class="uf-switch-title">Autenticación en dos pasos</div>
+                        <div class="uf-switch-desc">Tras usuario y contraseña, exige el código recibido por WhatsApp</div>
+                    </div>
+                    {{ form.two_factor_enabled }}
+                </div>
+
                 {# ── Rol y estado ── #}
                 <div class="uf-section">Rol y estado</div>
 

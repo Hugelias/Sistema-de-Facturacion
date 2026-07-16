@@ -1,0 +1,21 @@
+{
+  "name": "tecnostock-whatsapp-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Microservicio WhatsApp local (Baileys) — tu propio número vía QR, sin Meta Cloud ni Green-API",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "express": "^4.21.2",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  }
+}

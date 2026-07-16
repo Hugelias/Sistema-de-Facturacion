@@ -1,20 +1,122 @@
 from django.apps import apps
 from django.contrib import messages
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.auth.views import LoginView
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
 
+from billing.whatsapp_client import WhatsAppServiceError
 from shared.decorators import staff_required
 from .emails import send_password_reset_code_email
-from .forms import (PasswordResetCodeForm, PasswordResetRequestForm, RoleAwareAuthenticationForm,
-                     SignUpForm, UserCreateForm, UserEditForm)
-from .models import PasswordResetCode
+from .forms import (LoginOTPForm, PasswordResetCodeForm, PasswordResetRequestForm,
+                     RoleAwareAuthenticationForm, SignUpForm, UserCreateForm, UserEditForm)
+from .models import LOGIN_OTP_VALID_MINUTES, LoginOTPCode, PasswordResetCode
+from .whatsapp import send_login_otp_whatsapp
+
+
+def _user_requiere_2fa(user) -> bool:
+    try:
+        return user.profile.requiere_2fa()
+    except Exception:
+        return False
+
+
+def _iniciar_2fa(request, user, next_url: str):
+    """Genera OTP, lo guarda en BD, lo envía por WhatsApp y deja al usuario pendiente en sesión."""
+    otp = LoginOTPCode.generar_para(user)
+    send_login_otp_whatsapp(user, otp)
+    request.session['pending_2fa_user_id'] = user.pk
+    request.session['pending_2fa_next'] = next_url or '/'
 
 
 class RoleAwareLoginView(LoginView):
     form_class = RoleAwareAuthenticationForm
+
+    def form_valid(self, form):
+        user = form.get_user()
+        if _user_requiere_2fa(user):
+            next_url = self.get_redirect_url() or '/'
+            try:
+                _iniciar_2fa(self.request, user, next_url)
+            except WhatsAppServiceError as e:
+                messages.error(
+                    self.request,
+                    f'No se pudo enviar el código por WhatsApp: {e}. '
+                    '¿Está corriendo whatsapp_service y el WhatsApp vinculado?',
+                )
+                return redirect('login')
+            except Exception:
+                messages.error(
+                    self.request,
+                    'No se pudo enviar el código por WhatsApp. Verifica el microservicio (:5004).',
+                )
+                return redirect('login')
+            messages.success(
+                self.request,
+                'Te enviamos un código temporal a tu WhatsApp. Ingrésalo para continuar.',
+            )
+            return redirect('security:login_2fa')
+        return super().form_valid(form)
+
+
+@require_http_methods(['GET', 'POST'])
+def login_2fa(request):
+    """Paso 2 del login: validar código OTP recibido por WhatsApp."""
+    user_id = request.session.get('pending_2fa_user_id')
+    if not user_id:
+        messages.error(request, 'Primero inicia sesión con tu usuario y contraseña.')
+        return redirect('login')
+
+    user = User.objects.filter(pk=user_id, is_active=True).select_related('profile').first()
+    if not user or not _user_requiere_2fa(user):
+        request.session.pop('pending_2fa_user_id', None)
+        request.session.pop('pending_2fa_next', None)
+        messages.error(request, 'La verificación en dos pasos no está disponible para esta cuenta.')
+        return redirect('login')
+
+    profile = user.profile
+    phone_mask = profile.telefono_enmascarado()
+
+    if request.method == 'POST' and request.POST.get('action') == 'resend':
+        try:
+            _iniciar_2fa(request, user, request.session.get('pending_2fa_next', '/'))
+            messages.success(request, 'Te reenviamos un nuevo código por WhatsApp.')
+        except WhatsAppServiceError as e:
+            messages.error(request, f'No se pudo reenviar el código: {e}')
+        except Exception:
+            messages.error(request, 'No se pudo reenviar el código. Revisa whatsapp_service.')
+        return redirect('security:login_2fa')
+
+    if request.method == 'POST':
+        form = LoginOTPForm(request.POST)
+        if form.is_valid():
+            otp = LoginOTPCode.objects.filter(
+                user=user,
+                code=form.cleaned_data['code'],
+                used=False,
+            ).order_by('-created_at').first()
+            if not otp or not otp.is_valid():
+                form.add_error('code', 'El código es incorrecto o ya venció. Solicita uno nuevo.')
+            else:
+                otp.used = True
+                otp.save(update_fields=['used'])
+                next_url = request.session.pop('pending_2fa_next', '/') or '/'
+                request.session.pop('pending_2fa_user_id', None)
+                auth_login(request, user)
+                messages.success(request, f'Bienvenido, {user.get_full_name() or user.username}.')
+                return redirect(next_url)
+    else:
+        form = LoginOTPForm()
+
+    return render(request, 'registration/login_2fa.html', {
+        'form': form,
+        'phone_mask': phone_mask,
+        'username': user.username,
+        'valid_minutes': LOGIN_OTP_VALID_MINUTES,
+    })
 
 
 def role_select(request):

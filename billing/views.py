@@ -21,6 +21,8 @@ from .models import Brand, ProductGroup, Supplier, Product, Customer, CustomerPr
 from .forms import (BrandForm, ProductGroupForm, SupplierForm, ProductForm,
                     InvoiceForm, InvoiceDetailFormSet)
 from .emails import send_invoice_email
+from .whatsapp import send_invoice_whatsapp
+from .whatsapp_client import WhatsAppServiceError
 from .tokens import verify_invoice_token
 from .electronic_invoice import autorizar_factura_electronica, generar_xml_autorizacion
 from .pdf import generar_factura_pdf
@@ -944,6 +946,40 @@ def invoice_send_email(request, pk):
             messages.success(request, f'Factura reenviada por correo a {invoice.customer.email}.')
         except Exception:
             messages.warning(request, 'No se pudo enviar el correo (revisa la configuración de email).')
+    return redirect('billing:invoice_detail', pk=invoice.pk)
+
+
+@login_required
+@permission_required('billing.view_invoice', raise_exception=True)
+@require_POST
+def invoice_send_whatsapp(request, pk):
+    """Envía al cliente el enlace de la factura por WhatsApp (microservicio :5004)."""
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('customer').prefetch_related('details__product'),
+        pk=pk,
+    )
+    if not (invoice.customer.phone or '').strip():
+        messages.error(request, 'Este cliente no tiene un teléfono registrado.')
+    else:
+        try:
+            result = send_invoice_whatsapp(invoice, request)
+            proveedor = result.get('proveedor', 'whatsapp')
+            emisor = result.get('numero_emisor')
+            extra = f' desde +{emisor}' if emisor else ''
+            messages.success(
+                request,
+                f'Factura enviada por WhatsApp{extra} a {invoice.customer.phone} '
+                f'(proveedor: {proveedor}).',
+            )
+        except ValueError as e:
+            messages.error(request, str(e))
+        except WhatsAppServiceError as e:
+            messages.warning(request, f'No se pudo enviar por WhatsApp: {e}')
+        except Exception:
+            messages.warning(
+                request,
+                'No se pudo enviar por WhatsApp (¿está corriendo whatsapp_service en :5004?).',
+            )
     return redirect('billing:invoice_detail', pk=invoice.pk)
 
 

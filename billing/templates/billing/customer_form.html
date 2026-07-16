@@ -390,18 +390,19 @@
 (function () {
     'use strict';
 
-    /* ── Ecuadorian cedula algorithm (mirrors shared/validators.py) ── */
+    /* ── Cédula (10) / RUC persona natural (13 …001) — igual que shared/validators.py ── */
     function isValidCedula(v) {
-        v = v.trim();
-        if (!/^\d{10}$/.test(v)) return false;
+        v = String(v || '').trim();
+        if (!/^\d{10}$/.test(v) && !/^\d{13}$/.test(v)) return false;
+        if (v.length === 13 && v.slice(10) !== '001') return false;
         var coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
         var total = 0;
         for (var i = 0; i < 9; i++) {
-            var d = parseInt(v[i]) * coef[i];
+            var d = parseInt(v[i], 10) * coef[i];
             if (d >= 10) d -= 9;
             total += d;
         }
-        return (10 - (total % 10)) % 10 === parseInt(v[9]);
+        return (10 - (total % 10)) % 10 === parseInt(v[9], 10);
     }
 
     /* ── Show / clear error ── */
@@ -460,7 +461,7 @@
             if (v === '') {
                 showErr(dniErr, dniInput, 'Este campo es obligatorio.');
             } else if (!isValidCedula(v)) {
-                showErr(dniErr, dniInput, 'Ingrese una cédula ecuatoriana válida de 10 dígitos.');
+                showErr(dniErr, dniInput, 'Ingrese una cédula (10 dígitos) o RUC (13 dígitos) válido.');
             } else {
                 showErr(dniErr, dniInput, '');
             }
@@ -524,7 +525,7 @@
                 showErr(dniErr, dniInput, 'Este campo es obligatorio.');
                 ok = false;
             } else if (!isValidCedula(dniVal)) {
-                showErr(dniErr, dniInput, 'Ingrese una cédula ecuatoriana válida de 10 dígitos.');
+                showErr(dniErr, dniInput, 'Ingrese una cédula (10 dígitos) o RUC (13 dígitos) válido.');
                 ok = false;
             }
 

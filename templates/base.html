@@ -406,6 +406,9 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:var(--main-bg);color:v
         if(!isDocumentNavigation(a))return;
         showLoader();
     },true);
+    // Bubble (false): corre DESPUÉS de la validación del formulario.
+    // Si el form hace preventDefault (cédula inválida, etc.), no mostramos el loader
+    // ni dejamos el botón bloqueado — antes quedaba “Cargando…” pegado.
     document.addEventListener('submit',function(e){
         if(e.defaultPrevented)return;
         var f=e.target;
@@ -420,7 +423,7 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:var(--main-bg);color:v
             b.classList.add('btn-loading');
             b.disabled=true;
         }
-    },true);
+    },false);
     // Cualquier carga/restauración de página cierra el loader (bfcache, back/forward, etc.)
     window.addEventListener('pageshow',hideLoader);
     window.addEventListener('pagehide',hideLoader);

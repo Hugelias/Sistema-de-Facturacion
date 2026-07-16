@@ -1,0 +1,17 @@
+# Dependencias e instalación local
+node_modules/
+package-lock.json
+
+# Sesión WhatsApp (Baileys) — NO subir
+session/
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Credenciales antiguas (Green-API) — ya no se usan
+credentials.json
+.env
+
+__pycache__/
+*.pyc
+.venv/
+venv/

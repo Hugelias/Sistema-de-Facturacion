@@ -168,6 +168,15 @@ SRI_SERVICE_URL = 'http://localhost:5002'
 # Puerto 5003.
 SRI_FACTURACION_SERVICE_URL = 'http://localhost:5003'
 
+# Microservicio de WhatsApp — Baileys local (tu propio número por QR)
+# ─────────────────────────────────────────────────────────────────────────────
+# Igual idea que Evolution/Baileys del otro proyecto, pero sin servidor externo.
+#     cd whatsapp_service
+#     npm install
+#     node server.js
+# Abrir http://localhost:5004/vincular y escanear con tu WhatsApp.
+WHATSAPP_SERVICE_URL = 'http://localhost:5004'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

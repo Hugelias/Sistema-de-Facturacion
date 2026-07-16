@@ -4,6 +4,8 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from .models import UserProfile
+
 ROLE_GROUP_MAP = {
     'administrador': 'Administrador',
     'gerente': 'Gerente',
@@ -89,6 +91,28 @@ class PasswordResetCodeForm(forms.Form):
         return p2
 
 
+class LoginOTPForm(forms.Form):
+    code = forms.CharField(
+        label='Código de WhatsApp',
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '000000',
+            'autocomplete': 'one-time-code',
+            'inputmode': 'numeric',
+            'pattern': '[0-9]{6}',
+            'autofocus': True,
+        }),
+    )
+
+    def clean_code(self):
+        code = self.cleaned_data.get('code', '').strip()
+        if not code.isdigit() or len(code) != 6:
+            raise ValidationError('El código debe tener exactamente 6 dígitos.')
+        return code
+
+
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=100, required=True, label='Nombres')
@@ -103,8 +127,6 @@ class SignUpForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
-        # Cuenta pendiente de aprobación: un administrador debe activarla
-        # y asignarle un grupo/rol desde el panel antes de que pueda ingresar.
         user.is_active = False
         if commit:
             user.save()
@@ -114,6 +136,10 @@ class SignUpForm(UserCreationForm):
 _INPUT  = {'class': 'form-control'}
 _SELECT = {'class': 'form-select'}
 _PWD    = {'class': 'form-control'}
+
+
+def _normalizar_telefono(valor: str) -> str:
+    return ''.join(c for c in (valor or '') if c.isdigit())
 
 
 class UserCreateForm(forms.ModelForm):
@@ -131,6 +157,24 @@ class UserCreateForm(forms.ModelForm):
         label='Confirmar contraseña',
         widget=forms.PasswordInput(attrs={**_PWD, 'placeholder': 'Repite la contraseña'}),
     )
+    phone = forms.CharField(
+        label='Teléfono WhatsApp',
+        required=True,
+        max_length=15,
+        widget=forms.TextInput(attrs={
+            **_INPUT,
+            'placeholder': 'Ej: 0991234567',
+            'inputmode': 'numeric',
+            'autocomplete': 'tel',
+        }),
+        help_text='Se usará para enviar el código de autenticación en dos pasos.',
+    )
+    two_factor_enabled = forms.BooleanField(
+        label='Autenticación en dos pasos (WhatsApp)',
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+    )
 
     class Meta:
         model = User
@@ -142,6 +186,18 @@ class UserCreateForm(forms.ModelForm):
             'email':      forms.EmailInput(attrs={**_INPUT, 'placeholder': 'correo@ejemplo.com'}),
             'is_active':  forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
         }
+
+    def clean_phone(self):
+        phone = _normalizar_telefono(self.cleaned_data.get('phone', ''))
+        if len(phone) < 9:
+            raise ValidationError('Ingresa un número de teléfono válido (mín. 9 dígitos).')
+        return phone
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('two_factor_enabled') and not cleaned.get('phone'):
+            self.add_error('phone', 'El teléfono es obligatorio si activas la autenticación en dos pasos.')
+        return cleaned
 
     def clean_password2(self):
         p1 = self.cleaned_data.get('password1')
@@ -157,6 +213,12 @@ class UserCreateForm(forms.ModelForm):
             user.save()
             group = self.cleaned_data.get('group')
             user.groups.set([group] if group else [])
+            phone = self.cleaned_data.get('phone') or ''
+            two_fa = bool(self.cleaned_data.get('two_factor_enabled')) and bool(phone)
+            UserProfile.objects.update_or_create(
+                user=user,
+                defaults={'phone': phone, 'two_factor_enabled': two_fa},
+            )
         return user
 
 
@@ -173,6 +235,22 @@ class UserEditForm(forms.ModelForm):
         required=False,
         widget=forms.PasswordInput(attrs={**_PWD, 'placeholder': 'Dejar en blanco para no cambiar'}),
     )
+    phone = forms.CharField(
+        label='Teléfono WhatsApp',
+        required=False,
+        max_length=15,
+        widget=forms.TextInput(attrs={
+            **_INPUT,
+            'placeholder': 'Ej: 0991234567',
+            'inputmode': 'numeric',
+            'autocomplete': 'tel',
+        }),
+    )
+    two_factor_enabled = forms.BooleanField(
+        label='Autenticación en dos pasos (WhatsApp)',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+    )
 
     class Meta:
         model = User
@@ -188,6 +266,25 @@ class UserEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             self.fields['group'].initial = self.instance.groups.first()
+            profile = getattr(self.instance, 'profile', None)
+            if profile:
+                self.fields['phone'].initial = profile.phone
+                self.fields['two_factor_enabled'].initial = profile.two_factor_enabled
+
+    def clean_phone(self):
+        phone = _normalizar_telefono(self.cleaned_data.get('phone', ''))
+        if phone and len(phone) < 9:
+            raise ValidationError('Ingresa un número de teléfono válido (mín. 9 dígitos).')
+        return phone
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('two_factor_enabled') and not cleaned.get('phone'):
+            self.add_error(
+                'phone',
+                'Para activar la autenticación en dos pasos debes registrar un teléfono WhatsApp.',
+            )
+        return cleaned
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -198,4 +295,10 @@ class UserEditForm(forms.ModelForm):
             user.save()
             group = self.cleaned_data.get('group')
             user.groups.set([group] if group else [])
+            phone = self.cleaned_data.get('phone') or ''
+            two_fa = bool(self.cleaned_data.get('two_factor_enabled')) and bool(phone)
+            UserProfile.objects.update_or_create(
+                user=user,
+                defaults={'phone': phone, 'two_factor_enabled': two_fa},
+            )
         return user

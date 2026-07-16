@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificación WhatsApp — TecnoStock S.A.</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    font-family:'Inter','Segoe UI',sans-serif;min-height:100vh;
+    background:linear-gradient(150deg,#EEF0FF 0%,#DDE2FF 40%,#CDD5FF 100%);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.card{
+    background:#fff;border-radius:24px;width:100%;max-width:420px;
+    box-shadow:0 24px 60px rgba(15,23,42,.14);padding:36px 32px 28px;
+}
+.brand{text-align:center;margin-bottom:18px}
+.brand-icon{
+    width:56px;height:56px;margin:0 auto 10px;border-radius:16px;
+    background:linear-gradient(135deg,#25D366,#128C7E);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;
+}
+.brand-name{font-size:1.1rem;font-weight:800;color:#0F172A}
+.brand-sub{font-size:.78rem;color:#64748B;margin-top:3px}
+.title{text-align:center;font-size:1.2rem;font-weight:700;color:#0F172A;margin-bottom:6px}
+.desc{text-align:center;font-size:.84rem;color:#64748B;line-height:1.5;margin-bottom:18px}
+.desc strong{color:#0F172A}
+.alert{display:flex;align-items:center;gap:8px;border-radius:10px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.alert.err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
+.alert.ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.alert.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8}
+.label{font-size:.79rem;font-weight:600;color:#374151;margin-bottom:6px}
+.input{
+    width:100%;padding:12px;border:1.5px solid #E2E8F0;border-radius:12px;
+    text-align:center;letter-spacing:8px;font-size:1.2rem;font-weight:700;
+    font-family:'Courier New',monospace;outline:none;
+}
+.input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.15)}
+.input.is-err{border-color:#EF4444}
+.err{font-size:.73rem;color:#EF4444;margin-top:6px}
+.btn{
+    width:100%;margin-top:14px;padding:13px;border:none;border-radius:12px;
+    background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;
+    font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;
+}
+.btn:hover{opacity:.93}
+.btn-ghost{
+    width:100%;margin-top:10px;padding:11px;border:1.5px solid #E2E8F0;border-radius:12px;
+    background:#fff;color:#475569;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit;
+}
+.btn-ghost:hover{background:#F8FAFC}
+.foot{text-align:center;margin-top:16px}
+.foot a{color:#2563EB;font-size:.8rem;font-weight:600;text-decoration:none}
+.foot a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="brand">
+        <div class="brand-icon"><i class="bi bi-whatsapp"></i></div>
+        <div class="brand-name">TecnoStock S.A.</div>
+        <div class="brand-sub">Autenticación en dos pasos</div>
+    </div>
+
+    <div class="title">Código de WhatsApp</div>
+    <p class="desc">
+        Enviamos un código a <strong>{{ phone_mask }}</strong>
+        (usuario <strong>{{ username }}</strong>).
+        Válido {{ valid_minutes }} minutos.
+    </p>
+
+    {% if messages %}
+        {% for msg in messages %}
+        <div class="alert {% if 'error' in msg.tags %}err{% elif 'success' in msg.tags %}ok{% else %}info{% endif %}">
+            <i class="bi bi-info-circle"></i> {{ msg }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="label">Código de 6 dígitos</div>
+        <input class="input {% if form.code.errors %}is-err{% endif %}"
+               type="text" name="code" id="id_code" maxlength="6" inputmode="numeric"
+               pattern="[0-9]{6}" autocomplete="one-time-code" autofocus
+               placeholder="000000" value="{{ form.code.value|default:'' }}">
+        {% for e in form.code.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        <button type="submit" class="btn"><i class="bi bi-shield-check"></i> Verificar e ingresar</button>
+    </form>
+
+    <form method="post" style="margin:0">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="resend">
+        <button type="submit" class="btn-ghost"><i class="bi bi-arrow-repeat"></i> Reenviar código</button>
+    </form>
+
+    <div class="foot">
+        <a href="{% url 'login' %}"><i class="bi bi-arrow-left"></i> Volver al login</a>
+    </div>
+</div>
+</body>
+</html>
